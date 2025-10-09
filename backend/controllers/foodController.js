@@ -48,6 +48,49 @@ const removeFood = async (req,res) => {
         res.json({success:false,message:"Error"})
     }
 }
+// update food item
+const updateFood = async (req, res) => {
+    try {
+        const { id, name, description, price, category } = req.body;
+        
+        // Kiểm tra nếu thiếu ID
+        if (!id) {
+            return res.json({ success: false, message: "Product ID is required" });
+        }
+
+        let updateData = { 
+            name: name,
+            description: description, 
+            price: Number(price), 
+            category: category 
+        };
+        
+        // Nếu có ảnh mới
+        if (req.file) {
+            // Xóa ảnh cũ
+            const existingFood = await foodModel.findById(id);
+            if (existingFood && existingFood.image) {
+                try {
+                    fs.unlink(`uploads/${existingFood.image}`, () => {});
+                } catch (fileError) {
+                    console.log("Error deleting old image:", fileError);
+                }
+            }
+            updateData.image = req.file.filename;
+        }
+        
+        const updatedFood = await foodModel.findByIdAndUpdate(id, updateData, { new: true });
+        
+        if (!updatedFood) {
+            return res.json({ success: false, message: "Product not found" });
+        }
+        
+        res.json({ success: true, message: "Food Updated Successfully", data: updatedFood });
+    } catch (error) {
+        console.log("Update error:", error);
+        res.json({ success: false, message: "Error updating food" });
+    }
+}
 
 
-export {addFood,listFood,removeFood}
+export {addFood,listFood,removeFood, updateFood}

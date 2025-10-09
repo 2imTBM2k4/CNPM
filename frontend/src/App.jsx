@@ -14,6 +14,7 @@ import MyOrders from './pages/MyOrders/MyOrders';
 import ProductDetail from './pages/ProductDetail/ProductDetail'; // Thêm import này
 import { StoreContext } from './context/StoreContext';
 import StoreContextProvider from './context/StoreContext';
+import FoodPage from './pages/Food/FoodPage'; // Thêm import này
 
 const App = () => {
   const { showLogin, setShowLogin } = useContext(StoreContext);
@@ -26,11 +27,13 @@ const App = () => {
           <Navbar setShowLogin={setShowLogin} />
           <Routes>
             <Route path="/" element={<Home />} />
+              <Route path="/food" element={<FoodPage />} /> {/* Thêm route này */}
             <Route path="/cart" element={<Cart />} />
             <Route path="/order" element={<PlaceOrder />} />
             <Route path="/verify" element={<Verify />} />
             <Route path="/myorders" element={<MyOrders />} />
             <Route path="/product/:id" element={<ProductDetail />} /> {/* Thêm route này */}
+
           </Routes>
         </div>
         <Footer />

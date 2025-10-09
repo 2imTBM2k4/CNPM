@@ -124,11 +124,13 @@
 /*update*/
 
 /* Quantity Controls */
+/* Quantity Controls - Căn trái */
 .quantity-controls {
   display: flex;
   align-items: center;
   gap: 10px;
-  justify-content: center;
+  justify-content: flex-start; /* Đổi từ center sang flex-start */
+  margin-left: 10px; /* Thêm khoảng cách từ bên trái */
 }
 
 .quantity-btn {
@@ -176,6 +178,106 @@
   font-size: 16px;
 }
 
+/* Điều chỉnh grid template để quantity control có không gian riêng */
+.cart-items-title {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1fr 1.5fr 1fr 0.5fr; /* Tăng cột quantity lên 1.5fr */
+  align-items: center;
+  color: grey;
+  font-size: max(1vw, 12px);
+}
+
+.cart-items-item {
+  margin: 10px 0px;
+  color: black;
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1fr 1.5fr 1fr 0.5fr; /* Đồng bộ với title */
+  align-items: center;
+}
+
+/* Đảm bảo các phần tử con trong cart-items-item căn đúng vị trí */
+.cart-items-item img {
+  width: 50px;
+  justify-self: start;
+}
+
+.cart-items-item p {
+  margin: 0;
+  padding: 0 10px;
+}
+
+.cart-items-item .cross {
+  cursor: pointer;
+  justify-self: center;
+}
+
+/* Quantity controls trong cart item */
+.cart-items-item .quantity-controls {
+  grid-column: 4; /* Đặt quantity controls vào cột thứ 4 */
+  justify-self: start; /* Căn trái trong cột */
+  margin-left: 0; /* Reset margin */
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .cart-items-title {
+    grid-template-columns: 0.8fr 1.2fr 0.8fr 1.2fr 0.8fr 0.5fr;
+    font-size: 12px;
+  }
+  
+  .cart-items-item {
+    grid-template-columns: 0.8fr 1.2fr 0.8fr 1.2fr 0.8fr 0.5fr;
+  }
+}
+
+@media (max-width: 750px) {
+  .quantity-controls {
+    gap: 5px;
+  }
+  
+  .quantity-btn {
+    width: 25px;
+    height: 25px;
+    font-size: 14px;
+  }
+  
+  .quantity-display {
+    font-size: 14px;
+    min-width: 25px;
+  }
+  
+  /* Điều chỉnh grid cho mobile */
+  .cart-items-title {
+    grid-template-columns: 0.6fr 1fr 0.8fr 1.2fr 0.8fr 0.4fr;
+  }
+  
+  .cart-items-item {
+    grid-template-columns: 0.6fr 1fr 0.8fr 1.2fr 0.8fr 0.4fr;
+  }
+}
+
+/* Dark theme support cho quantity controls */
+:root .quantity-btn {
+  background-color: #444;
+  color: white;
+}
+
+:root .quantity-btn:hover {
+  background-color: #555;
+}
+
+:root .quantity-btn.increase {
+  background-color: #28a745;
+}
+
+:root .quantity-btn.decrease {
+  background-color: #dc3545;
+}
+
+.lightcolors .quantity-btn {
+  background-color: #f0f0f0;
+  color: #333;
+}
 /* Confirm Dialog */
 .confirm-dialog-overlay {
   position: fixed;

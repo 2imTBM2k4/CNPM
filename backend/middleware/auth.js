@@ -1,18 +1,53 @@
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
+import userModel from "../models/userModel.cjs";
 
-const authMiddleware = async (req,res,next) => {
-    const {token} = req.headers;
-    if (!token){
-        return res.json({success:false,message:"Not Authorized Login Again"})
+const authMiddleware = async (req, res, next) => {
+  let token;
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  } else if (req.headers.token) {
+    token = req.headers.token;
+  }
+
+  if (!token) {
+    return res.status(401).json({ success: false, message: "Not Authorized. Login Again" });
+  }
+
+  try {
+    const token_decode = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await userModel.findById(token_decode.id).populate('restaurantId');
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
     }
+    req.user = user;
+    next();
+  } catch (error) {
+    console.log(error);
+    res.status(401).json({ success: false, message: "Invalid Token" });
+  }
+};
+
+// Mới: Optional auth - Set req.user nếu có token, nhưng không fail nếu không có
+const optionalAuth = async (req, res, next) => {
+  let token;
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  } else if (req.headers.token) {
+    token = req.headers.token;
+  }
+
+  if (token) {
     try {
-        const token_decode = jwt.verify(token,process.env.JWT_SECRET);
-        req.body.userId = token_decode.id;
-        next();
+      const token_decode = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await userModel.findById(token_decode.id).populate('restaurantId');
+      if (user) {
+        req.user = user;
+      }
     } catch (error) {
-        console.log(error);
-        res.json({success:false,message:"Error"})
+      console.log('Optional auth error:', error);  // Log nhưng không fail
     }
-}
+  }
+  next();  // Luôn proceed
+};
 
-export default authMiddleware;
+export { authMiddleware as default, optionalAuth };

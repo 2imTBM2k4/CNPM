@@ -1,96 +1,162 @@
-import foodModel from '../models/foodModel.cjs'
-import fs from 'fs'
+// import foodModel from "../models/foodModel.cjs";
 
+// // Add a new food item
+// const addFood = async (req, res) => {
+//     try {
+//         const { name, description, price, category } = req.body;
+//         const image = req.file ? req.file.filename : null; // Handle uploaded image
 
-// add food item
+//         if (!name || !description || !price || !category || !image) {
+//             return res.json({ success: false, message: "Missing required fields" });
+//         }
 
-const addFood = async (req,res) => {
+//         const newFood = new foodModel({
+//             name,
+//             description,
+//             price,
+//             category,
+//             image
+//         });
 
-    let image_filename = `${req.file.filename}`;
+//         await newFood.save();
+//         res.json({ success: true, message: "Food added successfully", food: newFood });
+//     } catch (error) {
+//         console.error("Error adding food:", error);
+//         res.json({ success: false, message: "Error adding food" });
+//     }
+// };
 
-    const food = new foodModel({
-        name:req.body.name,
-        description:req.body.description,
-        price:req.body.price,
-        category:req.body.category,
-        image:image_filename
-    })
-    try {
-        await food.save();
-        res.json({success:true,message:"Food Added"})
-    } catch (error) {
-        console.log(error)
-        res.json({success:false,message:"Error"})
+// // List all food items
+// const listFood = async (req, res) => {
+//     try {
+//         const foods = await foodModel.find({});
+//         res.json({ success: true, data: foods });
+//     } catch (error) {
+//         console.error("Error listing foods:", error);
+//         res.json({ success: false, message: "Error listing foods" });
+//     }
+// };
+
+// // Remove a food item
+// const removeFood = async (req, res) => {
+//     try {
+//         const { id } = req.body;
+//         await foodModel.findByIdAndDelete(id);
+//         res.json({ success: true, message: "Food removed successfully" });
+//     } catch (error) {
+//         console.error("Error removing food:", error);
+//         res.json({ success: false, message: "Error removing food" });
+//     }
+// };
+
+// // Update a food item
+// const updateFood = async (req, res) => {
+//     try {
+//         const { id, name, description, price, category } = req.body;
+//         const image = req.file ? req.file.filename : undefined; // Optional image update
+
+//         const updateData = { name, description, price, category };
+//         if (image) updateData.image = image;
+
+//         const updatedFood = await foodModel.findByIdAndUpdate(id, updateData, { new: true });
+//         if (!updatedFood) {
+//             return res.json({ success: false, message: "Food not found" });
+//         }
+//         res.json({ success: true, message: "Food updated successfully", food: updatedFood });
+//     } catch (error) {
+//         console.error("Error updating food:", error);
+//         res.json({ success: false, message: "Error updating food" });
+//     }
+// };
+
+// export { addFood, listFood, removeFood, updateFood };
+
+import foodModel from "../models/foodModel.cjs";
+
+// Add a new food item
+const addFood = async (req, res) => {
+  try {
+    if (req.user.role !== 'restaurant_owner' || !req.user.restaurantId) {
+      return res.json({ success: false, message: "Only restaurant owners with a valid restaurant can add food" });
     }
-}
+    const { name, description, price, category } = req.body;
+    const image = req.file ? req.file.filename : null;
 
-// all food list
-const listFood = async (req,res) => {
-    try {
-        const foods = await foodModel.find({});
-        res.json({success:true,data:foods})
-    } catch (error) {
-        console.log(error);
-        res.json({success:false,message:"Error"})
+    if (!name || !description || !price || !category || !image) {
+      return res.json({ success: false, message: "Missing required fields" });
     }
-}
 
-// remove food item
-const removeFood = async (req,res) => {
-    try {
-        const food = await foodModel.findById(req.body.id);
-        fs.unlink(`uploads/${food.image}`,()=>{})
+    const newFood = new foodModel({
+      name,
+      description,
+      price,
+      category,
+      image,
+      restaurantId: req.user.restaurantId  // Attach from authenticated user
+    });
 
-        await foodModel.findByIdAndDelete(req.body.id);
-        res.json({success:true,message:"Food Removed"})
-    } catch (error) {
-        console.log(error);
-        res.json({success:false,message:"Error"})
+    await newFood.save();
+    res.json({ success: true, message: "Food added successfully", food: newFood });
+  } catch (error) {
+    console.error("Error adding food:", error);
+    res.json({ success: false, message: "Error adding food" });
+  }
+};
+// List all food items (filter by restaurant nếu là owner)
+const listFood = async (req, res) => {
+  try {
+    let foods;
+    console.log('List food - req.user:', req.user);  // Mới: Log để check req.user có set không
+    if (req.user && req.user.role === 'restaurant_owner' && req.user.restaurantId) {
+      foods = await foodModel.find({ restaurantId: req.user.restaurantId });
+    } else if (req.user && req.user.role === 'admin') {
+      foods = await foodModel.find({});
+    } else {
+      foods = await foodModel.find({});  // Public or invalid: All foods
     }
-}
-// update food item
+    res.json({ success: true, data: foods });
+  } catch (error) {
+    console.error("Error listing foods:", error);
+    res.json({ success: false, message: "Error listing foods" });
+  }
+};
+
+// Remove a food item (check ownership)
+// Remove a food item (check ownership)
+const removeFood = async (req, res) => {
+  try {
+    const { id } = req.body;
+    const food = await foodModel.findById(id);
+    if (!food || (req.user.role === 'restaurant_owner' && req.user.restaurantId && food.restaurantId.toString() !== req.user.restaurantId.toString())) {
+      return res.json({ success: false, message: "Food not found or unauthorized" });
+    }
+    await foodModel.findByIdAndDelete(id);
+    res.json({ success: true, message: "Food removed successfully" });
+  } catch (error) {
+    console.error("Error removing food:", error);
+    res.json({ success: false, message: "Error removing food" });
+  }
+};
+// Update a food item (check ownership)
 const updateFood = async (req, res) => {
-    try {
-        const { id, name, description, price, category } = req.body;
-        
-        // Kiểm tra nếu thiếu ID
-        if (!id) {
-            return res.json({ success: false, message: "Product ID is required" });
-        }
+  try {
+    const { id, name, description, price, category } = req.body;
+    const image = req.file ? req.file.filename : undefined;
 
-        let updateData = { 
-            name: name,
-            description: description, 
-            price: Number(price), 
-            category: category 
-        };
-        
-        // Nếu có ảnh mới
-        if (req.file) {
-            // Xóa ảnh cũ
-            const existingFood = await foodModel.findById(id);
-            if (existingFood && existingFood.image) {
-                try {
-                    fs.unlink(`uploads/${existingFood.image}`, () => {});
-                } catch (fileError) {
-                    console.log("Error deleting old image:", fileError);
-                }
-            }
-            updateData.image = req.file.filename;
-        }
-        
-        const updatedFood = await foodModel.findByIdAndUpdate(id, updateData, { new: true });
-        
-        if (!updatedFood) {
-            return res.json({ success: false, message: "Product not found" });
-        }
-        
-        res.json({ success: true, message: "Food Updated Successfully", data: updatedFood });
-    } catch (error) {
-        console.log("Update error:", error);
-        res.json({ success: false, message: "Error updating food" });
+    const food = await foodModel.findById(id);
+    if (!food || (req.user.role === 'restaurant_owner' && food.restaurantId.toString() !== req.user.restaurantId.toString())) {
+      return res.json({ success: false, message: "Food not found or unauthorized" });
     }
-}
 
+    const updateData = { name, description, price, category };
+    if (image) updateData.image = image;
 
-export {addFood,listFood,removeFood, updateFood}
+    const updatedFood = await foodModel.findByIdAndUpdate(id, updateData, { new: true });
+    res.json({ success: true, message: "Food updated successfully", food: updatedFood });
+  } catch (error) {
+    console.error("Error updating food:", error);
+    res.json({ success: false, message: "Error updating food" });
+  }
+};
+
+export { addFood, listFood, removeFood, updateFood };

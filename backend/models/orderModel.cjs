@@ -23,7 +23,7 @@ const orderSchema = new mongoose.Schema({
   orderItems: [{
     product: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Product',
+      ref: 'Food',  // Sửa: Ref 'Food' thay vì 'Product'
       required: true
     },
     name: String,
@@ -112,7 +112,8 @@ const orderSchema = new mongoose.Schema({
     enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'],
     default: 'Pending'
   },
-  stripeSessionId: String
+  stripeSessionId: String,
+  restaurantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', required: true }  // Mới: Liên kết với restaurant
 }, {
   timestamps: true
 });

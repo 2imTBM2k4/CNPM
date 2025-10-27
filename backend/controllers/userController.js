@@ -1,4 +1,5 @@
 import userModel from "../models/userModel.cjs";
+import restaurantModel from "../models/restaurantModel.cjs";  // Mới
 import jwt from "jsonwebtoken"
 import bcrypt from "bcrypt"
 import validator from "validator"
@@ -11,6 +12,10 @@ const loginUser = async (req,res) => {
 
         if (!user){
             return res.json({success:false,message:"User doesn't exist."})
+        }
+
+        if (user.locked) {  // Mới: Check locked
+            return res.json({success:false,message:"Account is locked."})
         }
 
         const isMatch = await bcrypt.compare(password,user.password);
@@ -31,9 +36,9 @@ const createToken = (id) => {
     return jwt.sign({id},process.env.JWT_SECRET)
 }
 
-// register user
+// register user (hỗ trợ role, tạo restaurant nếu owner)
 const registerUser = async (req,res) => {
-    const {name,password,email} = req.body;
+    const {name, password, email, role, restaurantName, address, phone} = req.body;  // Mới: Thêm fields
     try {
         //checking if user already exists
         const exists = await userModel.findOne({email});
@@ -46,7 +51,6 @@ const registerUser = async (req,res) => {
             return res.json({success:false,message:"Please enter a valid email."})
         }
 
-
         if (password.length<8){
             return res.json({success:false,message:"Please enter a strong password."})
         }
@@ -56,12 +60,28 @@ const registerUser = async (req,res) => {
         const hashedPassword = await bcrypt.hash(password,salt);
 
         const newUser = new userModel({
-            name:name,
-            email:email,
-            password:hashedPassword
+            name: role === 'restaurant_owner' ? restaurantName : name,  // Nếu owner, name là restaurantName
+            email,
+            password: hashedPassword,
+            role: role || 'user',  // Default user nếu không chỉ định
+            phone,
+            address: { street: address }  // Giả định address là string, adjust nếu cần
         })
 
         const user = await newUser.save()
+
+        if (role === 'restaurant_owner') {  // Tạo restaurant
+            const newRestaurant = new restaurantModel({
+                name: restaurantName,
+                address,
+                phone,
+                owner: user._id
+            });
+            await newRestaurant.save();
+            user.restaurantId = newRestaurant._id;
+            await user.save();
+        }
+
         const token = createToken(user._id)
         res.json({success:true,token});
     } catch (error) {
@@ -70,4 +90,32 @@ const registerUser = async (req,res) => {
     }
 }
 
-export {loginUser,registerUser}
+// Mới: Lock user (admin only)
+const lockUser = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.json({ success: false, message: "Unauthorized" });
+    }
+    const { id, locked } = req.body;
+    const updated = await userModel.findByIdAndUpdate(id, { locked }, { new: true });
+    if (!updated) {
+      return res.json({ success: false, message: "User not found" });
+    }
+    res.json({ success: true, message: locked ? "User locked" : "User unlocked" });
+  } catch (error) {
+    console.error(error);
+    res.json({ success: false, message: "Error" });
+  }
+};
+
+const getMe = async (req, res) => {
+  try {
+    // req.user đã có từ authMiddleware
+    res.json({ success: true, user: req.user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Error fetching user info" });
+  }
+};
+
+export { loginUser, registerUser, lockUser, getMe };    

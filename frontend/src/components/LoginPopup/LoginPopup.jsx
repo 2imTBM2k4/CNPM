@@ -8,12 +8,15 @@ const LoginPopup = ({setShowLogin}) => {
 
   const {url,setToken} = useContext(StoreContext)
 
-
   const [currState,setCurrState] = useState("Login")
+  const [role, setRole] = useState("user");  // Mới
   const [data,setData] = useState({
     name:"",
     email:"test@gmail.com",
-    password:"123456789"
+    password:"123456789",
+    restaurantName: "",
+    address: "",
+    phone: ""
   })
 
   const onChangeHandler = (event) => {
@@ -21,7 +24,6 @@ const LoginPopup = ({setShowLogin}) => {
     const value = event.target.value;
     setData(data=>({...data,[name]:value}))
   }
-
 
   const onLogin = async (event) => {
     event.preventDefault()
@@ -33,7 +35,9 @@ const LoginPopup = ({setShowLogin}) => {
       newUrl += "/api/user/register"
     }
 
-    const response = await axios.post(newUrl,data);
+    const postData = { ...data, role };  // Thêm role
+
+    const response = await axios.post(newUrl, postData);
 
     if (response.data.success){
       setToken(response.data.token);
@@ -41,13 +45,9 @@ const LoginPopup = ({setShowLogin}) => {
       setShowLogin(false)
     }
     else{
-      alert(res.data.message)
+      alert(response.data.message)
     }
-
   }
-
-
-
 
   return (
     <div className='login-popup'>
@@ -57,7 +57,23 @@ const LoginPopup = ({setShowLogin}) => {
             <img onClick={()=>setShowLogin(false)} src={assets.cross_icon} alt="" />
           </div>
           <div className="login-popup-inputs">
-            {currState==="Login"?<></>:<input name='name' onChange={onChangeHandler} value={data.name} type="text" placeholder='Your name' required/>}
+            {currState==="Login" ? <></> : (
+              <>
+                <select onChange={(e) => setRole(e.target.value)} value={role}>
+                  <option value="user">Sign Up as User</option>
+                  <option value="restaurant_owner">Sign Up as Restaurant</option>
+                </select>
+                {role === "restaurant_owner" ? (
+                  <>
+                    <input name='restaurantName' onChange={onChangeHandler} value={data.restaurantName} type="text" placeholder='Restaurant name' required/>
+                    <input name='address' onChange={onChangeHandler} value={data.address} type="text" placeholder='Address' required/>
+                    <input name='phone' onChange={onChangeHandler} value={data.phone} type="text" placeholder='Phone' required/>
+                  </>
+                ) : (
+                  <input name='name' onChange={onChangeHandler} value={data.name} type="text" placeholder='Your name' required/>
+                )}
+              </>
+            )}
             <input name='email' onChange={onChangeHandler} value={data.email} type="email" placeholder='Your email' required/>
             <input name='password' onChange={onChangeHandler} value={data.password} type="password" placeholder='Password' required/>
           </div>

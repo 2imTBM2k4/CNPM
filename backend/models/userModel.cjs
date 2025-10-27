@@ -1,14 +1,3 @@
-// import mongoose from "mongoose"
-
-// const userSchema = new mongoose.Schema({
-//     name:{type:String,required:true},
-//     email:{type:String,required:true,unique:true},
-//     password:{type:String,required:true},
-//     cartData:{type:Object,default:{}}
-// },{minimize:false})
-
-// const userModel = mongoose.models.user || mongoose.model("user", userSchema)
-// export default userModel;
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
@@ -29,10 +18,12 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 6
   },
-  isAdmin: {
-    type: Boolean,
-    default: false
+  role: {  
+    type: String,
+    enum: ['user', 'restaurant_owner', 'admin'],
+    default: 'user'
   },
+  restaurantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', default: null },
   phone: {
     type: String,
     trim: true
@@ -47,7 +38,7 @@ const userSchema = new mongoose.Schema({
   cart: [{
     productId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Product'
+      ref: 'Food'
     },
     quantity: {
       type: Number,
@@ -59,8 +50,9 @@ const userSchema = new mongoose.Schema({
   }],
   wishlist: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product'
-  }]
+    ref: 'Food'
+  }],
+  locked: { type: Boolean, default: false }  // Mới: Để lock account
 }, {
   timestamps: true
 });

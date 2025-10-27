@@ -1,0 +1,44 @@
+.edit-restaurant {
+  width: 70%;
+  margin-left: max(5vw, 25px);
+  margin-top: 50px;
+  color: var(--light-text);
+  font-size: 16px;
+}
+.edit-restaurant form {
+  gap: 20px;
+}
+.edit-restaurant .add-img-upload img {
+  width: 120px;
+}
+.edit-restaurant .add-product-name,
+.edit-restaurant .add-product-description {
+  width: max(40%, 280px);
+}
+.edit-restaurant .add-product-name input,
+.edit-restaurant .add-product-description textarea {
+  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.add-btn {
+  max-width: 120px;
+  border: none;
+  padding: 10px;
+  background-color: black;
+  color: white;
+  cursor: pointer;
+}
+
+label img[src*="assets/upload_area"] {
+  filter: var(--upload);
+}
+.loading, .error {
+  text-align: center;
+  padding: 20px;
+  color: var(--light-text);
+  font-size: 18px;
+}
+.error {
+  color: red;
+}

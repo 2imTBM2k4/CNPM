@@ -7,41 +7,70 @@ import io from 'socket.io-client';
 
 const Orders = ({ url }) => {
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);  // Mới
+  const [loading, setLoading] = useState(true);
 
   const fetchAllOrders = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(url + "/api/order/list");
+      const token = localStorage.getItem('token');
+      const restaurantId = localStorage.getItem('restaurantId');  // Thêm log
+      console.log('Fetch orders - Token exists:', !!token, 'RestaurantId:', restaurantId);  // DEBUG
+      const headers = token ? { token } : {};
+      const response = await axios.get(url + "/api/order/list", { headers });
+      console.log('Fetch orders response:', response.data);  // DEBUG: Check data
       if (response.data.success) {
-        setOrders(response.data.data || []);
+        // Fallback: Convert status to lowercase nếu DB cũ
+        const normalizedOrders = (response.data.data || []).map(order => ({
+          ...order,
+          orderStatus: order.orderStatus?.toLowerCase() || 'pending'
+        }));
+        setOrders(normalizedOrders);
+        console.log('Normalized orders:', normalizedOrders.map(o => ({ id: o._id, status: o.orderStatus })));  // DEBUG
       } else {
-        toast.error(response.data.message || "Error");
+        toast.error(response.data.message || "Error fetching orders");
         setOrders([]);
       }
     } catch (error) {
-      console.error("Fetch orders error:", error);
-      toast.error("Error fetching orders");
+      console.error("Fetch orders error:", error.response?.data || error);  // DEBUG
+      toast.error(error.response?.data?.message || "Error fetching orders");
       setOrders([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const statusHandler = async (event, orderId) => {
+  const updateStatus = async (orderId, status) => {
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error("Please login as restaurant owner");
+        return;
+      }
+
+      let reason = '';
+      if (status === 'cancelled') {
+        reason = prompt("Enter cancellation reason:");
+        if (!reason || reason.trim() === '') {
+          toast.error("Reason is required for cancellation");
+          return;
+        }
+      }
+
       const response = await axios.post(url + "/api/order/status", {
         orderId,
-        status: event.target.value
-      });
+        status,
+        reason
+      }, { headers: { token } });
+
       if (response.data.success) {
         await fetchAllOrders();
+        toast.success("Status updated");
       } else {
-        toast.error("Error updating status");
+        toast.error(response.data.message || "Error updating status");
       }
     } catch (error) {
-      console.error("Update status error:", error);
-      toast.error("Error");
+      console.error("Update status error:", error.response?.data || error);
+      toast.error(error.response?.data?.message || "Error updating status");
     }
   };
 
@@ -49,13 +78,20 @@ const Orders = ({ url }) => {
     fetchAllOrders();
 
     const socket = io(url);
-    const restaurantId = localStorage.getItem('restaurantId');  // Assume lưu từ login
+    const restaurantId = localStorage.getItem('restaurantId');
+    console.log('Socket join - RestaurantId:', restaurantId);  // DEBUG
     if (restaurantId) {
       socket.emit('joinRestaurant', restaurantId);
+    } else {
+      console.warn('No restaurantId in localStorage - Socket join failed');  // DEBUG
+      toast.warn('Please re-login to enable notifications');
     }
 
     socket.on('newOrder', (newOrder) => {
+      console.log('New order via socket:', newOrder);  // DEBUG
       toast.info("Có đơn hàng mới!");
+      // Normalize status cho newOrder
+      newOrder.orderStatus = newOrder.orderStatus?.toLowerCase() || 'pending';
       setOrders((prev) => [newOrder, ...prev]);
     });
 
@@ -67,43 +103,62 @@ const Orders = ({ url }) => {
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [url]);
 
   if (loading) {
     return <div>Loading...</div>;
   }
 
+  const renderItems = (orderItems) => {
+    if (!orderItems || orderItems.length === 0) return 'No items';
+    return orderItems.map((item, idx) => (
+      idx === orderItems.length - 1 
+        ? `${item.name} x ${item.quantity}` 
+        : `${item.name} x ${item.quantity}, `
+    )).join('');
+  };
+
   return (
     <div className='order add'>
       <h3>Order Page</h3>
       <div className="order-list">
-        {orders?.map((order, index) => (
-          <div key={index} className='order-item'>
-            <img src={assets.parcel_icon} alt="" />
-            <div>
-              <p className='order-item-food'>
-                {order.orderItems?.map((item, idx) => (
-                  idx === order.orderItems.length - 1 ? `${item.name} x ${item.quantity}` : `${item.name} x ${item.quantity}, `
-                )) || 'No items'}
-              </p>
-              <p className='order-item-name'>{order.shippingAddress?.fullName || 'N/A'}</p>
-              <div className="order-item-address">
-                <p>{order.shippingAddress?.address || ''},</p>
-                <p>{order.shippingAddress?.city || ''}, {order.shippingAddress?.state || ''}, {order.shippingAddress?.country || ''}, {order.shippingAddress?.zipCode || ''}</p>
+        {orders.length === 0 ? (
+          <p>No orders (Check console for debug info)</p>  // DEBUG: Clear message
+        ) : (
+          orders.map((order, index) => (
+            <div key={order._id || index} className='order-item'>
+              <img src={assets.parcel_icon} alt="" />
+              <div>
+                <p className='order-item-food'>
+                  {renderItems(order.orderItems)}
+                </p>
+                <p className='order-item-name'>{order.shippingAddress?.fullName || 'N/A'}</p>
+                <div className="order-item-address">
+                  <p>{order.shippingAddress?.address || ''},</p>
+                  <p>{order.shippingAddress?.city || ''}, {order.shippingAddress?.state || ''}, {order.shippingAddress?.country || ''}, {order.shippingAddress?.zipCode || ''}</p>
+                </div>
+                <p className="order-item-phone">{order.shippingAddress?.phone || 'N/A'}</p>
               </div>
-              <p className="order-item-phone">{order.shippingAddress?.phone || 'N/A'}</p>
+              <p>Items: {order.orderItems?.length || 0}</p>
+              <p>${order.totalPrice || 0}</p>
+              <p>Status: {order.orderStatus || 'pending'}</p>  {/* DEBUG: Show status */}
+              {order.orderStatus === 'cancelled' && order.reason && (
+                <p className="cancel-reason">Reason: {order.reason}</p>
+              )}
+              {order.orderStatus === 'pending' && (
+                <div className="status-buttons">
+                  <button onClick={() => updateStatus(order._id, 'preparing')}>Accept (Preparing)</button>
+                  <button onClick={() => updateStatus(order._id, 'cancelled')}>Reject (Cancel)</button>
+                </div>
+              )}
+              {order.orderStatus === 'preparing' && (
+                <div className="status-buttons">
+                  <button onClick={() => updateStatus(order._id, 'delivering')}>Handover to Shipper (Delivering)</button>
+                </div>
+              )}
             </div>
-            <p>Items: {order.orderItems?.length || 0}</p>
-            <p>${order.totalPrice || 0}</p>
-            <select onChange={(event) => statusHandler(event, order._id)} value={order.orderStatus || 'Pending'}>
-              <option value="Pending">Pending</option>
-              <option value="Processing">Processing</option>
-              <option value="Shipped">Shipped</option>
-              <option value="Delivered">Delivered</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
-          </div>
-        )) || <p>No orders</p>}
+          ))
+        )}
       </div>
     </div>
   );

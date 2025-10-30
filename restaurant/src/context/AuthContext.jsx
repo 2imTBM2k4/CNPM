@@ -11,42 +11,51 @@
 //   useEffect(() => {
 //     const token = localStorage.getItem('token');
 //     if (token) {
-//       fetchUserInfo(token);  // Mới: Fetch user sau load token
+//       fetchUserInfo(token);
 //     }
 //   }, []);
 
-//  const fetchUserInfo = async (token) => {
-//   try {
-//     const response = await fetch(`${apiUrl}/api/user/me`, {
-//       method: 'GET',
-//       headers: { 'Authorization': `Bearer ${token}` }  // Đúng header
-//     });
-//     if (!response.ok) {
-//       if (response.status === 404) {
-//         throw new Error('User info endpoint not found - Check backend routes');
-//       } else if (response.status === 401) {
-//         throw new Error('Unauthorized - Invalid token');
-//       } else {
-//         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+//   const fetchUserInfo = async (token) => {
+//     try {
+//       const response = await fetch(`${apiUrl}/api/user/me`, {
+//         method: 'GET',
+//         headers: { 'Authorization': `Bearer ${token}` }
+//       });
+//       if (!response.ok) {
+//         if (response.status === 404) {
+//           throw new Error('User info endpoint not found - Check backend routes');
+//         } else if (response.status === 401) {
+//           throw new Error('Unauthorized - Invalid token');
+//         } else {
+//           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+//         }
 //       }
+//       const contentType = response.headers.get('content-type');
+//       if (!contentType || !contentType.includes('application/json')) {
+//         throw new Error('Response not JSON - Likely server error page');
+//       }
+//       const data = await response.json();
+//       if (data.success) {
+//         let fetchedUser = data.user;
+//         if (fetchedUser.restaurantId && typeof fetchedUser.restaurantId === 'object') {
+//           fetchedUser.restaurantId = fetchedUser.restaurantId._id || fetchedUser.restaurantId.toString();
+//         }
+//         setUser(fetchedUser);
+//         // FIX: Set localStorage cho socket join
+//         if (fetchedUser.restaurantId) {
+//           localStorage.setItem('restaurantId', fetchedUser.restaurantId);
+//           console.log('Set restaurantId in localStorage:', fetchedUser.restaurantId);  // DEBUG
+//         }
+//       } else {
+//         throw new Error(data.message || 'Failed to fetch user info');
+//       }
+//     } catch (error) {
+//       console.error('Fetch user error:', error);
+//       alert(error.message);
+//       logout();
 //     }
-//     // Kiểm tra content-type trước khi json()
-//     const contentType = response.headers.get('content-type');
-//     if (!contentType || !contentType.includes('application/json')) {
-//       throw new Error('Response not JSON - Likely server error page');
-//     }
-//     const data = await response.json();
-//     if (data.success) {
-//       setUser(data.user);  // Full user { _id, role, restaurantId, ... }
-//     } else {
-//       throw new Error(data.message || 'Failed to fetch user info');
-//     }
-//   } catch (error) {
-//     console.error('Fetch user error:', error);
-//     alert(error.message);  // Show user-friendly alert
-//     logout();  // Auto logout nếu fail
-//   }
-// };
+//   };
+
 //   const login = async (email, password) => {
 //     try {
 //       const response = await fetch(`${apiUrl}/api/user/login`, {
@@ -57,7 +66,7 @@
 //       const data = await response.json();
 //       if (data.success) {
 //         localStorage.setItem('token', data.token);
-//         await fetchUserInfo(data.token);  // Fetch user sau login
+//         await fetchUserInfo(data.token);  // Sẽ set restaurantId ở đây
 //         navigate('/list');
 //       } else {
 //         alert(data.message || 'Login failed');
@@ -81,7 +90,7 @@
 //       const data = await response.json();
 //       if (data.success) {
 //         localStorage.setItem('token', data.token);
-//         await fetchUserInfo(data.token);  // Fetch user sau register
+//         await fetchUserInfo(data.token);  // Sẽ set restaurantId ở đây
 //         navigate('/list');
 //       } else {
 //         alert(data.message || 'Register failed');
@@ -94,6 +103,7 @@
 
 //   const logout = () => {
 //     localStorage.removeItem('token');
+//     localStorage.removeItem('restaurantId');  // FIX: Clear khi logout
 //     setUser(null);
 //     navigate('/login');
 //   };
@@ -112,6 +122,7 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true); // MỚI: Track loading khi init auth
   const navigate = useNavigate();
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
@@ -119,11 +130,15 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     if (token) {
       fetchUserInfo(token);
+    } else {
+      // Không có token: done loading ngay
+      setIsLoading(false);
     }
   }, []);
 
   const fetchUserInfo = async (token) => {
     try {
+      setIsLoading(true); // MỚI: Bắt đầu loading
       const response = await fetch(`${apiUrl}/api/user/me`, {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -137,7 +152,6 @@ export const AuthProvider = ({ children }) => {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
       }
-      // Kiểm tra content-type trước khi json()
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         throw new Error('Response not JSON - Likely server error page');
@@ -145,11 +159,15 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
       if (data.success) {
         let fetchedUser = data.user;
-        // Convert restaurantId to string nếu là object
         if (fetchedUser.restaurantId && typeof fetchedUser.restaurantId === 'object') {
           fetchedUser.restaurantId = fetchedUser.restaurantId._id || fetchedUser.restaurantId.toString();
         }
         setUser(fetchedUser);
+        // FIX: Set localStorage cho socket join
+        if (fetchedUser.restaurantId) {
+          localStorage.setItem('restaurantId', fetchedUser.restaurantId);
+          console.log('Set restaurantId in localStorage:', fetchedUser.restaurantId);  // DEBUG
+        }
       } else {
         throw new Error(data.message || 'Failed to fetch user info');
       }
@@ -157,11 +175,14 @@ export const AuthProvider = ({ children }) => {
       console.error('Fetch user error:', error);
       alert(error.message);
       logout();
+    } finally {
+      setIsLoading(false); // MỚI: Kết thúc loading (luôn chạy)
     }
   };
 
   const login = async (email, password) => {
     try {
+      setIsLoading(true); // MỚI: Loading khi login
       const response = await fetch(`${apiUrl}/api/user/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -170,7 +191,7 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
       if (data.success) {
         localStorage.setItem('token', data.token);
-        await fetchUserInfo(data.token);
+        await fetchUserInfo(data.token);  // Sẽ set restaurantId ở đây
         navigate('/list');
       } else {
         alert(data.message || 'Login failed');
@@ -178,11 +199,14 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error(error);
       alert('Error during login');
+    } finally {
+      setIsLoading(false); // MỚI: Kết thúc loading
     }
   };
 
   const register = async (formData) => {
     try {
+      setIsLoading(true); // MỚI: Loading khi register
       const response = await fetch(`${apiUrl}/api/user/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -194,7 +218,7 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
       if (data.success) {
         localStorage.setItem('token', data.token);
-        await fetchUserInfo(data.token);
+        await fetchUserInfo(data.token);  // Sẽ set restaurantId ở đây
         navigate('/list');
       } else {
         alert(data.message || 'Register failed');
@@ -202,17 +226,22 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error(error);
       alert('Error during register');
+    } finally {
+      setIsLoading(false); // MỚI: Kết thúc loading
     }
   };
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('restaurantId');  // FIX: Clear khi logout
     setUser(null);
+    setIsLoading(false); // MỚI: Không loading khi logout
     navigate('/login');
   };
 
+  // MỚI: Value context bao gồm isLoading
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

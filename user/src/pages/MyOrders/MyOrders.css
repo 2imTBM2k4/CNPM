@@ -1,13 +1,13 @@
-.my-orders{
+.my-orders {
     margin: 50px 0px;
 }
-.my-orders .container{
+.my-orders .container {
     display: flex;
     flex-direction: column;
     gap: 20px;
     margin-top: 30px;
 }
-.my-orders-order{
+.my-orders-order {
     display: grid;
     grid-template-columns: 0.5fr 2fr 1fr 1fr 2fr 1fr;
     align-items: center;
@@ -17,17 +17,17 @@
     color: #454545;
     border: 1px solid tomato;
 }
-.my-orders-order img{
+.my-orders-order img {
     width: 50px;
 }
-.my-orders-order p span{
+.my-orders-order p span {
     color: tomato;
 }
-.my-orders-order p b{
+.my-orders-order p b {
     font-weight: 500;
     color: #454545;
 }
-.my-orders-order button{
+.my-orders-order button {
     border: 1px solid #454545;
     padding: 12px 0px;
     border-radius: 4px;
@@ -35,31 +35,42 @@
     cursor: pointer;
     color: #454545
 }
+.received-btn {
+    background-color: #d4edda;
+    border-color: #28a745;
+    color: #155724;
+}
+.received-btn:hover {
+    background-color: #c3e6cb;
+}
+.cancel-reason {
+    color: #dc3545;
+    font-style: italic;
+    grid-column: span 6;  /* Full width */
+    margin: 5px 0;
+}
 
-
-:root .my-orders-order button{
+:root .my-orders-order button {
     border: 1px solid tomato;
     background-color: black;
     color: white;
 }
 
-.lightcolors .my-orders-order button{
+.lightcolors .my-orders-order button {
     border: 1px solid #454545;
     background-color: #ffe1e1;
     color: #454545
 }
 
-
 :root .my-orders-order p b,
-:root .my-orders-order{
+:root .my-orders-order {
     color: white;
 }
 
 .lightcolors .my-orders-order p b,
-.lightcolors .my-orders-order{
+.lightcolors .my-orders-order {
     color: #454545;
 }
-
 
 :root .myordersp {
     color: white; 
@@ -69,14 +80,16 @@
     color: black;
 }
 
-
 @media (max-width:900px) {
-    .my-orders-order{
+    .my-orders-order {
         grid-template-columns: 1fr 2fr 1fr;
         row-gap: 5px;
         font-size: 12px;
     }
-    .my-orders-order button{
+    .my-orders-order button {
         font-size: 10px;
+    }
+    .cancel-reason {
+        grid-column: span 3;
     }
 }

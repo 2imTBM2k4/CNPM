@@ -308,6 +308,7 @@ user\src\pages\Cart
 user\src\pages\Food
 user\src\pages\Home
 user\src\pages\MyOrders
+user\src\pages\Payment
 user\src\pages\PlaceOrder
 user\src\pages\ProductDetail
 user\src\pages\Restaurant
@@ -320,6 +321,8 @@ user\src\pages\Home\Home.css
 user\src\pages\Home\Home.jsx
 user\src\pages\MyOrders\MyOrders.css
 user\src\pages\MyOrders\MyOrders.jsx
+user\src\pages\Payment\Payment.css
+user\src\pages\Payment\Payment.jsx
 user\src\pages\PlaceOrder\PlaceOrder.css
 user\src\pages\PlaceOrder\PlaceOrder.jsx
 user\src\pages\ProductDetail\ProductDetail.css

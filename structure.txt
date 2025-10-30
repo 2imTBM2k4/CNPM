@@ -62,10 +62,12 @@ backend\uploads
 backend\.DS_Store
 backend\.env
 backend\.gitignore
+backend\migrate-images.js
 backend\package-lock.json
 backend\package.json
 backend\server.js
 backend\config\db.js
+backend\config\multer.js
 backend\controllers\cartController.js
 backend\controllers\foodController.js
 backend\controllers\orderController.js
@@ -86,6 +88,8 @@ backend\routes\orderRoute.js
 backend\routes\restaurantRoute.js
 backend\routes\userRoute.js
 backend\seeds\seedData.cjs
+backend\uploads\foods
+backend\uploads\restaurants
 backend\uploads\.DS_Store
 backend\uploads\1727126978673food_1.png
 backend\uploads\1727127509822food_2.png
@@ -127,6 +131,12 @@ backend\uploads\1761554528062Screenshot 2025-09-22 093737.png
 backend\uploads\1761554588649Screenshot 2025-09-22 093737.png
 backend\uploads\1761558143335548284032_1595376148481618_8538158401216843869_n.jpg
 backend\uploads\1761558200478wallpapersden.com_valorant-hd-cool-2022-art_3840x2160.jpg
+backend\uploads\restaurants\1761576470600.jpg
+backend\uploads\restaurants\1761576515216.jpg
+backend\uploads\restaurants\1761576633144.jpg
+backend\uploads\restaurants\1761577056446.jpg
+backend\uploads\restaurants\1761577107486.jpg
+backend\uploads\restaurants\1761611586430.jpg
 restaurant\public
 restaurant\src
 restaurant\.env
@@ -162,6 +172,7 @@ restaurant\src\components\Sidebar\Sidebar.css
 restaurant\src\components\Sidebar\Sidebar.jsx
 restaurant\src\context\AuthContext.jsx
 restaurant\src\pages\Add
+restaurant\src\pages\EditRestaurant
 restaurant\src\pages\List
 restaurant\src\pages\Login
 restaurant\src\pages\Orders
@@ -169,6 +180,8 @@ restaurant\src\pages\Products
 restaurant\src\pages\Register
 restaurant\src\pages\Add\Add.css
 restaurant\src\pages\Add\Add.jsx
+restaurant\src\pages\EditRestaurant\EditRestaurant.css
+restaurant\src\pages\EditRestaurant\EditRestaurant.jsx
 restaurant\src\pages\List\List.css
 restaurant\src\pages\List\List.jsx
 restaurant\src\pages\Login\Login.css

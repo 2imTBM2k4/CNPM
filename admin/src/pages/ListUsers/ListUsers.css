@@ -1,0 +1,41 @@
+/* Copy từ ListRestaurant.css và chỉnh sửa nếu cần */
+.list {
+  padding: 20px;
+}
+
+.list-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.list-table-format {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.title {
+  font-weight: bold;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.cursor {
+  cursor: pointer;
+}
+
+.edit-btn {
+  color: blue;
+}
+
+.lock-btn {
+  color: orange;
+}
+
+.remove-btn {
+  color: red;
+}

@@ -1,65 +1,97 @@
-// import React from 'react'
-// import Navbar from './components/Navbar/Navbar'
-// import Sidebar from './components/Sidebar/Sidebar'
-// import { Routes,Route } from 'react-router-dom'
-// import Add from './pages/Add/Add'
-// import List from './pages/List/List'
-// import Orders from './pages/Orders/Orders'
-// import { ToastContainer } from 'react-toastify';
-// import 'react-toastify/dist/ReactToastify.css';
-
-// const App = () => {
-
-//   // const url = "http://localhost:4000"
-//   const url = "https://hangry-backend.onrender.com"
-
-//   return (
-//     <div>
-//       <ToastContainer/>
-//       <Navbar/>
-//       <hr/>
-//       <div className="app-content">
-//         <Sidebar/>
-//         <Routes>
-//           <Route path="/add" element={<Add url={url}/>}/>
-//           <Route path="/list" element={<List url={url}/>}/>
-//           <Route path="/orders" element={<Orders url={url}/>}/>
-//         </Routes>
-//       </div>
-//     </div>
-//   )
-// }
-
-// export default App
-
-import React from 'react'
-import Navbar from './components/Navbar/Navbar'
-import Sidebar from './components/Sidebar/Sidebar'
-import { Routes, Route } from 'react-router-dom'
-import Add from './pages/Add/Add'
-import List from './pages/ListRestaurant/ListRestaurant'
-import Orders from './pages/Orders/Orders'
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import React, { useEffect, useState } from "react";
+import Navbar from "./components/Navbar/Navbar";
+import Sidebar from "./components/Sidebar/Sidebar";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import Add from "./pages/Add/Add";
+import ListRestaurant from "./pages/ListRestaurant/ListRestaurant";
+import Orders from "./pages/Orders/Orders";
+import Dashboard from "./pages/Dashboard/Dashboard";
+import ListUsers from "./pages/ListUsers/ListUsers";
+import Login from "./pages/Login/Login";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const App = () => {
-  const url = import.meta.env.VITE_API_URL || 'http://localhost:4000';  // Dùng env, fallback local nếu không có
+  const url = import.meta.env.VITE_API_URL || "http://localhost:4000";
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // SỬA: Thêm state cho mobile menu toggle (optional, để hỗ trợ mở/đóng sidebar trên mobile)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = () => {
+    const token = localStorage.getItem("token");
+    const userRole = localStorage.getItem("userRole");
+
+    if (token && userRole === "admin") {
+      setIsAuthenticated(true);
+      if (location.pathname === "/login") {
+        navigate("/", { replace: true });
+      }
+    } else {
+      setIsAuthenticated(false);
+      if (location.pathname !== "/login") {
+        navigate("/login", { replace: true });
+      }
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userRole");
+    setIsAuthenticated(false);
+    navigate("/login");
+  };
+
+  // SỬA: Thêm function toggle mobile menu (gọi từ Navbar nếu có hamburger button)
+  const handleMobileToggle = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  // Chỉ hiển thị login page khi chưa authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="app">
+        <ToastContainer />
+        <Login url={url} />
+      </div>
+    );
+  }
+
+  // Layout chính với sidebar cố định và content riêng biệt
   return (
-    <div>
-      <ToastContainer/>
-      <Navbar/>
-      <hr/>
-      <div className="app-content">
-        <Sidebar/>
-        <Routes>
-          <Route path="/add" element={<Add url={url}/>}/>
-          <Route path="/ListRestaurant" element={<List url={url}/>}/>
-          <Route path="/orders" element={<Orders url={url}/>}/>
-        </Routes>
+    <div className="app">
+      <ToastContainer />
+      {/* SỬA: Truyền props cho Sidebar để hỗ trợ mobile toggle */}
+      <Sidebar
+        mobileOpen={isMobileMenuOpen}
+        onMobileToggle={handleMobileToggle}
+      />
+
+      {/* Main content area - hoàn toàn tách biệt */}
+      <div className="main-content-area">
+        {/* SỬA: Truyền handleMobileToggle cho Navbar nếu bạn có hamburger button ở đó */}
+        <Navbar onLogout={handleLogout} onMobileToggle={handleMobileToggle} />
+        <div className="page-content">
+          <Routes>
+            <Route path="/" element={<Dashboard url={url} />} />
+            <Route path="/add" element={<Add url={url} />} />
+            <Route
+              path="/list-restaurants"
+              element={<ListRestaurant url={url} />}
+            />
+            <Route path="/list-users" element={<ListUsers url={url} />} />
+            <Route path="/orders" element={<Orders url={url} />} />
+          </Routes>
+        </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default App
+export default App;

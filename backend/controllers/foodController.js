@@ -93,14 +93,17 @@
 // export { addFood, listFood, removeFood, updateFood };
 
 import foodModel from "../models/foodModel.cjs";
-import { v2 as cloudinary } from 'cloudinary';  // Thêm
-import fs from 'fs';  // Thêm để xóa file local
+import { v2 as cloudinary } from "cloudinary"; // Thêm
+import fs from "fs"; // Thêm để xóa file local
 
 // Add a new food item
 const addFood = async (req, res) => {
   try {
-    if (req.user.role !== 'restaurant_owner' || !req.user.restaurantId) {
-      return res.json({ success: false, message: "Only restaurant owners with a valid restaurant can add food" });
+    if (req.user.role !== "restaurant_owner" || !req.user.restaurantId) {
+      return res.json({
+        success: false,
+        message: "Only restaurant owners with a valid restaurant can add food",
+      });
     }
     const { name, description, price, category } = req.body;
     let imageUrl = null;
@@ -113,15 +116,15 @@ const addFood = async (req, res) => {
     if (req.file) {
       try {
         const result = await cloudinary.uploader.upload(req.file.path, {
-          folder: 'foods',  // Folder trên Cloudinary
-          resource_type: 'image',  // Đảm bảo là image
+          folder: "foods", // Folder trên Cloudinary
+          resource_type: "image", // Đảm bảo là image
         });
-        imageUrl = result.secure_url;  // Lưu URL an toàn (HTTPS)
+        imageUrl = result.secure_url; // Lưu URL an toàn (HTTPS)
 
         // Xóa file local sau upload
         fs.unlinkSync(req.file.path);
       } catch (uploadError) {
-        console.error('Cloudinary upload error:', uploadError);
+        console.error("Cloudinary upload error:", uploadError);
         // Xóa file nếu upload fail
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         return res.json({ success: false, message: "Error uploading image" });
@@ -135,12 +138,16 @@ const addFood = async (req, res) => {
       description,
       price,
       category,
-      image: imageUrl,  // Lưu full URL
-      restaurantId: req.user.restaurantId
+      image: imageUrl, // Lưu full URL
+      restaurantId: req.user.restaurantId,
     });
 
     await newFood.save();
-    res.json({ success: true, message: "Food added successfully", food: newFood });
+    res.json({
+      success: true,
+      message: "Food added successfully",
+      food: newFood,
+    });
   } catch (error) {
     console.error("Error adding food:", error);
     res.json({ success: false, message: "Error adding food" });
@@ -152,13 +159,17 @@ const listFood = async (req, res) => {
   try {
     let foods;
     const { restaurantId } = req.query;
-    console.log('List food - req.user:', req.user);
+    console.log("List food - req.user:", req.user);
 
     if (restaurantId) {
       foods = await foodModel.find({ restaurantId });
-    } else if (req.user && req.user.role === 'restaurant_owner' && req.user.restaurantId) {
+    } else if (
+      req.user &&
+      req.user.role === "restaurant_owner" &&
+      req.user.restaurantId
+    ) {
       foods = await foodModel.find({ restaurantId: req.user.restaurantId });
-    } else if (req.user && req.user.role === 'admin') {
+    } else if (req.user && req.user.role === "admin") {
       foods = await foodModel.find({});
     } else {
       foods = await foodModel.find({});
@@ -175,8 +186,16 @@ const removeFood = async (req, res) => {
   try {
     const { id } = req.body;
     const food = await foodModel.findById(id);
-    if (!food || (req.user.role === 'restaurant_owner' && req.user.restaurantId && food.restaurantId.toString() !== req.user.restaurantId.toString())) {
-      return res.json({ success: false, message: "Food not found or unauthorized" });
+    if (
+      !food ||
+      (req.user.role === "restaurant_owner" &&
+        req.user.restaurantId &&
+        food.restaurantId.toString() !== req.user.restaurantId.toString())
+    ) {
+      return res.json({
+        success: false,
+        message: "Food not found or unauthorized",
+      });
     }
     await foodModel.findByIdAndDelete(id);
     res.json({ success: true, message: "Food removed successfully" });
@@ -193,8 +212,15 @@ const updateFood = async (req, res) => {
     let imageUrl = null;
 
     const food = await foodModel.findById(id);
-    if (!food || (req.user.role === 'restaurant_owner' && food.restaurantId.toString() !== req.user.restaurantId.toString())) {
-      return res.json({ success: false, message: "Food not found or unauthorized" });
+    if (
+      !food ||
+      (req.user.role === "restaurant_owner" &&
+        food.restaurantId.toString() !== req.user.restaurantId.toString())
+    ) {
+      return res.json({
+        success: false,
+        message: "Food not found or unauthorized",
+      });
     }
 
     const updateData = { name, description, price, category };
@@ -204,27 +230,33 @@ const updateFood = async (req, res) => {
       try {
         // Optional: Xóa ảnh cũ trên Cloudinary nếu có public_id
         if (food.image) {
-          const publicId = food.image.split('/').pop().split('.')[0];  // Extract public_id từ URL
+          const publicId = food.image.split("/").pop().split(".")[0]; // Extract public_id từ URL
           await cloudinary.uploader.destroy(`foods/${publicId}`);
         }
 
         const result = await cloudinary.uploader.upload(req.file.path, {
-          folder: 'foods',
-          resource_type: 'image',
+          folder: "foods",
+          resource_type: "image",
         });
         imageUrl = result.secure_url;
 
         fs.unlinkSync(req.file.path);
       } catch (uploadError) {
-        console.error('Cloudinary upload error:', uploadError);
+        console.error("Cloudinary upload error:", uploadError);
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         return res.json({ success: false, message: "Error uploading image" });
       }
       updateData.image = imageUrl;
     }
 
-    const updatedFood = await foodModel.findByIdAndUpdate(id, updateData, { new: true });
-    res.json({ success: true, message: "Food updated successfully", food: updatedFood });
+    const updatedFood = await foodModel.findByIdAndUpdate(id, updateData, {
+      new: true,
+    });
+    res.json({
+      success: true,
+      message: "Food updated successfully",
+      food: updatedFood,
+    });
   } catch (error) {
     console.error("Error updating food:", error);
     res.json({ success: false, message: "Error updating food" });

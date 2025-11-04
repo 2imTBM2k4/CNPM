@@ -1,42 +1,77 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+/* Reset và Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.app {
+  min-height: 100vh;
+  background: var(--body-color);
+  display: flex;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+/* Sidebar cố định bên trái */
+.sidebar {
+  /* Styles từ Sidebar.css - giữ nguyên */
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+}
+
+/* Main content area - chiếm toàn bộ không gian còn lại */
+.main-content-area {
+  flex: 1;
+  margin-left: 260px; /* Đúng bằng width của sidebar */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--body-color);
+}
+
+/* Navbar trong main content */
+.main-content-area .navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--navbar-bg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Nội dung trang - chiếm toàn bộ không gian còn lại */
+.page-content {
+  flex: 1;
+  padding: 20px;
+  background: var(--body-color);
+  overflow-y: auto;
+  min-height: calc(100vh - 80px); /* Trừ chiều cao navbar */
+}
+
+/* Đảm bảo tất cả các trang đều chiếm full width */
+.dashboard,
+.add,
+.list.add,
+.order.add {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .main-content-area {
+    margin-left: 80px;
   }
-  to {
-    transform: rotate(360deg);
+}
+
+@media (max-width: 768px) {
+  .main-content-area {
+    margin-left: 0;
+    width: 100%;
   }
-}
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+  .page-content {
+    padding: 15px;
   }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
 }

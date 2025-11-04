@@ -1,30 +1,32 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import "./EditRestaurant.css";
+import "./EditUser.css";
 
-const EditRestaurant = ({ url, restaurant, onClose, onUpdate }) => {
+const EditUser = ({ url, user, onClose, onUpdate }) => {
   const [data, setData] = useState({
     name: "",
-    address: "",
+    email: "",
+    role: "",
     phone: "",
-    description: "",
+    locked: false,
   });
 
   useEffect(() => {
-    if (restaurant) {
+    if (user) {
       setData({
-        name: restaurant.name,
-        address: restaurant.address,
-        phone: restaurant.phone || "",
-        description: restaurant.description || "",
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone || "",
+        locked: user.locked,
       });
     }
-  }, [restaurant]);
+  }, [user]);
 
   const onChangeHandler = (event) => {
     const name = event.target.name;
-    const value = event.target.value;
+    const value = name === "locked" ? event.target.checked : event.target.value;
     setData((data) => ({ ...data, [name]: value }));
   };
 
@@ -36,21 +38,18 @@ const EditRestaurant = ({ url, restaurant, onClose, onUpdate }) => {
       return;
     }
     const updateData = {
-      id: restaurant._id,
+      id: user._id,
       name: data.name,
-      address: data.address,
+      email: data.email,
+      role: data.role,
       phone: data.phone,
-      description: data.description,
+      locked: data.locked,
     };
 
     try {
-      const response = await axios.post(
-        `${url}/api/restaurant/update`,
-        updateData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await axios.post(`${url}/api/user/update`, updateData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (response.data.success) {
         toast.success(response.data.message);
         onUpdate();
@@ -59,8 +58,7 @@ const EditRestaurant = ({ url, restaurant, onClose, onUpdate }) => {
         toast.error(response.data.message);
       }
     } catch (error) {
-      console.log("Update error:", error);
-      toast.error("Error updating restaurant");
+      toast.error("Error updating user");
     }
   };
 
@@ -68,14 +66,14 @@ const EditRestaurant = ({ url, restaurant, onClose, onUpdate }) => {
     <div className="edit-modal">
       <div className="modal-content">
         <div className="modal-header">
-          <h2>Edit Restaurant</h2>
+          <h2>Edit User</h2>
           <span className="close" onClick={onClose}>
             &times;
           </span>
         </div>
         <form className="flex-col" onSubmit={onSubmitHandler}>
           <div className="add-product-name flex-col">
-            <p>Restaurant Name</p>
+            <p>Name</p>
             <input
               onChange={onChangeHandler}
               value={data.name}
@@ -86,15 +84,23 @@ const EditRestaurant = ({ url, restaurant, onClose, onUpdate }) => {
             />
           </div>
           <div className="add-product-name flex-col">
-            <p>Address</p>
+            <p>Email</p>
             <input
               onChange={onChangeHandler}
-              value={data.address}
-              type="text"
-              name="address"
+              value={data.email}
+              type="email"
+              name="email"
               placeholder="Type here"
               required
             />
+          </div>
+          <div className="add-product-name flex-col">
+            <p>Role</p>
+            <select name="role" onChange={onChangeHandler} value={data.role}>
+              <option value="user">User</option>
+              <option value="restaurant_owner">Restaurant Owner</option>
+              <option value="admin">Admin</option>
+            </select>
           </div>
           <div className="add-product-name flex-col">
             <p>Phone</p>
@@ -106,15 +112,16 @@ const EditRestaurant = ({ url, restaurant, onClose, onUpdate }) => {
               placeholder="Type here"
             />
           </div>
-          <div className="add-product-description flex-col">
-            <p>Description</p>
-            <textarea
-              onChange={onChangeHandler}
-              value={data.description}
-              name="description"
-              rows="6"
-              placeholder="Write content here"
-            />
+          <div className="add-product-name flex-col">
+            <label>
+              <input
+                type="checkbox"
+                name="locked"
+                checked={data.locked}
+                onChange={onChangeHandler}
+              />
+              Lock Account
+            </label>
           </div>
           <div className="modal-buttons">
             <button type="button" className="cancel-btn" onClick={onClose}>
@@ -130,4 +137,4 @@ const EditRestaurant = ({ url, restaurant, onClose, onUpdate }) => {
   );
 };
 
-export default EditRestaurant;
+export default EditUser;

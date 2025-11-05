@@ -1,16 +1,15 @@
-/* Home.css */
 .home-section h2 {
-  color: #333; /* Màu mặc định cho light mode */
   text-align: center;
-  margin-bottom: 20px;
-  font-size: 2rem;
+  margin-bottom: 25px;
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--text-color);
 }
 
-/* Dark theme support cho Home */
 :root .home-section h2 {
-  color: white; /* Màu trắng cho dark mode */
+  color: white;
 }
 
 .lightcolors .home-section h2 {
-  color: #333; /* Đảm bảo màu đen trong light mode */
+  color: #333;
 }

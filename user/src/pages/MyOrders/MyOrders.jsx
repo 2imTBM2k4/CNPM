@@ -1,195 +1,179 @@
-// import React, { useState, useEffect, useContext } from 'react';
-// import './MyOrders.css';
-// import axios from 'axios';
-// import { toast } from 'react-toastify';
-// import { StoreContext } from '../../context/StoreContext';
-// import { assets } from '../../assets/assets';
-// import { useNavigate } from 'react-router-dom';  // Thêm để redirect nếu !token
-
-// const MyOrders = () => {
-//   const { url, token } = useContext(StoreContext);
-//   const [orders, setOrders] = useState([]);  // Default []
-//   const [loading, setLoading] = useState(true);  // Mới: Loading state
-//   const navigate = useNavigate();
-
-//   const fetchMyOrders = async () => {
-//     if (!token) {
-//       toast.error("Please login to view orders");
-//       navigate('/');  // Redirect nếu chưa login
-//       return;
-//     }
-
-//     try {
-//       setLoading(true);
-//       const response = await axios.post(url + "/api/order/userorders", { userId: 'dummy' }, { headers: { token } });  // userId không cần vì backend dùng req.user
-//       if (response.data.success) {
-//         setOrders(response.data.data || []);  // Fallback []
-//       } else {
-//         toast.error(response.data.message || "Error fetching orders");
-//         setOrders([]);
-//       }
-//     } catch (error) {
-//       console.error("Fetch orders error:", error);
-//       toast.error("Network error");
-//       setOrders([]);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchMyOrders();
-//   }, [token]);
-
-//   if (loading) {
-//     return <div>Loading orders...</div>;  // Spinner nếu cần
-//   }
-
-//   return (
-//     <div className='my-orders'>
-//       <h2>My Orders</h2>
-//       <div className="container">
-//         {orders?.map((order, index) => {  // Optional chaining + fallback
-//           return (
-//             <div key={index} className='my-orders-order'>
-//               <img src={assets.parcel_icon} alt="" />
-//               <p>{order.orderItems?.map((item, index) => {  // Cũng add ?
-//                 if (index === order.orderItems.length - 1) {
-//                   return item.name + " x " + item.quantity;
-//                 } else {
-//                   return item.name + " x " + item.quantity + ", ";
-//                 }
-//               })}</p>
-//               <p>${order.totalPrice}</p>
-//               <p>Items: {order.orderItems?.length}</p>
-//               <p><span>&#x25cf;</span> <b>{order.orderStatus}</b></p>
-//               <button onClick={fetchMyOrders}>Track Order</button>
-//             </div>
-//           );
-//         }) || <p>No orders found</p>}  // Fallback UI
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default MyOrders;
-import React, { useState, useEffect, useContext } from 'react';
-import './MyOrders.css';
-import axios from 'axios';
-import { toast } from 'react-toastify';
-import { StoreContext } from '../../context/StoreContext';
-import { assets } from '../../assets/assets';
-import { useNavigate } from 'react-router-dom';
+import React, { useContext, useEffect, useState } from "react";
+import axios from "axios";
+import { StoreContext } from "../../context/StoreContext";
+import { toast } from "react-toastify";
+import "./MyOrders.css"; // Giả sử bạn có file CSS này cho style nhất quán với light mode
 
 const MyOrders = () => {
-  const { url, token, setToken } = useContext(StoreContext);
+  const { url, token } = useContext(StoreContext);
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
-  const fetchMyOrders = async () => {
-    if (!token) {
-      console.log('No token on fetch, skipping...');
-      return;
-    }
-
-    console.log('Fetching orders with token:', token.substring(0, 10) + '...');
-
+  const fetchOrders = async () => {
+    if (!token) return;
     try {
-      setLoading(true);
-      const response = await axios.post(url + "/api/order/userorders", {}, { headers: { token } });
-      console.log('Fetch orders response:', response.data);
+      const response = await axios.get(`${url}/api/order/userorders`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (response.data.success) {
-        setOrders(response.data.data || []);
-      } else {
-        toast.error(response.data.message || "Error fetching orders");
-        setOrders([]);
+        setOrders(response.data.data);
       }
     } catch (error) {
-      console.error("Fetch orders error:", error.response?.data || error);
-      if (error.response?.status === 401) {
-        console.log('Token invalid (401), clearing...');
-        toast.error("Session expired. Please login again");
-        localStorage.removeItem('token');
-        setToken('');
-        navigate('/');
-      } else {
-        toast.error("Network error. Please try again");
-      }
-      setOrders([]);
-    } finally {
-      setLoading(false);
+      console.error("Fetch orders error:", error);
+      toast.error("Không thể tải đơn hàng");
     }
   };
 
-  const updateStatus = async (orderId, status) => {
-    if (!token) {
-      toast.error("Please login");
-      return;
-    }
+  const confirmReceived = async (orderId) => {
     try {
-      const response = await axios.post(url + "/api/order/status", { orderId, status }, { headers: { token } });
+      const payload = {
+        orderId,
+        status: "delivered",
+        isPaid: true,
+        paidAt: new Date().toISOString(),
+      };
+
+      console.log("Sending confirm received for order:", orderId); // Debug
+
+      const response = await axios.post(`${url}/api/order/status`, payload, {
+        // Sửa route thành /status
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
       if (response.data.success) {
-        toast.success("Status updated");
-        await fetchMyOrders();
+        toast.success("Đã xác nhận nhận hàng!");
+        fetchOrders();
       } else {
-        toast.error(response.data.message || "Error updating status");
+        toast.error(response.data.message || "Cập nhật thất bại");
       }
     } catch (error) {
-      console.error("Update status error:", error.response?.data || error);
-      toast.error(error.response?.data?.message || "Error");
+      console.error(
+        "Confirm received error:",
+        error.response?.data || error.message
+      ); // Debug chi tiết
+      toast.error("Cập nhật thất bại. Kiểm tra console để xem lỗi.");
     }
   };
 
-  useEffect(() => {
-    console.log('MyOrders mounted, initial token:', !!token);
-  }, []);
+  // Hàm helper để format date (giữ nguyên từ code cũ)
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  // Hàm helper cho status text và color (giữ nguyên)
+  const getStatusText = (status) => {
+    const statusMap = {
+      pending: "Chờ xác nhận",
+      preparing: "Đang chuẩn bị",
+      delivering: "Đang giao hàng",
+      delivered: "Đã giao",
+      cancelled: "Đã hủy",
+    };
+    return statusMap[status] || status;
+  };
+
+  const getStatusColor = (status) => {
+    const colorMap = {
+      pending: "#ffc107",
+      preparing: "#17a2b8",
+      delivering: "#007bff",
+      delivered: "#28a745",
+      cancelled: "#dc3545",
+    };
+    return colorMap[status] || "#6c757d";
+  };
 
   useEffect(() => {
-    if (token) {
-      console.log('Token changed, fetching orders...');
-      fetchMyOrders();
-    }
+    fetchOrders();
   }, [token]);
 
-  if (loading) {
-    return <div className="loading">Loading orders...</div>;
-  }
-
-  const renderItems = (orderItems) => {
-    if (!orderItems || orderItems.length === 0) return 'No items';
-    return orderItems.map((item, idx) => (
-      idx === orderItems.length - 1 
-        ? `${item.name} x ${item.quantity}` 
-        : `${item.name} x ${item.quantity}, `
-    )).join('');
-  };
-
   return (
-    <div className='my-orders'>
-      <h2>My Orders</h2>
-      <div className="container">
-        {orders.length > 0 ? (
-          orders.map((order, index) => (
-            <div key={order._id || index} className='my-orders-order'>
-              <img src={assets.parcel_icon} alt="" />
-              <p>{renderItems(order.orderItems)}</p>
-              <p>${order.totalPrice || 0}</p>
-              <p>Items: {order.orderItems?.length || 0}</p>
-              <p><span>&#x25cf;</span> <b>{order.orderStatus || 'pending'}</b></p>
-              {order.orderStatus === 'cancelled' && order.reason && (
-                <p className="cancel-reason">Reason: {order.reason}</p>
+    <div className="my-orders">
+      <h2>Đơn hàng của tôi</h2>
+      {orders.length === 0 ? (
+        <p className="no-orders">Chưa có đơn hàng nào</p>
+      ) : (
+        <div className="orders-list">
+          {orders.map((order) => (
+            <div key={order._id} className="order-card">
+              <div className="order-header">
+                <div className="order-info">
+                  <h4>Đơn hàng #{order._id.slice(-8).toUpperCase()}</h4>
+                  <span className="order-date">
+                    {formatDate(order.createdAt || order.orderDate)}
+                  </span>
+                </div>
+                <div
+                  className="order-status"
+                  style={{ backgroundColor: getStatusColor(order.orderStatus) }}
+                >
+                  {getStatusText(order.orderStatus)}
+                </div>
+              </div>
+
+              <div className="order-details">
+                <div className="order-items">
+                  <strong>Sản phẩm:</strong>
+                  <div className="items-list">
+                    {order.orderItems?.map((item, index) => (
+                      <div key={index} className="order-item">
+                        <span className="item-name">{item.name}</span>
+                        <span className="item-quantity">x{item.quantity}</span>
+                        <span className="item-price">${item.price}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="order-summary">
+                  <div className="summary-row">
+                    <span>Tổng tiền:</span>
+                    <strong>${order.totalPrice}</strong>
+                  </div>
+                  <div className="summary-row">
+                    <span>Phương thức thanh toán:</span>
+                    <span>
+                      {order.paymentMethod === "COD"
+                        ? "Thanh toán khi nhận hàng"
+                        : "Thẻ tín dụng"}
+                    </span>
+                  </div>
+                  <div className="summary-row">
+                    <span>Địa chỉ giao hàng:</span>
+                    <span>
+                      {order.shippingAddress?.address},{" "}
+                      {order.shippingAddress?.city}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {order.orderStatus === "delivering" && (
+                <div className="order-actions">
+                  <button
+                    onClick={() => confirmReceived(order._id)}
+                    className="confirm-received-btn"
+                  >
+                    ✅ Xác nhận đã nhận hàng
+                  </button>
+                </div>
               )}
-              <button onClick={fetchMyOrders}>Track Order</button>
-              {order.orderStatus === 'delivering' && (  // Fix: Lowercase
-                <button className="received-btn" onClick={() => updateStatus(order._id, 'delivered')}>Mark as Received</button>
+
+              {order.orderStatus === "cancelled" && order.reason && (
+                <div className="cancel-reason">
+                  <strong>Lý do hủy:</strong> {order.reason}
+                </div>
               )}
             </div>
-          ))
-        ) : (
-          <p>No orders found</p>
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

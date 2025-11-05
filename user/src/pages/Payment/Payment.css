@@ -1,106 +1,88 @@
-.place-order{
-    display: flex;
-    align-items: start;
-    justify-content: space-between;
-    gap: 50px;
-    margin-top: 100px;
-}
-.place-order-left{
-    width: 100%;
-    max-width: max(30%, 500px);
-}
-.place-order-left .title{
-    font-size: 30px;
-    font-weight: 600;
-    margin-bottom: 50px;
-}
-.place-order-left input{
-    margin-bottom: 15px;
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #c5c5c5;
-    border-radius: 4px;
-    outline-color: tomato;
-}
-.place-order-left .multi-fields{
-    display: flex;
-    gap: 10px;
-}
-.place-order-right{
-    width: 100%;
-    max-width: max(40%, 500px);
-}
-.place-order .cart-total button{
-    margin-top: 30px;
+.payment {
+  max-width: 600px;
+  margin: 100px auto 50px;
+  padding: 30px;
+  background-color: var(--background-secondary);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
 }
 
-:root .emaill {
-    background-color: black;
-}
-:root .emaill{
-    color: white;
-}
-
-:root .streett {
-    background-color: black;
-}
-:root .streett{
-    color: white;
+.payment h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--text-color);
 }
 
-:root .phonee {
-    background-color: black;
-}
-:root .phonee{
-    color: white;
-}
-
-
-.lightcolors .emaill {
-    background-color: white;
-}
-.lightcolors .emaill{
-    color: black;
+.payment p {
+  font-size: 18px;
+  margin-bottom: 25px;
+  color: var(--text-secondary);
 }
 
-.lightcolors .streett {
-    background-color: white;
-}
-.lightcolors .streett{
-    color: black;
-}
-
-.lightcolors .phonee {
-    background-color: white;
-}
-.lightcolors .phonee{
-    color: black;
-}
-
-
-:root .multi-fields input {
-    background-color: black;
-    color: white; 
+.payment select {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 25px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--body-color);
+  color: var(--text-color);
+  font-size: 16px;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
 }
 
-:root .multi-fields input::placeholder {
-    color: white;
+.payment select:focus {
+  border-color: var(--accent-color);
+  outline: none;
 }
 
-
-.lightcolors .multi-fields input {
-    background-color: white;
-    color: black;
+.payment .confirm-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 16px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
-.lightcolors .multi-fields input::placeholder {
-    color: black;
+
+.payment .confirm-btn:hover {
+  background-color: darken(var(--accent-color), 10%);
+  transform: scale(1.02);
 }
 
-
-:root .title {
-    color: white;
+.payment .confirm-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
-.lightcolors .title {
-    color: black;
+/* Loading spinner - Simple text, or add CSS spinner if needed */
+.payment.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font-size: 18px;
+  color: var(--text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .payment {
+    padding: 20px;
+  }
+
+  .payment h2 {
+    font-size: 22px;
+  }
+
+  .payment p {
+    font-size: 16px;
+  }
 }

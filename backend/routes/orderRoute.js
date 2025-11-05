@@ -1,13 +1,23 @@
 import express from "express";
-import authMiddleware from "../middleware/auth.js";
-import { placeOrder, verifyOrder, userOrders, listOrders, updateStatus } from "../controllers/orderController.js";
+import {
+  placeOrder,
+  verifyOrder,
+  userOrders,
+  listOrders,
+  updateStatus,
+  getStatusStats, // Thêm function mới
+} from "../controllers/orderController.js";
+import { protect } from "../middleware/auth.js"; // Sửa: named { protect }
 
-const orderRouter = express.Router();
+const router = express.Router();
 
-orderRouter.post("/place", authMiddleware, placeOrder);
-orderRouter.post("/verify", verifyOrder);
-orderRouter.post("/userorders", authMiddleware, userOrders);
-orderRouter.get("/list", authMiddleware, listOrders);  // Mới: Protect
-orderRouter.post("/status", authMiddleware, updateStatus);  // Mới: Protect
+router.post("/place", protect, placeOrder); // Thay auth bằng protect
+router.post("/verify", verifyOrder); // Không cần protect nếu public
+router.get("/userorders", protect, userOrders);
+router.get("/list", protect, listOrders);
+// THÊM HOẶC SỬA ROUTE UPDATE STATUS
+router.post("/status", protect, updateStatus);
+// THÊM ROUTE MỚI CHO STATS
+router.get("/status-stats", protect, getStatusStats);
 
-export default orderRouter;
+export default router;

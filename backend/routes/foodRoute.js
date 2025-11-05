@@ -1,35 +1,23 @@
-// import express from "express";
-// import { addFood, listFood, removeFood, updateFood } from "../controllers/foodController.js";
-// import multer from "multer";
-// import { default as authMiddleware, optionalAuth } from "../middleware/auth.js";  // Import cả 2
-// const foodRouter = express.Router();
-
-// const storage = multer.diskStorage({
-//   destination: "uploads",
-//   filename: (req, file, cb) => {
-//     return cb(null, `${Date.now()}${file.originalname}`);
-//   }
-// });
-
-// const upload = multer({ storage: storage });
-
-// foodRouter.post("/add", authMiddleware, upload.single("image"), addFood);
-// foodRouter.get("/list", optionalAuth, listFood);  // Thay bằng optionalAuth
-// foodRouter.post("/remove", authMiddleware, removeFood);
-// foodRouter.post("/update", authMiddleware, upload.single("image"), updateFood);
-
-// export default foodRouter;
-
 import express from "express";
-import { addFood, listFood, removeFood, updateFood } from "../controllers/foodController.js";
-import { uploadMiddleware } from '../config/multer.js';  // SỬA: ../config (không phải ../../)
-import { default as authMiddleware, optionalAuth } from "../middleware/auth.js";
+import {
+  addFood,
+  listFood,
+  removeFood,
+  updateFood,
+} from "../controllers/foodController.js";
+import { uploadMiddleware } from "../config/multer.js"; // Giả định config/multer.js đã OK
+import { protect, optionalAuth } from "../middleware/auth.js"; // Sửa: import named exports
 
 const foodRouter = express.Router();
 
-foodRouter.post("/add", authMiddleware, uploadMiddleware.single("image"), addFood);
+foodRouter.post("/add", protect, uploadMiddleware.single("image"), addFood); // Thay authMiddleware bằng protect
 foodRouter.get("/list", optionalAuth, listFood);
-foodRouter.post("/remove", authMiddleware, removeFood);
-foodRouter.post("/update", authMiddleware, uploadMiddleware.single("image"), updateFood);
+foodRouter.post("/remove", protect, removeFood);
+foodRouter.post(
+  "/update",
+  protect,
+  uploadMiddleware.single("image"),
+  updateFood
+);
 
 export default foodRouter;

@@ -1,435 +1,154 @@
-/* ProductDetail.css - Cải thiện layout responsive, theme dark/light, và UX mượt mà hơn */
-
-/* Container chính cho trang chi tiết */
 .product-detail {
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 100px auto 50px;
   padding: 20px;
-  animation: fadeIn 0.5s ease-in-out;
+  animation: fadeIn 0.5s ease;
 }
 
-/* Nút quay về - Vị trí fixed top-left, style button đẹp */
 .back-btn {
   position: fixed;
-  top: 20px;
+  top: 85px;
   left: 20px;
-  z-index: 1000;
-  background-color: rgba(0, 0, 0, 0.7); /* Dark theme */
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 50px;
+  z-index: 999;
+  background-color: var(--background-secondary);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  padding: 8px 15px;
+  border-radius: 25px;
   cursor: pointer;
   font-size: 14px;
   transition: background-color 0.3s ease;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .back-btn:hover {
-  background-color: rgba(0, 0, 0, 0.9);
+  background-color: var(--accent-color);
+  color: white;
 }
 
-.lightcolors .back-btn {
-  background-color: rgba(255, 255, 255, 0.9);
-  color: black;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.lightcolors .back-btn:hover {
-  background-color: rgba(255, 255, 255, 1);
-}
-
-/* Container flex cho ảnh và info - Responsive */
 .product-detail-container {
   display: flex;
-  gap: 30px;
-  margin-top: 60px; /* Để tránh overlap với back-btn */
-  background-color: rgba(0, 0, 0, 0.05); /* Subtle background */
-  border-radius: 15px;
-  padding: 30px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.3s ease;
+  gap: 40px;
+  background-color: var(--background-secondary);
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.product-detail-container:hover {
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
-}
-
-.lightcolors .product-detail-container {
-  background-color: rgba(255, 255, 255, 0.8);
-}
-
-/* Ảnh sản phẩm - Lớn hơn, border-radius */
 .product-detail-image {
   flex: 1;
-  max-width: 500px;
+  max-width: 450px;
 }
 
 .product-detail-image img {
   width: 100%;
   height: auto;
-  border-radius: 15px;
+  border-radius: 12px;
   object-fit: cover;
 }
 
-/* Info bên phải - Padding tốt hơn */
 .product-detail-info {
   flex: 1;
-  padding: 20px 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 15px;
 }
 
-/* Tên và rating - Grid với font lớn hơn */
 .product-detail-name-rating {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: start;
-  margin-bottom: 15px;
-  gap: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .product-detail-name-rating h2 {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 600;
-  margin: 0;
-  line-height: 1.2;
+  color: var(--text-color);
 }
 
 .product-detail-name-rating .ratingstars {
-  width: 80px;
-  height: auto;
+  width: 70px;
 }
 
-/* Mô tả - Font readable hơn */
 .product-detail-desc {
-  font-size: 16px;
-  line-height: 1.5;
-  color: #676767;
-  margin-bottom: 20px;
-  flex-grow: 1;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-secondary);
 }
 
-/* Giá - Nổi bật hơn */
 .product-detail-price {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
-  color: tomato;
-  margin: 15px 0;
+  color: var(--accent-color);
 }
 
-/* Phần cart - Tương tự FoodItem nhưng lớn hơn */
 .product-detail-cart {
   display: flex;
   align-items: center;
   gap: 15px;
-  margin-top: 20px;
+  margin-top: 15px;
 }
 
 .add-detail {
-  width: 50px;
-  height: 50px;
+  width: 45px;
+  height: 45px;
   cursor: pointer;
   border-radius: 50%;
-  background-color: black; /* Dark theme */
-  padding: 5px;
-  transition: transform 0.2s ease;
+  background-color: var(--accent-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
 }
 
 .add-detail:hover {
   transform: scale(1.1);
 }
 
-.lightcolors .add-detail {
-  background-color: white;
-  border: 2px solid #ddd;
-}
-
 .food-item-counter {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 15px;
-  border-radius: 50px;
-  background-color: white; /* Default light */
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: box-shadow 0.3s ease;
-}
-
-.food-item-counter:hover {
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  padding: 8px 15px;
+  border-radius: 30px;
+  background-color: var(--background-secondary);
+  border: 1px solid var(--border-color);
 }
 
 .food-item-counter img {
-  width: 35px;
-  height: 35px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
 }
 
 .cartitemsp {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
-  margin: 0;
+  min-width: 20px;
+  text-align: center;
 }
 
-/* Theme overrides - Dark mode */
-:root .product-detail-desc {
-  color: #ccc;
-}
-
-:root .product-detail-price {
-  color: #ff6b6b; /* Tomato variant */
-}
-
-:root .product-detail-name-rating h2 {
-  color: white;
-}
-
-:root .food-item-counter {
-  background-color: rgba(36, 32, 32, 0.8);
-}
-
-:root .add-detail {
-  background-color: rgba(0, 0, 0, 0.8);
-}
-
-/* Light mode overrides */
-.lightcolors .product-detail-desc {
-  color: #555;
-}
-
-.lightcolors .product-detail-price {
-  color: #e74c3c;
-}
-
-.lightcolors .product-detail-name-rating h2 {
-  color: #333;
-}
-
-.lightcolors .food-item-counter {
-  background-color: #f9f9f9;
-}
-
-/* Responsive - Mobile first */
-@media (max-width: 768px) {
-  .product-detail {
-    padding: 10px;
-  }
-
+/* Responsive */
+@media (max-width: 900px) {
   .product-detail-container {
     flex-direction: column;
-    gap: 20px;
-    margin-top: 80px;
-    padding: 20px;
+    gap: 25px;
   }
 
-  .product-detail-name-rating {
-    grid-template-columns: 1fr;
-    gap: 5px;
+  .product-detail-image {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 500px) {
+  .product-detail {
+    padding: 15px;
   }
 
   .product-detail-name-rating h2 {
-    font-size: 24px;
+    font-size: 22px;
   }
 
-  .back-btn {
-    top: 10px;
-    left: 10px;
-    padding: 8px 12px;
-    font-size: 12px;
-  }
-
-  .add-detail,
-  .food-item-counter img {
-    width: 40px;
-    height: 40px;
-  }
-}
-
-/* Animation fadeIn (nếu chưa có global) */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Temp counter bên cạnh add icon */
-.temp-counter {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 50px;
-  background-color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: box-shadow 0.3s ease;
-}
-
-.temp-counter:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.temp-counter img {
-  width: 28px;
-  height: 28px;
-}
-
-.temp-quantity {
-  font-size: 16px;
-  font-weight: 500;
-  margin: 0;
-  min-width: 20px;
-  text-align: center;
-}
-
-/* Nút confirm thêm vào giỏ */
-.confirm-btn {
-  background-color: #28a745; /* Xanh lá cho action */
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 25px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
-}
-
-.confirm-btn:hover {
-  background-color: #218838;
-  transform: translateY(-1px);
-}
-
-.confirm-btn:active {
-  transform: translateY(0);
-}
-
-/* Theme dark cho temp-counter và confirm-btn */
-:root .temp-counter {
-  background-color: rgba(36, 32, 32, 0.8);
-}
-
-:root .temp-quantity {
-  color: white;
-}
-
-:root .confirm-btn {
-  background-color: #28a745;
-  color: white;
-  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
-}
-
-/* Light mode */
-.lightcolors .temp-counter {
-  background-color: #f9f9f9;
-}
-
-.lightcolors .temp-quantity {
-  color: #333;
-}
-
-.lightcolors .confirm-btn {
-  background-color: #28a745;
-  color: white;
-}
-
-/* Responsive cho temp elements */
-@media (max-width: 768px) {
-  .temp-counter {
-    padding: 6px 10px;
-    gap: 6px;
-  }
-
-  .temp-counter img {
-    width: 24px;
-    height: 24px;
-  }
-
-  .temp-quantity {
-    font-size: 14px;
-  }
-
-  .confirm-btn {
-    padding: 8px 16px;
-    font-size: 12px;
-  }
-}
-
-/* Override cho counter ở ProductDetail - Inline, không absolute */
-.product-detail .food-item-counter {
-  position: static !important; /* Override absolute từ FoodItem.css */
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 15px;
-  border-radius: 50px;
-  background-color: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: box-shadow 0.3s ease;
-  margin-left: 10px; /* Khoảng cách với add icon nếu cần */
-}
-
-.product-detail .food-item-counter:hover {
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-}
-
-.product-detail .food-item-counter img {
-  width: 35px;
-  height: 35px;
-}
-
-.product-detail .cartitemsp {
-  font-size: 18px;
-  font-weight: 500;
-  margin: 0;
-  min-width: 20px;
-  text-align: center;
-}
-
-/* Theme dark/light cho override */
-:root .product-detail .food-item-counter {
-  background-color: rgba(36, 32, 32, 0.8);
-}
-
-.lightcolors .product-detail .food-item-counter {
-  background-color: #f9f9f9;
-}
-
-/* Responsive cho override */
-@media (max-width: 768px) {
-  .product-detail .food-item-counter {
-    padding: 8px 12px;
-    gap: 8px;
-    margin-left: 8px;
-  }
-
-  .product-detail .food-item-counter img {
-    width: 30px;
-    height: 30px;
-  }
-
-  .product-detail .cartitemsp {
-    font-size: 16px;
-  }
-}/* Section chứa counter và nút confirm */
-.product-detail-counter-section {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  flex-wrap: wrap;
-}
-
-/* Đảm bảo counter và nút confirm hiển thị đẹp trên mobile */
-@media (max-width: 768px) {
-  .product-detail-counter-section {
-    gap: 10px;
-    justify-content: center;
-  }
-  
-  .product-detail-cart {
-    justify-content: center;
+  .product-detail-price {
+    font-size: 22px;
   }
 }

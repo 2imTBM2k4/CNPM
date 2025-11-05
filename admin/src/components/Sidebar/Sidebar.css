@@ -1,36 +1,166 @@
-.sidebar{
-    width: 18%;
-    min-height: 100vh;
-    border: 1.5px solid #a9a9a9;
-    border-top: 0;
-    font-size: max(1vw, 10px);
-}
-.sidebar-options{
-    padding-top: 50px;
-    padding-left: 20%;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-.sidebar-option{
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border: 1px solid #a9a9a9;
-    border-right: 0;
-    padding: 8px 10px;
-    border-radius: 3px 0px 0px 3px;
-    cursor: pointer;
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  background: var(--sidebar-bg);
+  color: white;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+  overflow-y: auto;
+  transition: all 0.3s ease;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
 }
 
-.sidebar-option.active{
-    background-color: var(--sidebar);
-    border-color: tomato;
+.sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+  background: rgba(0, 0, 0, 0.1);
 }
 
+.sidebar-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  margin: 0;
+}
 
-@media (max-width:900px) {
-    .sidebar-option p{
-        display: none;
-    }    
+.sidebar-options {
+  padding: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sidebar-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.75rem 1.5rem;
+  margin: 0 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  border: none;
+  background: none;
+  width: calc(100% - 1rem);
+}
+
+.sidebar-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: translateX(5px);
+}
+
+.sidebar-option.active {
+  background: var(--sidebar-active);
+  color: white;
+  box-shadow: var(--shadow);
+}
+
+.sidebar-option img {
+  width: 20px;
+  height: 20px;
+  filter: brightness(0) invert(1);
+  transition: transform 0.3s ease;
+}
+
+.sidebar-option:hover img {
+  transform: scale(1.1);
+}
+
+.sidebar-option p {
+  font-weight: 500;
+  font-size: 0.9rem;
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 80px;
+  }
+
+  .sidebar-option p {
+    display: none;
+  }
+
+  .sidebar-header {
+    padding: 1rem;
+  }
+
+  .sidebar-title {
+    display: none;
+  }
+
+  .main-content-area {
+    margin-left: 80px;
+  }
+
+  .sidebar-option {
+    justify-content: center;
+    padding: 0.75rem;
+    margin: 0 0.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .main-content-area {
+    margin-left: 0;
+  }
+}
+
+/* SỬA: Thêm layout chính cho main content - tránh sidebar overlap */
+.main-content-area {
+  margin-left: 260px; /* Bằng width của sidebar */
+  transition: margin-left 0.3s ease; /* Mượt mà khi responsive */
+  min-height: 100vh; /* Đảm bảo full height */
+  display: flex;
+  flex-direction: column;
+}
+
+.page-content {
+  flex: 1; /* Chiếm hết không gian còn lại sau navbar */
+  padding: 1rem; /* Padding mặc định cho các page, có thể override ở từng page */
+  background: #f8f9fa; /* Nền nhẹ cho content area */
+}
+
+/* SỬA: Cập nhật responsive cho layout mới */
+@media (max-width: 1024px) {
+  .main-content-area {
+    margin-left: 80px; /* Giảm margin theo width sidebar */
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content-area {
+    margin-left: 0; /* Không margin trên mobile */
+  }
+
+  .page-content {
+    padding: 0.5rem; /* Giảm padding mobile */
+  }
+}
+
+/* SỬA: Thêm style cho mobile close button (optional) */
+.mobile-close-btn {
+  display: none; /* Ẩn mặc định, chỉ hiện trên mobile */
+}
+
+@media (max-width: 768px) {
+  .mobile-close-btn {
+    display: block;
+  }
 }

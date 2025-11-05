@@ -1,33 +1,57 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap");
 
-*{
+* {
   padding: 0;
   margin: 0;
-  box-sizing: 0;
-  font-family: Outfit;
+  box-sizing: border-box;
+  font-family: "Outfit", sans-serif;
   scroll-behavior: smooth;
 }
 
-body{
+body {
   background-color: var(--body-color);
   min-height: 100vh;
+  color: var(--text-color);
 }
 
-a{
+a {
   text-decoration: none;
   color: inherit;
 }
 
-.app{
+.app {
   width: 80%;
   margin: auto;
 }
 
 @keyframes fadeIn {
-  0%{
+  0% {
     opacity: 0;
   }
-  100%{
+  100% {
     opacity: 1;
   }
+}
+
+/* Theme variables - Default light mode ở :root, dark ở .darkmode */
+:root {
+  --body-color: #ffffff;
+  --text-color: #101010;
+  --text-secondary: #464853;
+  --accent-color: tomato;
+  --background-secondary: #f8f9fa;
+  --border-color: #ddd;
+  --button-bg: #ffffff;
+  --button-text: #747474;
+}
+
+.darkmode {
+  --body-color: #121212;
+  --text-color: #ffffff;
+  --text-secondary: #b9b9b9;
+  --accent-color: tomato;
+  --background-secondary: #1e1e1e;
+  --border-color: #27272a;
+  --button-bg: #ffffff;
+  --button-text: #000000;
 }

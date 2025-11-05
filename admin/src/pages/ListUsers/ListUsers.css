@@ -1,0 +1,74 @@
+/* Copy từ ListRestaurant.css và chỉnh sửa nếu cần
+.list {
+  padding: 20px;
+}
+
+.list-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.list-table-format {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.title {
+  font-weight: bold;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.cursor {
+  cursor: pointer;
+}
+
+.edit-btn {
+  color: blue;
+}
+
+.lock-btn {
+  color: orange;
+}
+
+.remove-btn {
+  color: red;
+} */
+
+/* admin/src/pages/ListUsers/ListUsers.css (Tương tự ListRestaurant) */
+.list-table-format {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 15px;
+  border: 1px solid #cacaca;
+  font-size: 13px;
+}
+
+.list-table-format.title {
+  background-color: #f9f9f9;
+}
+
+.cursor {
+  cursor: pointer;
+}
+
+.lock-btn {
+  color: red;
+}
+
+@media (max-width: 600px) {
+  .list-table-format {
+    grid-template-columns: 1fr 2fr 1fr;
+    gap: 15px;
+  }
+  .list-table-format.title {
+    display: none;
+  }
+}

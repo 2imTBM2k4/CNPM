@@ -1,53 +1,103 @@
-import userModel from "../models/userModel.cjs"
+import Cart from "../models/cartModel.cjs";
+import Food from "../models/foodModel.cjs";
 
-// add items to user cart
-const addToCart = async (req,res) => {
-    try {
-        let userData = await userModel.findById(req.body.userId);
-        let cartData = await userData.cartData;
-        if (!cartData[req.body.itemId])
-        {
-            cartData[req.body.itemId] = 1;
-        }
-        else{
-            cartData[req.body.itemId] += 1;
-        }
-        await userModel.findByIdAndUpdate(req.body.userId,{cartData})
-        res.json({success:true,message:"Added to cart"});
-    } catch (error) {
-        console.log(error);
-        res.json({success:false,message:"Error"})
+// GET /api/cart/get
+export const getCart = async (req, res) => {
+  try {
+    let cart = await Cart.findOne({ userId: req.user._id }).populate(
+      "items.foodId"
+    );
+    if (!cart) {
+      cart = await Cart.create({ userId: req.user._id, items: [] });
     }
-}
+    const cartObj = cart.items.reduce((obj, item) => {
+      obj[item.foodId._id] = item.quantity;
+      return obj;
+    }, {});
+    res.json({ success: true, cartData: cartObj });
+  } catch (err) {
+    console.error("Get cart error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
+// POST /api/cart/add
+export const addToCart = async (req, res) => {
+  const { itemId } = req.body;
+  try {
+    const food = await Food.findById(itemId);
+    if (!food)
+      return res
+        .status(404)
+        .json({ success: false, message: "Food not found" });
 
-// remove items from user cart
-const removeFromCart = async (req,res) => {
-    try {
-        let userData = await userModel.findById(req.body.userId);
-        let cartData = await userData.cartData;
-        if (cartData[req.body.itemId]>0){
-            cartData[req.body.itemId] -= 1;
-        }
-        await userModel.findByIdAndUpdate(req.body.userId,{cartData});
-        res.json({success:true,message:"Removed from cart"})
-    } catch (error) {
-        console.log(error);
-        res.json({success:false,message:"Error"})
-        
+    let cart = await Cart.findOne({ userId: req.user._id });
+    if (!cart) cart = new Cart({ userId: req.user._id, items: [] });
+
+    const existing = cart.items.find((i) => i.foodId.toString() === itemId);
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      cart.items.push({ foodId: itemId, quantity: 1 });
     }
-}
+    await cart.save();
+    await cart.populate("items.foodId");
 
-// fetch user cart data
-const getCart = async (req,res) => {
-    try {
-        let userData = await userModel.findById(req.body.userId);
-        let cartData = await userData.cartData;
-        res.json({success:true,cartData})
-    } catch (error) {
-        console.log(error);
-        res.json({success:false,message:"Error"})
+    const cartObj = cart.items.reduce((obj, item) => {
+      obj[item.foodId._id] = item.quantity;
+      return obj;
+    }, {});
+
+    res.json({ success: true, cartData: cartObj });
+  } catch (err) {
+    console.error("Add to cart error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/cart/remove
+export const removeFromCart = async (req, res) => {
+  const { itemId } = req.body;
+  try {
+    const cart = await Cart.findOne({ userId: req.user._id });
+    if (!cart)
+      return res
+        .status(404)
+        .json({ success: false, message: "Cart not found" });
+
+    const idx = cart.items.findIndex((i) => i.foodId.toString() === itemId);
+    if (idx === -1)
+      return res
+        .status(404)
+        .json({ success: false, message: "Item not in cart" });
+
+    if (cart.items[idx].quantity > 1) {
+      cart.items[idx].quantity -= 1;
+    } else {
+      cart.items.splice(idx, 1);
     }
-}
+    await cart.save();
+    await cart.populate("items.foodId");
 
-export {addToCart,removeFromCart,getCart}
+    const cartObj = cart.items.reduce((obj, item) => {
+      obj[item.foodId._id] = item.quantity;
+      return obj;
+    }, {});
+
+    res.json({ success: true, cartData: cartObj });
+  } catch (err) {
+    console.error("Remove from cart error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/cart/clear
+export const clearCart = async (req, res) => {
+  try {
+    await Cart.deleteOne({ userId: req.user._id });
+    res.json({ success: true, message: "Cart cleared" });
+  } catch (err) {
+    console.error("Clear cart error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

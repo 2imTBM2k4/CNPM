@@ -1,56 +1,209 @@
-import React, { useEffect, useState } from 'react'
-import './ListRestaurant.css'
-import axios from "axios"
-import {toast} from "react-toastify"
-import EditRestaurant from "../Restaurant/EditRestaurant";  // Đổi tên từ EditProduct, tạo thư mục Restaurants nếu cần
+// import React, { useEffect, useState } from "react";
+// import "./ListRestaurant.css";
+// import axios from "axios";
+// import { toast } from "react-toastify";
+// import EditRestaurant from "../Restaurant/EditRestaurant";
 
-const List = ({url}) => {
+// const ListRestaurant = ({ url }) => {
+//   const [list, setList] = useState([]);
+//   const [editingRestaurant, setEditingRestaurant] = useState(null);
+
+//   const fetchList = async () => {
+//     const token = localStorage.getItem("token");
+//     if (!token) {
+//       toast.error("Please login first");
+//       return;
+//     }
+//     try {
+//       const response = await axios.get(`${url}/api/restaurant/list`, {
+//         headers: { Authorization: `Bearer ${token}` },
+//       });
+//       if (response.data.success) {
+//         setList(response.data.data);
+//       } else {
+//         toast.error("Error fetching restaurants");
+//       }
+//     } catch (error) {
+//       toast.error("Network error or unauthorized");
+//     }
+//   };
+
+//   const removeRestaurant = async (restaurantId) => {
+//     const token = localStorage.getItem("token");
+//     if (!token) {
+//       toast.error("Please login first");
+//       return;
+//     }
+//     try {
+//       const response = await axios.post(
+//         `${url}/api/restaurant/delete`,
+//         { id: restaurantId },
+//         {
+//           headers: { Authorization: `Bearer ${token}` },
+//         }
+//       );
+//       await fetchList();
+//       if (response.data.success) {
+//         toast.success(response.data.message);
+//       } else {
+//         toast.error("Error");
+//       }
+//     } catch (error) {
+//       toast.error("Network error");
+//     }
+//   };
+
+//   const editRestaurant = (restaurant) => {
+//     setEditingRestaurant(restaurant);
+//   };
+
+//   const closeEditModal = () => {
+//     setEditingRestaurant(null);
+//   };
+
+//   useEffect(() => {
+//     fetchList();
+//   }, []);
+
+//   return (
+//     <div className="list add flex-col">
+//       <p>All Restaurants List</p>
+//       <div className="list-table">
+//         <div className="list-table-format title">
+//           <b>Name</b>
+//           <b>Address</b>
+//           <b>Phone</b>
+//           <b>Description</b>
+//           <b>Owner Email</b>
+//           <b>Action</b>
+//         </div>
+//         {list.map((item, index) => {
+//           return (
+//             <div key={index} className="list-table-format">
+//               <p>{item.name}</p>
+//               <p>{item.address}</p>
+//               <p>{item.phone || "N/A"}</p>
+//               <p>{item.description || "N/A"}</p>
+//               <p>{item.owner?.email || "N/A"}</p>
+//               <div className="actions">
+//                 <p
+//                   onClick={() => editRestaurant(item)}
+//                   className="cursor edit-btn"
+//                 >
+//                   ✏️
+//                 </p>
+//                 <p
+//                   onClick={() => removeRestaurant(item._id)}
+//                   className="cursor remove-btn"
+//                 >
+//                   X
+//                 </p>
+//               </div>
+//             </div>
+//           );
+//         })}
+//       </div>
+
+//       {editingRestaurant && (
+//         <EditRestaurant
+//           url={url}
+//           restaurant={editingRestaurant}
+//           onClose={closeEditModal}
+//           onUpdate={fetchList}
+//         />
+//       )}
+//     </div>
+//   );
+// };
+
+// export default ListRestaurant;
+
+// admin/src/pages/ListRestaurant/ListRestaurant.jsx
+import React, { useEffect, useState } from "react";
+import "./ListRestaurant.css";
+import axios from "axios";
+import { toast } from "react-toastify";
+
+const ListRestaurant = ({ url }) => {
   const [list, setList] = useState([]);
-  const [editingRestaurant, setEditingRestaurant] = useState(null); // Thêm state
 
   const fetchList = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please login first");
+      return;
+    }
     try {
-      const response = await axios.get(`${url}/api/restaurant/list`);
-      if (response.data.success){
-        setList(response.data.data)
+      const response = await axios.get(`${url}/api/restaurant/list`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.data.success) {
+        setList(response.data.data);
       } else {
-        toast.error("Error fetching restaurants")
+        toast.error("Error fetching restaurants");
       }
     } catch (error) {
-      toast.error("Network error")
+      toast.error("Network error or unauthorized");
     }
-  }
+  };
 
-  const removeRestaurant = async(restaurantId) => {
+  const toggleLock = async (restaurantId, isLocked) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please login first");
+      return;
+    }
     try {
-      const response = await axios.post(`${url}/api/restaurant/delete`, {id: restaurantId});
-      await fetchList();
-      if (response.data.success){
-        toast.success(response.data.message)
+      const response = await axios.put(
+        `${url}/api/restaurant/${restaurantId}/lock`,
+        { isLocked },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (response.data.success) {
+        toast.success(response.data.message);
+        fetchList(); // Refresh list
       } else {
-        toast.error("Error")
+        toast.error("Error");
       }
     } catch (error) {
-      toast.error("Network error")
+      toast.error("Network error");
     }
-  }
+  };
 
-  // Thêm hàm edit
-  const editRestaurant = (restaurant) => {
-    setEditingRestaurant(restaurant);
-  }
+  // Thêm remove nếu cần (từ version cũ)
+  const removeRestaurant = async (restaurantId) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please login first");
+      return;
+    }
+    try {
+      const response = await axios.post(
+        `${url}/api/restaurant/delete`,
+        { id: restaurantId },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (response.data.success) {
+        toast.success(response.data.message);
+        fetchList();
+      } else {
+        toast.error("Error");
+      }
+    } catch (error) {
+      toast.error("Network error");
+    }
+  };
 
-  // Thêm hàm close modal
-  const closeEditModal = () => {
-    setEditingRestaurant(null);
-  }
-
-  useEffect(()=>{
+  useEffect(() => {
     fetchList();
-  },[])
+  }, []);
 
   return (
-    <div className='list add flex-col'>
+    <div className="list add flex-col">
       <p>All Restaurants List</p>
       <div className="list-table">
         <div className="list-table-format title">
@@ -59,37 +212,40 @@ const List = ({url}) => {
           <b>Phone</b>
           <b>Description</b>
           <b>Owner Email</b>
-          <b>Action</b>
+          <b>Status</b> {/* Mới */}
+          <b>Action</b> {/* Mới */}
         </div>
-        {list.map((item,index)=>{
+        {list.map((item, index) => {
           return (
-            <div key={index} className='list-table-format'>
+            <div key={index} className="list-table-format">
               <p>{item.name}</p>
               <p>{item.address}</p>
-              <p>{item.phone || 'N/A'}</p>
-              <p>{item.description || 'N/A'}</p>
-              <p>{item.owner?.email || 'N/A'}</p>
+              <p>{item.phone || "N/A"}</p>
+              <p>{item.description || "N/A"}</p>
+              <p>{item.owner?.email || "N/A"}</p>
+              <p>{item.isLocked ? "Locked" : "Active"}</p>{" "}
+              {/* Mới: Hiển thị status */}
               <div className="actions">
-                <p onClick={()=>editRestaurant(item)} className='cursor edit-btn'>✏️</p>
-                <p onClick={()=>removeRestaurant(item._id)} className='cursor remove-btn'>X</p>
+                <button
+                  onClick={() => toggleLock(item._id, !item.isLocked)}
+                  className="cursor lock-btn"
+                >
+                  {item.isLocked ? "Unlock" : "Lock"}
+                </button>
+                <p
+                  onClick={() => removeRestaurant(item._id)}
+                  className="cursor remove-btn"
+                >
+                  X
+                </p>{" "}
+                {/* Giữ remove nếu cần */}
               </div>
             </div>
-          )
-          
+          );
         })}
       </div>
-
-      {/* Thêm modal edit */}
-      {editingRestaurant && (
-        <EditRestaurant 
-          url={url}
-          restaurant={editingRestaurant}
-          onClose={closeEditModal}
-          onUpdate={fetchList}
-        />
-      )}
     </div>
-  )
-}
+  );
+};
 
-export default List
+export default ListRestaurant;

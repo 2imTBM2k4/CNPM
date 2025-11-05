@@ -1,10 +1,10 @@
-import React, { useState, useContext } from 'react';
-import { AuthContext } from '../../context/AuthContext';
-import './Login.css'; // Tạo file CSS cơ bản nếu muốn (ví dụ: form centered, inputs styled)
+import React, { useState, useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
+import "./Login.css";
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const { login } = useContext(AuthContext);
 
   const handleSubmit = (e) => {
@@ -31,13 +31,9 @@ const Login = () => {
           required
         />
         <button type="submit">Login</button>
-        {/* Nếu cần register: <p>Or <a href="/register">Register</a></p> */}
         <p>
-        Don't have an account?{' '}
-        <a href="/register" onClick={() => navigate('/register')}>
-          Register now
-        </a>
-      </p>
+          Don't have an account? <a href="/register">Register now</a>
+        </p>
       </form>
     </div>
   );

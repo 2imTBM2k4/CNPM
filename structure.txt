@@ -11,7 +11,6 @@ structure.txt
 .vscode\settings.json
 admin\public
 admin\src
-admin\.env
 admin\.eslintrc.cjs
 admin\index.html
 admin\package-lock.json
@@ -80,6 +79,7 @@ backend\migrate-images.js
 backend\package-lock.json
 backend\package.json
 backend\server.js
+backend\config\cloudinary.js
 backend\config\db.js
 backend\config\multer.js
 backend\controllers\cartController.js
@@ -88,6 +88,7 @@ backend\controllers\orderController.js
 backend\controllers\restaurantController.js
 backend\controllers\userController.js
 backend\middleware\auth.js
+backend\models\cartModel.cjs
 backend\models\categoryModel.cjs
 backend\models\foodModel.cjs
 backend\models\index.cjs
@@ -151,6 +152,19 @@ backend\uploads\restaurants\1761576633144.jpg
 backend\uploads\restaurants\1761577056446.jpg
 backend\uploads\restaurants\1761577107486.jpg
 backend\uploads\restaurants\1761611586430.jpg
+backend\uploads\restaurants\1762354320703.jpg
+backend\uploads\restaurants\1762354356371.jpg
+backend\uploads\restaurants\1762354552020.jpg
+backend\uploads\restaurants\1762355115290.jpg
+backend\uploads\restaurants\1762355623291.jpg
+backend\uploads\restaurants\1762355654688.jpg
+backend\uploads\restaurants\1762356175945.jpg
+backend\uploads\restaurants\1762356197453.jpg
+backend\uploads\restaurants\1762356210518.jpg
+backend\uploads\restaurants\1762356701839.jpg
+backend\uploads\restaurants\1762356849412.jpg
+backend\uploads\restaurants\1762357503538.jpg
+backend\uploads\restaurants\1762357973923.jpg
 restaurant\public
 restaurant\src
 restaurant\.env

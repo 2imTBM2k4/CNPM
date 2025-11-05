@@ -6,8 +6,8 @@ import {
   deleteRestaurant,
   getRestaurantById,
   lockRestaurant,
-} from "../controllers/restaurantController.js"; // Giả định named exports từ controller
-import { protect, optionalAuth } from "../middleware/auth.js"; // Sửa: named imports
+} from "../controllers/restaurantController.js";
+import { protect, optionalAuth } from "../middleware/auth.js";
 import { uploadMiddleware } from "../config/multer.js";
 
 const restaurantRouter = express.Router();
@@ -36,7 +36,8 @@ restaurantRouter.post(
 
 restaurantRouter.delete("/", protect, deleteRestaurant);
 
-restaurantRouter.get("/:id", protect, getRestaurantById); // Mới: Get single
-restaurantRouter.put("/:id/lock", protect, lockRestaurant); // Mới: Lock/unlock
+restaurantRouter.get("/:id", protect, getRestaurantById);
+
+restaurantRouter.put("/:id/lock", protect, lockRestaurant);
 
 export default restaurantRouter;

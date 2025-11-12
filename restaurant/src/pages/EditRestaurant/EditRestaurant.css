@@ -5,40 +5,82 @@
   color: var(--light-text);
   font-size: 16px;
 }
+
 .edit-restaurant form {
   gap: 20px;
 }
+
+.edit-restaurant .add-img-upload {
+  gap: 10px;
+}
+
 .edit-restaurant .add-img-upload img {
   width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid #ddd;
 }
+
+.edit-restaurant .add-img-upload img:hover {
+  border-color: #666;
+}
+
+.edit-restaurant .file-selected {
+  color: green;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
 .edit-restaurant .add-product-name,
 .edit-restaurant .add-product-description {
   width: max(40%, 280px);
 }
+
 .edit-restaurant .add-product-name input,
 .edit-restaurant .add-product-description textarea {
   padding: 10px;
   width: 100%;
   box-sizing: border-box;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }
+
+.edit-restaurant .add-product-name input:focus,
+.edit-restaurant .add-product-description textarea:focus {
+  outline: none;
+  border-color: #666;
+}
+
 .add-btn {
   max-width: 120px;
   border: none;
-  padding: 10px;
+  padding: 10px 20px;
   background-color: black;
   color: white;
   cursor: pointer;
+  border-radius: 4px;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.add-btn:hover {
+  background-color: #333;
 }
 
 label img[src*="assets/upload_area"] {
   filter: var(--upload);
 }
-.loading, .error {
+
+.loading,
+.error {
   text-align: center;
   padding: 20px;
   color: var(--light-text);
   font-size: 18px;
 }
+
 .error {
   color: red;
 }

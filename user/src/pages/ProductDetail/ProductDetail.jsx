@@ -1,27 +1,77 @@
-import React, { useContext, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import './ProductDetail.css';
-import { StoreContext } from '../../context/StoreContext';
-import { assets } from '../../assets/assets';
+import React, { useContext, useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import "./ProductDetail.css";
+import { StoreContext } from "../../context/StoreContext";
+import { assets } from "../../assets/assets";
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { food_list, cartItems, addToCart, removeFromCart, url } = useContext(StoreContext);
-  const [tempQuantity, setTempQuantity] = useState(1); // Bắt đầu từ 1
-  const [showCounter, setShowCounter] = useState(false); // Show/hide counter
+  const { food_list, cartItems, addToCart, url, isLoadingFoods } =
+    useContext(StoreContext);
+  const [tempQuantity, setTempQuantity] = useState(1);
+  const [showCounter, setShowCounter] = useState(false);
+  const [loading, setLoading] = useState(true); // NEW: Track detail loading
+  const [error, setError] = useState(null); // NEW: Error state
+  const [item, setItem] = useState(null); // NEW: Local state cho item (từ list hoặc fetch)
 
-  const item = food_list.find((product) => product._id === id);
+  // NEW: Fetch single nếu !item từ list
+  const fetchSingleProduct = async () => {
+    if (!id || item) return; // Đã có thì skip
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch(`${url}/api/food/${id}`);
+      const data = await res.json();
+      if (data.success) {
+        setItem(data.data);
+      } else {
+        throw new Error(data.message || "Product not found");
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (!item) {
+  // Effect: Tìm từ list, nếu không có + không loading → fetch single
+  useEffect(() => {
+    if (isLoadingFoods) {
+      setLoading(true); // Đợi list load
+      return;
+    }
+    const foundItem = food_list.find((product) => product._id === id);
+    if (foundItem) {
+      setItem(foundItem);
+      setLoading(false);
+    } else if (!loading) {
+      // Fallback fetch nếu list không có (hoặc list rỗng)
+      fetchSingleProduct();
+    } else {
+      setLoading(false);
+    }
+  }, [food_list, id, isLoadingFoods, loading]);
+
+  if (loading || isLoadingFoods) {
     return (
       <div className="product-detail">
-        <h2>Sản phẩm không tồn tại!</h2>
-        <button onClick={() => navigate('/')}>Quay về trang chủ</button>
+        <div className="loading">Đang tải sản phẩm...</div>
       </div>
     );
   }
+
+  if (error || (!item && !loading)) {
+    return (
+      <div className="product-detail">
+        <h2>{error || "Sản phẩm không tồn tại!"}</h2>
+        <button onClick={() => navigate("/")}>Quay về trang chủ</button>
+      </div>
+    );
+  }
+
+  // ... (giữ nguyên handleAddClick, handleRemoveTemp, handleConfirmAdd)
 
   const handleAddClick = () => {
     if (!showCounter) {
@@ -36,43 +86,44 @@ const ProductDetail = () => {
     if (tempQuantity > 1) {
       setTempQuantity(tempQuantity - 1);
     } else {
-      setTempQuantity(1); // Giữ ít nhất 1 sản phẩm
+      setTempQuantity(1);
       setShowCounter(false);
     }
   };
 
-  // SỬA: Chỉ toast nếu addToCart return true (thành công)
   const handleConfirmAdd = async () => {
     if (tempQuantity > 0) {
       const success = await addToCart(id, tempQuantity);
       if (success) {
         toast.success("Đã thêm vào giỏ hàng!");
-      }  // Không toast nếu false (chưa login, lỗi, etc.)
+      }
       setShowCounter(false);
       setTempQuantity(1);
     }
   };
 
-  // LUÔN hiển thị counter và nút thêm vào giỏ hàng, không kiểm tra cartItems
   return (
     <div className="product-detail">
-      {/* Nút back quay lại trang trước thay vì '/' */}
-      <button className="back-btn" onClick={() => navigate(-1)}>← Quay về</button>
+      <button className="back-btn" onClick={() => navigate(-1)}>
+        ← Quay về
+      </button>
       <div className="product-detail-container">
         <div className="product-detail-image">
-          {/* Sử dụng trực tiếp item.image vì đây là URL đầy đủ từ Cloudinary */}
           <img src={item.image} alt={item.name} />
         </div>
         <div className="product-detail-info">
           <div className="product-detail-name-rating">
             <h2>{item.name}</h2>
-            <img src={assets.rating_starts} alt="Rating" className="ratingstars" />
+            <img
+              src={assets.rating_starts}
+              alt="Rating"
+              className="ratingstars"
+            />
           </div>
           <p className="product-detail-desc">{item.description}</p>
           <p className="product-detail-price">${item.price}</p>
           <div className="product-detail-cart">
             {!showCounter ? (
-              // Hiển thị nút Add ban đầu
               <img
                 className="add-detail"
                 onClick={handleAddClick}
@@ -80,12 +131,19 @@ const ProductDetail = () => {
                 alt="Add to cart"
               />
             ) : (
-              // Hiển thị counter và nút xác nhận
               <div className="product-detail-counter-section">
                 <div className="temp-counter">
-                  <img onClick={handleRemoveTemp} src={assets.remove_icon_red} alt="-" />
+                  <img
+                    onClick={handleRemoveTemp}
+                    src={assets.remove_icon_red}
+                    alt="-"
+                  />
                   <p className="temp-quantity">{tempQuantity}</p>
-                  <img onClick={handleAddClick} src={assets.add_icon_green} alt="+" />
+                  <img
+                    onClick={handleAddClick}
+                    src={assets.add_icon_green}
+                    alt="+"
+                  />
                 </div>
                 <button className="confirm-btn" onClick={handleConfirmAdd}>
                   Thêm vào giỏ hàng

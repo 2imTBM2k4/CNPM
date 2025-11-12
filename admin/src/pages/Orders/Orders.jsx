@@ -45,6 +45,11 @@ const Orders = ({ url }) => {
               <p className="order-item-name">
                 {order.shippingAddress.fullName}
               </p>
+            {order.restaurantId && (
+              <p className="order-item-restaurant">
+                Restaurant: {order.restaurantId.name}
+              </p>
+            )}
               <div className="order-item-address">
                 <p>{order.shippingAddress.address},</p>
                 <p>

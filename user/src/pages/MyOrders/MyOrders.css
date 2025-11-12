@@ -188,6 +188,24 @@
   border-top: 1px solid #e2e8f0;
 }
 
+.view-delivery-btn {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-right: 0.5rem;
+}
+
+.view-delivery-btn:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
 .confirm-received-btn {
   background: #48bb78;
   color: white;
@@ -196,11 +214,38 @@
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
 }
 
-.confirm-received-btn:hover {
+.confirm-received-btn:hover:not(:disabled) {
   background: #38a169;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(72, 187, 120, 0.3);
+}
+
+.confirm-received-btn.disabled {
+  background: #cbd5e0;
+  color: #a0aec0;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.confirm-received-btn.enabled {
+  background: #48bb78;
+  color: white;
+  cursor: pointer;
+  opacity: 1;
+  animation: pulse-button 2s infinite;
+}
+
+@keyframes pulse-button {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(72, 187, 120, 0);
+  }
 }
 
 .cancel-reason {
@@ -231,4 +276,67 @@
   .order-status {
     align-self: flex-start;
   }
+}
+
+/* Drone Modal Styles */
+.drone-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.drone-modal-content {
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  max-width: 1000px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.drone-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.drone-modal-close:hover {
+  background: rgba(0, 0, 0, 0.7);
+  transform: rotate(90deg);
+}
+
+.drone-modal-actions {
+  padding: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: center;
+}
+
+.drone-modal-actions .confirm-received-btn {
+  width: 100%;
+  max-width: 400px;
 }

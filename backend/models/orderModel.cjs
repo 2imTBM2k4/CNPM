@@ -61,7 +61,7 @@ const orderSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      required: true,
+      // required: true,
       enum: ["Card", "COD", "PayPal"],
     },
     paymentResult: {
@@ -110,6 +110,11 @@ const orderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Restaurant",
       required: true,
+    },
+    paypalOrderId: {
+      // THÊM: Lưu trữ Order ID từ PayPal
+      type: String,
+      default: null,
     },
   },
   {

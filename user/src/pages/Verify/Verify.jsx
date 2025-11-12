@@ -1,38 +1,63 @@
-import React, { useEffect } from 'react'
-import './Verify.css'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useContext } from 'react';
-import { StoreContext } from '../../context/StoreContext';
-import axios from 'axios';
+import React, { useEffect } from "react";
+import "./Verify.css";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useContext } from "react";
+import { StoreContext } from "../../context/StoreContext";
+import axios from "axios";
 
 const Verify = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const success = searchParams.get("success");
+  const orderId = searchParams.get("orderId");
+  const { url, token } = useContext(StoreContext); // THÊM: token
+  const navigate = useNavigate();
 
-    const [searchParams,setSearchParams] = useSearchParams();
-    const success = searchParams.get("success")
-    const orderId = searchParams.get("orderId")
-    const {url} = useContext(StoreContext);
-    const navigate = useNavigate();
-
-    const verifyPayment = async () => {
-        const response = await axios.post(url+"/api/order/verify",{success,orderId});
-        if (response.data.success){
-            navigate("/myorders");
-        }
-        else {
-            navigate("/")
-        }
+  const verifyPayment = async () => {
+    if (!orderId) {
+      toast.error("Invalid order");
+      navigate("/");
+      return;
     }
 
+    try {
+      // Normalize success
+      const isSuccess = success === "true";
+      const response = await axios.post(
+        `${url}/api/order/verify`,
+        {
+          success: isSuccess, // Boolean
+          orderId,
+        },
+        {
+          headers: token ? { token } : {}, // THÊM: Token nếu có
+        }
+      );
+      if (response.data.success) {
+        toast.success("Payment verified! Check My Orders.");
+        navigate("/myorders");
+      } else {
+        toast.error("Payment failed");
+        navigate("/");
+      }
+    } catch (error) {
+      console.error("Verify error:", error);
+      toast.error("Verification error");
+      navigate("/");
+    }
+  };
 
-    useEffect(()=>{
-        verifyPayment();
-    },[])
+  useEffect(() => {
+    if (orderId) {
+      verifyPayment();
+    }
+  }, [orderId]);
 
   return (
-    <div className='verify'>
-        <div className="spinner"></div>
+    <div className="verify">
+      <div className="spinner"></div>
+      <p>Verifying payment...</p> {/* THÊM: UI feedback */}
     </div>
-  )
-}
+  );
+};
 
-export default Verify
+export default Verify;

@@ -3,36 +3,39 @@ import {
   registerUser,
   loginUser,
   lockUser,
-  getMe, // Thay getProfile bằng getMe nếu controller dùng getMe (dựa trên code gốc)
+  getMe,
   updateUserAddress,
   listUsers,
   updateUserByAdmin,
   deleteUser,
   getStats,
-  logoutUser, // Thêm nếu có
-  updateProfile, // Thay nếu cần
-} from "../controllers/userController.js"; // Đảm bảo controller có named exports
+  logoutUser,
+  updateProfile,
+} from "../controllers/userController.js";
 
-import { protect } from "../middleware/auth.js"; // Named import
+import { protect } from "../middleware/auth.js";
 
 const userRouter = express.Router();
 
+// ============ PUBLIC ROUTES ============
 userRouter.post("/register", registerUser);
 userRouter.post("/login", loginUser);
-userRouter.post("/lock", protect, lockUser);
-userRouter.get("/me", protect, getMe); // Thay getProfile bằng getMe để khớp
+userRouter.post("/logout", logoutUser);
+
+// ============ PROTECTED ROUTES ============
+userRouter.get("/me", protect, getMe);
 userRouter.put("/update-address", protect, updateUserAddress);
+userRouter.put("/profile", protect, updateProfile);
 
-// User CRUD for admin
+// ============ ADMIN ROUTES ============
 userRouter.get("/list", protect, listUsers);
-userRouter.post("/update", protect, updateUserByAdmin);
-userRouter.post("/delete", protect, deleteUser);
-
-// Mới: Stats route
 userRouter.get("/stats", protect, getStats);
 
-// Thêm nếu có từ code gốc
-userRouter.post("/logout", logoutUser);
-userRouter.put("/update", protect, updateProfile);
+// QUAN TRỌNG: Đặt route /lock TRƯỚC các route dynamic khác
+userRouter.post("/lock", protect, lockUser);
+
+// Các route update và delete
+userRouter.put("/update-by-admin", protect, updateUserByAdmin);
+userRouter.delete("/delete", protect, deleteUser);
 
 export default userRouter;

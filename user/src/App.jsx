@@ -1,4 +1,5 @@
 import React from "react";
+import "leaflet/dist/leaflet.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Navbar from "./components/Navbar/Navbar";
@@ -13,7 +14,7 @@ import Verify from "./pages/Verify/Verify";
 import MyOrders from "./pages/MyOrders/MyOrders";
 import ProductDetail from "./pages/ProductDetail/ProductDetail";
 import { StoreContext } from "./context/StoreContext";
-import StoreContextProvider from "./context/StoreContext";
+// Removed duplicate provider; App is already wrapped in provider in main.jsx
 import FoodPage from "./pages/Food/FoodPage"; // Giữ nhưng có thể comment nếu không cần
 import RestaurantPage from "./pages/Restaurant/RestaurantPage"; // Thêm import
 import Payment from "./pages/Payment/Payment";
@@ -21,29 +22,27 @@ const App = () => {
   const { showLogin, setShowLogin } = useContext(StoreContext);
 
   return (
-    <StoreContextProvider>
-      <>
-        {showLogin ? <LoginPopup setShowLogin={setShowLogin} /> : <></>}
-        <div className="main-content">
-          <Navbar setShowLogin={setShowLogin} />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/restaurant/:id" element={<RestaurantPage />} />{" "}
-            {/* Thêm route */}
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/order" element={<PlaceOrder />} />
-            <Route path="/verify" element={<Verify />} />
-            <Route path="/myorders" element={<MyOrders />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/placeorder" element={<PlaceOrder />} />{" "}
-            {/* Nếu chưa có */}
-            <Route path="/payment" element={<Payment />} /> {/* Add này */}
-          </Routes>
-        </div>
-        <Footer />
-        <ToastContainer />
-      </>
-    </StoreContextProvider>
+    <>
+      {showLogin ? <LoginPopup setShowLogin={setShowLogin} /> : <></>}
+      <div className="main-content">
+        <Navbar setShowLogin={setShowLogin} />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/restaurant/:id" element={<RestaurantPage />} />{" "}
+          {/* Thêm route */}
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/order" element={<PlaceOrder />} />
+          <Route path="/verify" element={<Verify />} />
+          <Route path="/myorders" element={<MyOrders />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/placeorder" element={<PlaceOrder />} />{" "}
+          {/* Nếu chưa có */}
+          <Route path="/payment" element={<Payment />} /> {/* Add này */}
+        </Routes>
+      </div>
+      <Footer />
+      <ToastContainer />
+    </>
   );
 };
 

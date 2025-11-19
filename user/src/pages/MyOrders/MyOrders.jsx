@@ -2,11 +2,15 @@ import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { StoreContext } from "../../context/StoreContext";
 import { toast } from "react-toastify";
+import DroneDelivery from "../../components/DroneDelivery/DroneDelivery";
 import "./MyOrders.css"; // Giả sử bạn có file CSS này cho style nhất quán với light mode
 
 const MyOrders = () => {
   const { url, token } = useContext(StoreContext);
   const [orders, setOrders] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showDroneModal, setShowDroneModal] = useState(false);
+  const [canReceiveOrder, setCanReceiveOrder] = useState({});
 
   const fetchOrders = async () => {
     if (!token) return;
@@ -32,8 +36,6 @@ const MyOrders = () => {
         paidAt: new Date().toISOString(),
       };
 
-      console.log("Sending confirm received for order:", orderId); // Debug
-
       const response = await axios.post(`${url}/api/order/status`, payload, {
         // Sửa route thành /status
         headers: { Authorization: `Bearer ${token}` },
@@ -42,15 +44,29 @@ const MyOrders = () => {
       if (response.data.success) {
         toast.success("Đã xác nhận nhận hàng!");
         fetchOrders();
+        setShowDroneModal(false);
+        setSelectedOrder(null);
       } else {
         toast.error(response.data.message || "Cập nhật thất bại");
       }
     } catch (error) {
-      console.error(
-        "Confirm received error:",
-        error.response?.data || error.message
-      ); // Debug chi tiết
-      toast.error("Cập nhật thất bại. Kiểm tra console để xem lỗi.");
+      toast.error("Cập nhật thất bại");
+    }
+  };
+
+  const handleViewDelivery = (order) => {
+    if (order.orderStatus === "delivering") {
+      setSelectedOrder(order);
+      setShowDroneModal(true);
+    }
+  };
+
+  const handleDeliveryComplete = () => {
+    if (selectedOrder) {
+      setCanReceiveOrder((prev) => ({
+        ...prev,
+        [selectedOrder._id]: true,
+      }));
     }
   };
 
@@ -157,8 +173,17 @@ const MyOrders = () => {
               {order.orderStatus === "delivering" && (
                 <div className="order-actions">
                   <button
+                    onClick={() => handleViewDelivery(order)}
+                    className="view-delivery-btn"
+                  >
+                    🚁 Xem chi tiết giao hàng
+                  </button>
+                  <button
                     onClick={() => confirmReceived(order._id)}
-                    className="confirm-received-btn"
+                    className={`confirm-received-btn ${
+                      canReceiveOrder[order._id] ? "enabled" : "disabled"
+                    }`}
+                    disabled={!canReceiveOrder[order._id]}
                   >
                     ✅ Xác nhận đã nhận hàng
                   </button>
@@ -172,6 +197,40 @@ const MyOrders = () => {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Drone Delivery Modal */}
+      {showDroneModal && selectedOrder && (
+        <div
+          className="drone-modal-overlay"
+          onClick={() => setShowDroneModal(false)}
+        >
+          <div
+            className="drone-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="drone-modal-close"
+              onClick={() => setShowDroneModal(false)}
+            >
+              ✕
+            </button>
+            <DroneDelivery
+              order={selectedOrder}
+              onDeliveryComplete={handleDeliveryComplete}
+            />
+            {canReceiveOrder[selectedOrder._id] && (
+              <div className="drone-modal-actions">
+                <button
+                  onClick={() => confirmReceived(selectedOrder._id)}
+                  className="confirm-received-btn enabled"
+                >
+                  ✅ Xác nhận đã nhận hàng
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

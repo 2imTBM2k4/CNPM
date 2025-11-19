@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 export const AuthContext = createContext();
 
@@ -41,11 +42,14 @@ export const AuthProvider = ({ children }) => {
         throw new Error("Response not JSON - Likely server error page");
       }
       const data = await response.json();
+
       if (data.success) {
-        let fetchedUser = data.user;
-        if (!fetchedUser) {
+        // FIX: Handle fallback cho data.data.user, data.user, hoặc data.data trực tiếp là user object
+        let fetchedUser = data.data?.user || data.user || data.data;
+        if (!fetchedUser || !fetchedUser._id) {
           throw new Error("User data is missing in response");
         }
+
         if (
           fetchedUser.restaurantId &&
           typeof fetchedUser.restaurantId === "object"
@@ -54,18 +58,13 @@ export const AuthProvider = ({ children }) => {
             fetchedUser.restaurantId._id || fetchedUser.restaurantId.toString();
         }
 
-        // Fetch balance tùy role với debug logs
+        // Fetch balance tùy role
         if (fetchedUser.role === "admin") {
           fetchedUser.walletBalance = fetchedUser.balance || 0;
-          console.log("Admin balance:", fetchedUser.walletBalance);
         } else if (
           fetchedUser.role === "restaurant_owner" &&
           fetchedUser.restaurantId
         ) {
-          console.log(
-            "Fetching restaurant data for ID:",
-            fetchedUser.restaurantId
-          );
           const restaurantResponse = await fetch(
             `${apiUrl}/api/restaurant/${fetchedUser.restaurantId}`,
             {
@@ -73,48 +72,35 @@ export const AuthProvider = ({ children }) => {
               headers: { Authorization: `Bearer ${token}` },
             }
           );
-          console.log("Restaurant API status:", restaurantResponse.status);
           if (restaurantResponse.ok) {
             const restaurantData = await restaurantResponse.json();
-            console.log("Restaurant data received:", restaurantData);
-            if (restaurantData.success && restaurantData.data) {
-              fetchedUser.walletBalance = restaurantData.data.balance || 0;
-              console.log(
-                "Restaurant balance set to:",
-                fetchedUser.walletBalance
-              );
-            } else {
-              fetchedUser.walletBalance = 0;
-              console.warn(
-                "Failed to fetch valid restaurant data:",
-                restaurantData
-              );
-            }
+            // FIX: Handle consistent { success, data } hoặc direct data
+            let restaurantBalance =
+              restaurantData.data?.balance || restaurantData.balance || 0;
+            fetchedUser.walletBalance = restaurantBalance;
           } else {
             fetchedUser.walletBalance = 0;
-            console.warn(
-              "Restaurant API response not OK:",
-              restaurantResponse.status
-            );
           }
         } else {
           fetchedUser.walletBalance = 0;
-          console.log("No balance for this role.");
         }
 
         setUser(fetchedUser);
         if (fetchedUser.restaurantId) {
           localStorage.setItem("restaurantId", fetchedUser.restaurantId);
         }
+        return fetchedUser; // Return user để có thể check ngay
       } else {
         localStorage.removeItem("token");
         localStorage.removeItem("restaurantId");
+        return null;
       }
     } catch (error) {
       console.error("Fetch user info error:", error);
       localStorage.removeItem("token");
       localStorage.removeItem("restaurantId");
       setUser(null);
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -129,21 +115,51 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({ email, password }),
       });
       const data = await response.json();
+      console.log("Login full response:", data); // DEBUG
+
       if (data.success) {
-        localStorage.setItem("token", data.token);
-        await fetchUserInfo(data.token);
-        navigate("/list");
+        const token = data.data?.token || data.token;
+        if (!token) {
+          throw new Error("Token missing in login response");
+        }
+        localStorage.setItem("token", token);
+        const fetchedUser = await fetchUserInfo(token);
+        // SỬA: Check user từ return value thay vì state (vì state update async)
+        if (fetchedUser && fetchedUser._id) {
+          // Delay navigation để toast kịp hiển thị
+          setTimeout(() => {
+            navigate("/list");
+          }, 500);
+        } else {
+          // User không tồn tại hoặc bị lock (đã được handle trong fetchUserInfo hoặc backend)
+          toast.error(
+            "Login failed: Account pending admin approval. Please wait."
+          );
+          localStorage.removeItem("token");
+          localStorage.removeItem("restaurantId");
+          setUser(null);
+        }
       } else {
-        alert(data.message || "Login failed");
+        // SỬA: Specific toast từ backend message
+        const msg = data.message || "Login failed";
+        toast.error(
+          msg.includes("pending") ? "Your restaurant is pending approval." : msg
+        );
       }
     } catch (error) {
-      console.error(error);
-      alert("Error during login");
+      console.error("Login error:", error);
+      toast.error(
+        error.message.includes("pending") || error.message.includes("locked")
+          ? "Your restaurant account is pending admin approval."
+          : "Error during login. Please try again."
+      );
+      localStorage.removeItem("token");
+      localStorage.removeItem("restaurantId");
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
   };
-
   const register = async (formData) => {
     try {
       setIsLoading(true);
@@ -156,15 +172,18 @@ export const AuthProvider = ({ children }) => {
         }),
       });
       const data = await response.json();
+      console.log("Register response:", data); // DEBUG
+
       if (data.success) {
-        // Không set token, không fetchUserInfo, không navigate('/list')
-        return data; // Return để Register.jsx xử lý toast & navigate('/login')
+        return data; // Success, không throw
       } else {
+        // SỬA: Throw với message cụ thể
         throw new Error(data.message || "Register failed");
       }
     } catch (error) {
-      console.error(error);
-      throw new Error("Error during register");
+      console.error("Register error:", error);
+      // SỬA: Re-throw với detail
+      throw new Error(error.message || "Error during register");
     } finally {
       setIsLoading(false);
     }

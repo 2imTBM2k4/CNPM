@@ -36,6 +36,12 @@ const Sidebar = ({ mobileOpen = false, onMobileToggle }) => {
       label: "Orders",
       className: "orderr",
     },
+    {
+      path: "/drones",
+      icon: assets.parcel_icon,
+      label: "Drones",
+      className: "drones",
+    },
   ];
 
   // SỬA: Function toggle cho mobile (gọi khi click close button hoặc menu item)

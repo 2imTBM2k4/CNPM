@@ -14,7 +14,7 @@ const restaurantSchema = new mongoose.Schema(
       required: true,
     },
     balance: { type: Number, default: 0 },
-    isLocked: { type: Boolean, default: false },
+    isLocked: { type: Boolean, default: true }, // SỬA: Default true để khóa tài khoản mới (chờ admin duyệt)
   },
   { timestamps: true }
 );

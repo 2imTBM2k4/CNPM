@@ -126,9 +126,9 @@ const Login = ({ url }) => {
     try {
       await login(email, password);
       toast.success("Login successful!");
+      setLoading(false);
     } catch (error) {
       toast.error(error.message || "Login failed");
-    } finally {
       setLoading(false);
     }
   };

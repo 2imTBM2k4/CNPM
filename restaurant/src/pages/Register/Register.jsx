@@ -6,6 +6,7 @@ import "./Register.css";
 
 const Register = () => {
   const [formData, setFormData] = useState({
+    name: "", // Thêm field: Tên chủ sở hữu (owner name)
     restaurantName: "",
     address: "",
     phone: "",
@@ -22,19 +23,32 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      console.log("Register submit data:", formData); // DEBUG: Check data gửi
       // Thêm role vào formData
       const registerData = { ...formData, role: "restaurant_owner" };
-      const response = await register(registerData); // Giả sử register return response
+      const response = await register(registerData);
+      console.log("Register response received:", response); // DEBUG: Check response
 
-      if (response.success) {
+      if (response && response.success) {
+        // SỬA: Check response tồn tại và success
         toast.success("Registration successful! Please login to continue.");
         navigate("/login");
       } else {
-        toast.error(response.message || "Registration failed.");
+        // SỬA: Handle specific message nếu !success
+        const errorMsg =
+          response?.message || "Registration failed. Please check your inputs.";
+        toast.error(errorMsg);
       }
     } catch (error) {
-      console.error("Register error:", error);
-      toast.error("Error during registration. Please try again.");
+      // SỬA: Customize toast dựa trên error.message (từ backend hoặc generic)
+      let message = "Error during registration. Please try again.";
+      if (error.message.includes("User already exists")) {
+        message =
+          "Email already registered. Please use another email or login.";
+      } else if (error.message.includes("pending")) {
+        message = "Account pending approval. Please wait for admin.";
+      }
+      toast.error(message);
     }
   };
 
@@ -42,6 +56,15 @@ const Register = () => {
     <div className="register-container">
       <form className="register-form" onSubmit={handleSubmit}>
         <h2>Register Restaurant Account</h2>
+        {/* Thêm input cho owner name */}
+        <input
+          type="text"
+          name="name"
+          placeholder="Owner Full Name"
+          value={formData.name}
+          onChange={handleChange}
+          required
+        />
         <input
           type="text"
           name="restaurantName"

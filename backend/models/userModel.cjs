@@ -34,11 +34,13 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
     address: {
-      street: String,
-      city: String,
-      state: String,
-      country: String,
-      zipCode: String,
+      fullName: { type: String, default: "" },
+      address: { type: String, default: "" },
+      city: { type: String, default: "" },
+      state: { type: String, default: "" },
+      country: { type: String, default: "" },
+      zipCode: { type: String, default: "" },
+      phone: { type: String, default: "" },
     },
     cart: [
       {

@@ -1,0 +1,374 @@
+import * as orderRepo from "../repositories/orderRepository.js";
+import * as restaurantRepo from "../repositories/restaurantRepository.js";
+import * as droneRepo from "../repositories/droneRepository.js";
+import crypto from "crypto";
+
+/**
+ * Lấy thông tin địa chỉ đầy đủ cho drone delivery
+ */
+export const getDeliveryAddresses = async (orderId) => {
+  const order = await orderRepo.findById(orderId);
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  let restaurant;
+  if (order.restaurantId && typeof order.restaurantId === 'object' && order.restaurantId._id) {
+    restaurant = order.restaurantId;
+  } else {
+    restaurant = await restaurantRepo.findById(order.restaurantId);
+  }
+  
+  if (!restaurant) {
+    throw new Error("Restaurant not found");
+  }
+
+  const customerAddress = order.shippingAddress;
+  if (!customerAddress) {
+    throw new Error("Customer address not found");
+  }
+
+  const customerFullAddress = [
+    customerAddress.address,
+    customerAddress.city,
+    customerAddress.state,
+    customerAddress.country,
+    customerAddress.zipCode,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  return {
+    success: true,
+    data: {
+      restaurant: {
+        name: restaurant.name,
+        address: restaurant.address,
+      },
+      customer: {
+        fullName: customerAddress.fullName,
+        address: customerFullAddress,
+        phone: customerAddress.phone,
+      },
+      orderId: order._id.toString(),
+      orderStatus: order.orderStatus,
+    },
+  };
+};
+
+/**
+ * Kiểm tra xem drone có thể bắt đầu giao hàng không
+ */
+export const canStartDelivery = async (orderId) => {
+  const order = await orderRepo.findById(orderId);
+  if (!order) {
+    return false;
+  }
+  return order.orderStatus === "delivering";
+};
+
+/**
+ * Tạo QR code cho đơn hàng
+ */
+export const generateQRCode = (orderId) => {
+  const hash = crypto.createHash("sha256");
+  hash.update(`${orderId}-${Date.now()}-${process.env.JWT_SECRET || "secret"}`);
+  return hash.digest("hex").substring(0, 16).toUpperCase();
+};
+
+/**
+ * Gán drone cho đơn hàng và tạo QR code
+ */
+export const assignDroneToOrder = async (orderId, droneId) => {
+  const order = await orderRepo.findById(orderId);
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  const drone = await droneRepo.findById(droneId);
+  if (!drone) {
+    throw new Error("Drone not found");
+  }
+
+  if (drone.status !== "available") {
+    throw new Error("Drone is not available");
+  }
+
+  // Tạo QR code
+  const qrCode = generateQRCode(orderId);
+
+  // Tính trọng lượng hàng (giả lập: random từ 500g đến 2000g)
+  const cargoWeight = Math.floor(Math.random() * 1500) + 500; // 500-2000g
+
+  // Cập nhật order
+  order.droneId = droneId;
+  order.qrCode = qrCode;
+  order.orderStatus = "delivering";
+  await order.save();
+
+  // Cập nhật drone với trọng lượng khoang hàng
+  drone.status = "delivering";
+  drone.currentOrder = orderId;
+  drone.cargoWeight = cargoWeight; // Set trọng lượng khi bắt đầu giao
+  await drone.save();
+
+  return {
+    success: true,
+    message: "Drone assigned successfully",
+    data: {
+      orderId: order._id,
+      droneId: drone._id,
+      droneCode: drone.droneCode,
+      qrCode,
+      cargoWeight,
+    },
+  };
+};
+
+/**
+ * Quét QR code (demo: khách hàng nhấn nút xác nhận)
+ */
+export const scanQRCode = async (orderId, qrCode) => {
+  const order = await orderRepo.findById(orderId);
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  if (!order.qrCode) {
+    throw new Error("Order does not have QR code");
+  }
+
+  if (order.qrCode !== qrCode) {
+    throw new Error("Invalid QR code");
+  }
+
+  if (order.qrScanned) {
+    throw new Error("QR code already scanned");
+  }
+
+  // Đánh dấu đã quét QR
+  order.qrScanned = true;
+  order.qrScannedAt = new Date();
+  await order.save();
+
+  // Mở nắp khoang hàng của drone
+  if (order.droneId) {
+    const drone = await droneRepo.findById(order.droneId);
+    if (drone) {
+      drone.cargoLidStatus = "open";
+      await drone.save();
+
+      // Tự động đóng nắp sau 5 giây (trong thực tế sẽ là 5 phút)
+      setTimeout(async () => {
+        await closeCargoLid(order.droneId, orderId);
+      }, 5000);
+    }
+  }
+
+  return {
+    success: true,
+    message: "QR code scanned successfully. Cargo lid is opening...",
+    data: {
+      qrScanned: true,
+      qrScannedAt: order.qrScannedAt,
+    },
+  };
+};
+
+/**
+ * Đóng nắp khoang hàng
+ */
+export const closeCargoLid = async (droneId, orderId) => {
+  const drone = await droneRepo.findById(droneId);
+  if (!drone) {
+    return;
+  }
+
+  const order = await orderRepo.findById(orderId);
+  if (!order) {
+    return;
+  }
+
+  // Đóng nắp
+  drone.cargoLidStatus = "closed";
+  
+  // Giả lập: Khách hàng đã lấy hàng, trọng lượng giảm về 0
+  drone.cargoWeight = 0;
+  
+  // Đánh dấu đã kiểm tra khoang hàng (trọng lượng = 0)
+  order.cargoChecked = true;
+  
+  await drone.save();
+  await order.save();
+
+  return {
+    success: true,
+    message: "Cargo lid closed",
+  };
+};
+
+/**
+ * Xác nhận đã nhận hàng (khách hàng nhấn nút)
+ */
+export const confirmDelivery = async (orderId) => {
+  const order = await orderRepo.findById(orderId);
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  // Kiểm tra điều kiện: QR đã quét + nắp đã đóng (cargoChecked)
+  if (!order.qrScanned) {
+    throw new Error("QR code has not been scanned yet");
+  }
+
+  if (!order.cargoChecked) {
+    throw new Error("Cargo has not been checked yet. Please wait for the lid to close.");
+  }
+
+  // Cập nhật trạng thái đơn hàng
+  order.orderStatus = "delivered";
+  order.isDelivered = true;
+  order.deliveredAt = new Date();
+  await order.save();
+
+  // Cập nhật drone: Về trạng thái sẵn sàng, reset trọng lượng về 0
+  if (order.droneId) {
+    const drone = await droneRepo.findById(order.droneId);
+    if (drone) {
+      drone.status = "available"; // Chuyển về sẵn sàng để nhận đơn mới
+      drone.currentOrder = null;
+      drone.cargoWeight = 0; // Reset trọng lượng về 0
+      drone.cargoLidStatus = "closed"; // Đảm bảo nắp đóng
+      drone.totalDeliveries += 1; // Tăng số lần giao hàng
+      await drone.save();
+    }
+  }
+
+  return {
+    success: true,
+    message: "Delivery confirmed successfully. Drone is now available for new orders.",
+    data: {
+      orderId: order._id,
+      deliveredAt: order.deliveredAt,
+    },
+  };
+};
+
+/**
+ * Lấy danh sách tất cả drone (Admin)
+ */
+export const getAllDrones = async () => {
+  const drones = await droneRepo.findAll();
+  return {
+    success: true,
+    data: drones,
+  };
+};
+
+/**
+ * Tạo drone mới (Admin)
+ */
+export const createDrone = async (droneData) => {
+  const existingDrone = await droneRepo.findByCode(droneData.droneCode);
+  if (existingDrone) {
+    throw new Error("Drone code already exists");
+  }
+
+  const drone = await droneRepo.create(droneData);
+  return {
+    success: true,
+    message: "Drone created successfully",
+    data: drone,
+  };
+};
+
+/**
+ * Cập nhật drone (Admin)
+ */
+export const updateDrone = async (droneId, updateData) => {
+  const drone = await droneRepo.findById(droneId);
+  if (!drone) {
+    throw new Error("Drone not found");
+  }
+
+  // Nếu thay đổi droneCode, kiểm tra trùng
+  if (updateData.droneCode && updateData.droneCode !== drone.droneCode) {
+    const existingDrone = await droneRepo.findByCode(updateData.droneCode);
+    if (existingDrone) {
+      throw new Error("Drone code already exists");
+    }
+  }
+
+  const updatedDrone = await droneRepo.update(droneId, updateData);
+  return {
+    success: true,
+    message: "Drone updated successfully",
+    data: updatedDrone,
+  };
+};
+
+/**
+ * Xóa drone (Admin)
+ */
+export const deleteDrone = async (droneId) => {
+  const drone = await droneRepo.findById(droneId);
+  if (!drone) {
+    throw new Error("Drone not found");
+  }
+
+  if (drone.status === "delivering") {
+    throw new Error("Cannot delete drone that is currently delivering");
+  }
+
+  await droneRepo.deleteById(droneId);
+  return {
+    success: true,
+    message: "Drone deleted successfully",
+  };
+};
+
+/**
+ * Lấy thông tin chi tiết drone
+ */
+export const getDroneById = async (droneId) => {
+  const drone = await droneRepo.findById(droneId);
+  if (!drone) {
+    throw new Error("Drone not found");
+  }
+
+  return {
+    success: true,
+    data: drone,
+  };
+};
+
+/**
+ * Cập nhật trọng lượng khoang hàng (giả lập cảm biến)
+ */
+export const updateCargoWeight = async (droneId, weight) => {
+  const drone = await droneRepo.findById(droneId);
+  if (!drone) {
+    throw new Error("Drone not found");
+  }
+
+  drone.cargoWeight = weight;
+  await drone.save();
+
+  // Nếu trọng lượng = 0 và nắp đang đóng, đánh dấu đã kiểm tra khoang hàng
+  if (weight === 0 && drone.cargoLidStatus === "closed" && drone.currentOrder) {
+    const order = await orderRepo.findById(drone.currentOrder);
+    if (order) {
+      order.cargoChecked = true;
+      await order.save();
+    }
+  }
+
+  return {
+    success: true,
+    message: "Cargo weight updated",
+    data: {
+      droneId: drone._id,
+      cargoWeight: drone.cargoWeight,
+    },
+  };
+};

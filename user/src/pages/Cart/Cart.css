@@ -226,3 +226,38 @@
     font-size: 14px;
   }
 }
+.loading-skeleton .skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  height: 20px;
+  border-radius: 4px;
+  margin: 5px 0;
+}
+.loading-skeleton .cart-item-image .skeleton {
+  width: 60px;
+  height: 60px;
+}
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+.error-item {
+  color: #ff6b6b;
+  text-align: center;
+  padding: 10px;
+  background: #ffeaea;
+  border-radius: 4px;
+}
+.error-item button {
+  background: #ff6b6b;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}

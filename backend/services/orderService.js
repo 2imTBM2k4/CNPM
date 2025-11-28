@@ -264,15 +264,26 @@ export const updateStatus = async (user, updateData) => {
     }
     // ... (tương tự các check khác từ code gốc)
   } else if (user.role === "user") {
-    if (status !== "delivered") {
-      throw new Error("Only delivered status allowed for users");
-    }
+    // Kiểm tra quyền sở hữu đơn hàng
     if (order.user._id.toString() !== user._id.toString()) {
-      // FIX: Dùng order.user._id thay vì order.user
       throw new Error("Unauthorized: Not your order");
     }
-    if (order.orderStatus !== "delivering") {
-      throw new Error("Cannot mark received yet (not delivering)");
+    
+    // User có thể: delivered hoặc cancelled (timeout)
+    if (status === "delivered") {
+      if (order.orderStatus !== "delivering") {
+        throw new Error("Cannot mark received yet (not delivering)");
+      }
+    } else if (status === "cancelled") {
+      // Cho phép user hủy đơn khi timeout (đang ở trạng thái delivering)
+      if (order.orderStatus !== "delivering") {
+        throw new Error("Cannot cancel order (not delivering)");
+      }
+      if (!reason || reason.trim() === "") {
+        throw new Error("Reason required for cancellation");
+      }
+    } else {
+      throw new Error("Only delivered or cancelled status allowed for users");
     }
   } else if (user.role !== "admin") {
     throw new Error("Unauthorized: Invalid role");
@@ -281,6 +292,19 @@ export const updateStatus = async (user, updateData) => {
   const updateDataObj = { orderStatus: status };
   if (status === "cancelled" && reason) {
     updateDataObj.reason = reason.trim();
+    
+    // Giải phóng drone khi đơn hàng bị hủy
+    if (order.droneId) {
+      const droneRepo = await import("../repositories/droneRepository.js");
+      const drone = await droneRepo.findById(order.droneId);
+      if (drone) {
+        drone.status = "available";
+        drone.currentOrder = null;
+        drone.cargoWeight = 0;
+        drone.cargoLidStatus = "closed";
+        await drone.save();
+      }
+    }
   }
 
   if (status === "delivered") {

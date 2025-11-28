@@ -136,6 +136,11 @@ const orderSchema = new mongoose.Schema(
       default: null,
       comment: "Drone được gán để giao đơn hàng này",
     },
+    droneArrivedAt: {
+      type: Date,
+      default: null,
+      comment: "Thời điểm drone tới địa chỉ khách hàng",
+    },
     cargoChecked: {
       type: Boolean,
       default: false,

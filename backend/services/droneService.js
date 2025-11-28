@@ -78,6 +78,7 @@ export const generateQRCode = (orderId) => {
 
 /**
  * Gán drone cho đơn hàng và tạo QR code
+ * Sau khi gán, bắt đầu đếm ngược 20s timeout
  */
 export const assignDroneToOrder = async (orderId, droneId) => {
   const order = await orderRepo.findById(orderId);
@@ -104,6 +105,7 @@ export const assignDroneToOrder = async (orderId, droneId) => {
   order.droneId = droneId;
   order.qrCode = qrCode;
   order.orderStatus = "delivering";
+  order.droneArrivedAt = new Date(); // Lưu thời điểm drone tới
   await order.save();
 
   // Cập nhật drone với trọng lượng khoang hàng
@@ -112,21 +114,26 @@ export const assignDroneToOrder = async (orderId, droneId) => {
   drone.cargoWeight = cargoWeight; // Set trọng lượng khi bắt đầu giao
   await drone.save();
 
+  // NOTE: Timeout được xử lý ở frontend để đảm bảo đáng tin cậy
+  // Frontend sẽ gọi API /api/order/status để cập nhật trạng thái khi timeout
+
   return {
     success: true,
-    message: "Drone assigned successfully",
+    message: "Drone assigned successfully. Customer has 20 seconds to confirm QR scan.",
     data: {
       orderId: order._id,
       droneId: drone._id,
       droneCode: drone.droneCode,
       qrCode,
       cargoWeight,
+      timeoutSeconds: 20,
     },
   };
 };
 
 /**
- * Quét QR code (demo: khách hàng nhấn nút xác nhận)
+ * Xác nhận khách hàng đã quét QR (giả lập drone quét QR của khách)
+ * Logic: Khách hàng nhấn nút "Xác nhận đã quét" → Nắp mở 5s
  */
 export const scanQRCode = async (orderId, qrCode) => {
   const order = await orderRepo.findById(orderId);
@@ -146,7 +153,7 @@ export const scanQRCode = async (orderId, qrCode) => {
     throw new Error("QR code already scanned");
   }
 
-  // Đánh dấu đã quét QR
+  // Đánh dấu đã quét QR (khách hàng đã xác nhận)
   order.qrScanned = true;
   order.qrScannedAt = new Date();
   await order.save();
@@ -158,7 +165,7 @@ export const scanQRCode = async (orderId, qrCode) => {
       drone.cargoLidStatus = "open";
       await drone.save();
 
-      // Tự động đóng nắp sau 5 giây (trong thực tế sẽ là 5 phút)
+      // Tự động đóng nắp sau 5 giây
       setTimeout(async () => {
         await closeCargoLid(order.droneId, orderId);
       }, 5000);
@@ -167,7 +174,7 @@ export const scanQRCode = async (orderId, qrCode) => {
 
   return {
     success: true,
-    message: "QR code scanned successfully. Cargo lid is opening...",
+    message: "Customer confirmed QR scan. Cargo lid is opening for 5 seconds...",
     data: {
       qrScanned: true,
       qrScannedAt: order.qrScannedAt,
@@ -340,6 +347,45 @@ export const getDroneById = async (droneId) => {
     success: true,
     data: drone,
   };
+};
+
+/**
+ * [DEPRECATED] Kiểm tra timeout giao hàng (20 giây)
+ * NOTE: Hàm này không còn được sử dụng vì timeout được xử lý ở frontend
+ * Frontend sẽ gọi API /api/order/status để cập nhật trạng thái khi timeout
+ * 
+ * Lý do: setTimeout() ở server không đáng tin cậy (server restart sẽ mất timeout)
+ */
+export const checkDeliveryTimeout = async (orderId) => {
+  const order = await orderRepo.findById(orderId);
+  if (!order) {
+    return;
+  }
+
+  // Nếu đã quét QR rồi thì không làm gì
+  if (order.qrScanned) {
+    return;
+  }
+
+  // Nếu chưa quét QR sau 20s → Giao thất bại
+  order.orderStatus = "cancelled";
+  order.reason = "⏳ Hết thời gian chờ nhận hàng - Drone đã đợi tại điểm giao nhưng không nhận được tín hiệu xác nhận an toàn từ bạn trong thời gian quy định. Đơn hàng đã bị hủy.";
+  order.isDelivered = false;
+  await order.save();
+
+  // Drone bay về nhà hàng
+  if (order.droneId) {
+    const drone = await droneRepo.findById(order.droneId);
+    if (drone) {
+      drone.status = "available";
+      drone.currentOrder = null;
+      drone.cargoWeight = 0;
+      drone.cargoLidStatus = "closed";
+      await drone.save();
+    }
+  }
+
+  console.log(`Order ${orderId} failed: Customer did not receive delivery within 20 seconds`);
 };
 
 /**

@@ -1,9 +1,9 @@
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import validator from "validator";
 import User from "../models/userModel.cjs";
 import Restaurant from "../models/restaurantModel.cjs";
 import Order from "../models/orderModel.cjs";
-import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
-import validator from "validator";
 
 const createToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET);
@@ -13,7 +13,9 @@ const createToken = (id) => {
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await User.findOne({ email }).select("+password +role");
+    const user = await User.findOne({ email }).select(
+      "+password +role +restaurantId"
+    );
 
     if (!user) {
       return res.json({ success: false, message: "User doesn't exist." });
@@ -27,6 +29,25 @@ export const loginUser = async (req, res) => {
 
     if (!isMatch) {
       return res.json({ success: false, message: "Invalid credentials" });
+    }
+
+    // Check restaurant lock for restaurant_owner
+    if (user.role === "restaurant_owner" && user.restaurantId) {
+      const restaurant = await Restaurant.findById(user.restaurantId)
+        .select("isLocked")
+        .lean();
+      if (!restaurant) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Restaurant not found" });
+      }
+      if (restaurant.isLocked) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "Your restaurant account is pending admin approval. Please wait for approval.",
+        });
+      }
     }
 
     const token = createToken(user._id);
@@ -82,19 +103,25 @@ export const registerUser = async (req, res) => {
       password: hash,
       role: role || "user",
       phone,
-      address,
+      address: {
+        // SỬA: Lưu địa chỉ và tên đầy đủ vào đối tượng lồng nhau
+        fullName: name, // Sử dụng tên đăng ký làm tên đầy đủ mặc định
+        address: address, // Lưu địa chỉ
+        phone: phone,
+      },
     });
 
     await newUser.save();
-
     const token = createToken(newUser._id);
 
     if (role === "restaurant_owner") {
       const newRestaurant = new Restaurant({
         name: restaurantName,
         owner: newUser._id,
-        address: newUser.address,
+        address: newUser.address.address, // SỬA: Lấy địa chỉ từ đối tượng lồng nhau
         phone: newUser.phone,
+        email: email,
+        isLocked: true, // Lock by default, waiting for admin approval
       });
       await newRestaurant.save();
       newUser.restaurantId = newRestaurant._id;
@@ -108,165 +135,224 @@ export const registerUser = async (req, res) => {
   }
 };
 
-// LOCK USER
-export const lockUser = async (req, res) => {
+// LOGOUT USER
+export const logoutUser = async (req, res) => {
   try {
-    const { userId, lock } = req.body;
-    const user = await User.findById(userId);
-    if (!user)
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-
-    user.locked = lock;
-    await user.save();
-    res.json({
-      success: true,
-      message: `User ${lock ? "locked" : "unlocked"}`,
-    });
+    res.json({ success: true, message: "Logged out successfully" });
   } catch (error) {
-    console.error("Lock user error:", error);
-    res.status(500).json({ success: false, message: "Error" });
+    console.error("Logout error:", error);
+    res.status(500).json({ success: false, message: "Error during logout" });
   }
 };
 
 // GET ME (PROFILE)
 export const getMe = async (req, res) => {
   try {
-    res.json({ success: true, user: req.user });
+    if (!req.user) {
+      return res
+        .status(401)
+        .json({ success: false, message: "No user in request" });
+    }
+    const user = await User.findById(req.user._id).select("-password").lean();
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+    if (user.restaurantId) user.restaurantId = user.restaurantId.toString();
+    // SỬA: Trả về user trực tiếp trong data để nhất quán
+    res.json({ success: true, data: user });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Error fetching user" });
+    console.error("GetMe error:", error.message);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // UPDATE USER ADDRESS
 export const updateUserAddress = async (req, res) => {
   try {
-    const { name, phone, address } = req.body;
-    const userId = req.user._id;
+    const { fullName, phone, address, city, state, country, zipCode } =
+      req.body;
+    const updateData = {
+      "address.fullName": fullName,
+      "address.phone": phone,
+      "address.address": address,
+      "address.city": city,
+      "address.state": state,
+      "address.country": country,
+      "address.zipCode": zipCode,
+    }; // Logic này bây giờ đã đúng với model mới
+    const user = await User.findByIdAndUpdate(req.user._id, updateData, {
+      new: true,
+    })
+      .select("-password")
+      .lean();
+    res.json({ success: true, data: user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
-    if (!address || !address.street || !address.city) {
-      return res.json({ success: false, message: "Invalid address data" });
+// UPDATE PROFILE
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, email, phone } = req.body;
+    const updateData = { name, email, phone };
+    if (email && email !== req.user.email) {
+      const existing = await User.findOne({ email });
+      if (existing)
+        return res
+          .status(400)
+          .json({ success: false, message: "Email already exists" });
+    }
+    const user = await User.findByIdAndUpdate(req.user._id, updateData, {
+      new: true,
+    })
+      .select("-password")
+      .lean();
+    res.json({ success: true, data: user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// LOCK USER (admin) - ✅ SỬA: Nhận { id, locked } thay vì { userId, lock }
+export const lockUser = async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ success: false, message: "Admin only" });
+  }
+  try {
+    // ✅ Hỗ trợ cả 2 format tham số
+    const userId = req.body.id || req.body.userId;
+    const locked =
+      req.body.locked !== undefined ? req.body.locked : req.body.lock;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing userId or id parameter",
+      });
     }
 
-    const updateData = {
-      name: name || req.user.name,
-      phone: phone || req.user.phone,
-      address: {
-        ...req.user.address,
-        ...address,
-      },
-    };
+    if (locked === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing locked or lock parameter",
+      });
+    }
 
-    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
-      new: true,
-      runValidators: true,
-    });
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { locked: locked },
+      { new: true }
+    ).select("-password");
 
-    if (!updatedUser) {
-      return res.json({ success: false, message: "User not found" });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     res.json({
       success: true,
-      user: updatedUser,
-      message: "Address updated successfully",
+      message: `User ${locked ? "locked" : "unlocked"}`,
+      data: user,
     });
   } catch (error) {
-    console.error("Update address error:", error);
-    res.status(500).json({ success: false, message: "Error updating address" });
+    console.error("Lock user error:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
-
-// LIST USERS (ADMIN)
+// LIST USERS (admin)
 export const listUsers = async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ success: false, message: "Admin only" });
+  }
   try {
-    const users = await User.find({}).select("-password");
+    const users = await User.find({}).select("-password").lean();
+    users.forEach((u) => {
+      if (u.restaurantId) u.restaurantId = u.restaurantId.toString();
+    });
     res.json({ success: true, data: users });
   } catch (error) {
-    console.error("List users error:", error);
-    res.status(500).json({ success: false, message: "Error listing users" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // UPDATE USER BY ADMIN
 export const updateUserByAdmin = async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ success: false, message: "Admin only" });
+  }
   try {
     const { userId, ...updates } = req.body;
-    const updatedUser = await User.findByIdAndUpdate(userId, updates, {
-      new: true,
-    }).select("-password");
-    if (!updatedUser)
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    res.json({ success: true, data: updatedUser });
+    if (updates.password) {
+      updates.password = await bcrypt.hash(updates.password, 10);
+    }
+    const user = await User.findByIdAndUpdate(userId, updates, { new: true })
+      .select("-password")
+      .lean();
+    if (user.restaurantId) user.restaurantId = user.restaurantId.toString();
+    res.json({ success: true, data: user });
   } catch (error) {
-    console.error("Update user by admin error:", error);
-    res.status(500).json({ success: false, message: "Error updating user" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// DELETE USER
+// DELETE USER (admin)
 export const deleteUser = async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ success: false, message: "Admin only" });
+  }
   try {
     const { userId } = req.body;
-    const user = await User.findById(userId);
-    if (!user)
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-
     await User.findByIdAndDelete(userId);
-    res.json({ success: true, message: "User deleted successfully" });
+    res.json({ success: true, message: "User deleted" });
   } catch (error) {
-    console.error("Delete user error:", error);
-    res.status(500).json({ success: false, message: "Error deleting user" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// GET STATS (ADMIN)
+// GET STATS
 export const getStats = async (req, res) => {
   if (req.user.role !== "admin") {
     return res
       .status(403)
       .json({ success: false, message: "Unauthorized: Admin only" });
   }
-
   try {
     const { period = "day" } = req.query;
-    const userCount = await User.countDocuments();
-    const restaurantCount = await Restaurant.countDocuments();
-    const completedOrdersCount = await Order.countDocuments({
-      orderStatus: "delivered",
-    });
 
-    let revenueAggregation;
-    if (period === "month") {
-      revenueAggregation = await Order.aggregate([
-        { $match: { orderStatus: "delivered" } },
-        {
-          $group: {
-            _id: { $dateToString: { format: "%Y-%m", date: "$deliveredAt" } },
-            totalRevenue: { $sum: { $multiply: ["$totalPrice", 0.2] } },
-          },
-        },
-        { $sort: { _id: 1 } },
+    const [userCount, restaurantCount, completedOrdersCount] =
+      await Promise.all([
+        User.countDocuments(),
+        Restaurant.countDocuments(),
+        Order.countDocuments({ orderStatus: "delivered" }),
       ]);
-    } else {
-      revenueAggregation = await Order.aggregate([
-        { $match: { orderStatus: "delivered" } },
-        {
-          $group: {
-            _id: {
-              $dateToString: { format: "%Y-%m-%d", date: "$deliveredAt" },
-            },
-            totalRevenue: { $sum: { $multiply: ["$totalPrice", 0.2] } },
-          },
+
+    const groupFormat = period === "month" ? "%Y-%m" : "%Y-%m-%d";
+
+    const revenue = await Order.aggregate([
+      { $match: { orderStatus: "delivered" } },
+      {
+        $group: {
+          _id: { $dateToString: { format: groupFormat, date: "$deliveredAt" } },
+          totalRevenue: { $sum: { $multiply: ["$totalPrice", 0.2] } },
         },
-        { $sort: { _id: 1 } },
-      ]);
-    }
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    const completedSeries = await Order.aggregate([
+      { $match: { orderStatus: "delivered" } },
+      {
+        $group: {
+          _id: { $dateToString: { format: groupFormat, date: "$deliveredAt" } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
 
     res.json({
       success: true,
@@ -274,30 +360,11 @@ export const getStats = async (req, res) => {
         userCount,
         restaurantCount,
         completedOrdersCount,
-        revenue: revenueAggregation,
+        revenue,
+        completedSeries,
       },
     });
   } catch (error) {
-    console.error("Get stats error:", error);
-    res.json({ success: false, message: "Error fetching stats" });
-  }
-};
-
-// LOGOUT USER (client-side, but server if needed)
-export const logoutUser = async (req, res) => {
-  res.json({ success: true, message: "Logged out successfully" });
-};
-
-// UPDATE PROFILE (user)
-export const updateProfile = async (req, res) => {
-  try {
-    const updates = req.body;
-    const user = await User.findByIdAndUpdate(req.user._id, updates, {
-      new: true,
-    }).select("-password");
-    res.json({ success: true, data: user });
-  } catch (error) {
-    console.error("Update profile error:", error);
-    res.status(500).json({ success: false, message: "Error updating profile" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };

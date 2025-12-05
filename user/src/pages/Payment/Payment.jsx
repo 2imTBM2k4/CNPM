@@ -1,97 +1,201 @@
-import React, { useContext, useState } from 'react';
-import { StoreContext } from '../../context/StoreContext';
-import axios from 'axios';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import './Payment.css';
+import React, { useContext, useState, useEffect, useRef } from "react";
+import { StoreContext } from "../../context/StoreContext";
+import axios from "axios";
+import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import "./Payment.css";
 
 const Payment = () => {
-  const { url, token, clearCart } = useContext(StoreContext); // MỚI: Lấy clearCart từ context
+  const { url, token, clearCart, food_list, cartRestaurantId } = useContext(StoreContext);
   const location = useLocation();
   const navigate = useNavigate();
   const { orderData } = location.state || {};
-  const [paymentMethod, setPaymentMethod] = useState('COD');
+  const [paymentMethod, setPaymentMethod] = useState("COD");
   const [loading, setLoading] = useState(false);
+  const [sdkReady, setSdkReady] = useState(false);
+  const paypalRef = useRef();
+
+  useEffect(() => {
+    const addPayPalScript = () => {
+      const script = document.createElement("script");
+      script.type = "text/javascript";
+      script.src = `https://www.paypal.com/sdk/js?client-id=AciP_05xSaGGzcHyWO3UCQ2kMlUMj_EsbBRgINfSc1nikIMx_-f7h1V0tmEXnnpHxcw7ZJ74GXWuBYrn&currency=USD`;
+      script.async = true;
+      script.onload = () => setSdkReady(true);
+      document.body.appendChild(script);
+    };
+
+    if (!window.paypal) {
+      addPayPalScript();
+    } else {
+      setSdkReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (sdkReady && paymentMethod === "PayPal" && paypalRef.current && !paypalRef.current.hasChildNodes()) {
+      window.paypal
+        .Buttons({
+          createOrder: (data, actions) => {
+            return actions.order.create({
+              purchase_units: [
+                {
+                  amount: {
+                    value: orderData.amount.toFixed(2),
+                  },
+                },
+              ],
+            });
+          },
+          onApprove: async (data, actions) => {
+            const details = await actions.order.capture();
+            handlePayPalSuccess(details);
+          },
+          onError: () => {
+            toast.error("PayPal payment failed");
+          },
+        })
+        .render(paypalRef.current);
+    }
+  }, [sdkReady, paymentMethod, orderData]);
 
   if (!orderData) {
-    return <p className="payment">Error: No order data. Go back to cart.</p>;
+    toast.error("No order data. Redirecting to cart...");
+    navigate("/cart");
+    return null;
   }
 
-  // Transform address to match schema: street → address, zipcode → zipCode, firstName + lastName → fullName
   const transformAddress = (rawAddress) => ({
     fullName: `${rawAddress.firstName} ${rawAddress.lastName}`.trim(),
-    address: rawAddress.street,  // Map street to address
+    address: rawAddress.street,
     city: rawAddress.city,
     state: rawAddress.state,
     country: rawAddress.country,
-    zipCode: rawAddress.zipcode,  // Map zipcode to zipCode (capital C)
-    phone: rawAddress.phone
+    zipCode: rawAddress.zipcode,
+    phone: rawAddress.phone,
   });
 
-  const placeOrder = async () => {
+  const ensureRestaurantId = (items) => {
+    return items.map((item) => {
+      if (!item.restaurantId) {
+        const food = food_list.find((f) => f._id === item._id);
+        return { ...item, restaurantId: food?.restaurantId || null };
+      }
+      return item;
+    });
+  };
+
+  const placeOrder = async (paymentDetails = null) => {
     if (!token) {
-      toast.error('Please login first');
-      navigate('/login');
+      toast.error("Please login first");
+      navigate("/login");
+      return;
+    }
+
+    if (!cartRestaurantId) {
+      toast.error("Restaurant ID not found. Please try again.");
+      navigate("/cart");
       return;
     }
 
     setLoading(true);
     try {
-      // Transform address trước khi send
+      const itemsWithRestId = ensureRestaurantId(orderData.items);
+      
+      let restaurantIdString;
+      if (!cartRestaurantId) {
+        throw new Error("Restaurant ID not found");
+      } else if (typeof cartRestaurantId === 'string') {
+        restaurantIdString = cartRestaurantId;
+      } else if (typeof cartRestaurantId === 'object') {
+        restaurantIdString = cartRestaurantId._id || (cartRestaurantId.toString && cartRestaurantId.toString() !== '[object Object]' ? cartRestaurantId.toString() : null);
+      }
+
+      if (!restaurantIdString || restaurantIdString === '[object Object]') {
+        throw new Error("Invalid restaurant ID format");
+      }
+
       const transformedData = {
         ...orderData,
+        items: itemsWithRestId,
         address: transformAddress(orderData.address),
-        paymentMethod
+        paymentMethod,
+        restaurantId: restaurantIdString,
+        ...(paymentDetails && { paymentDetails }),
       };
 
-      console.log('Transformed order data:', transformedData);  // Debug: Check mapping
+      const response = await axios.post(
+        `${url}/api/order/place`,
+        transformedData,
+        { headers: { token } }
+      );
 
-      const response = await axios.post(`${url}/api/order/place`, transformedData, { headers: { token } });
       if (response.data.success) {
-        // MỚI: Clear cart sau place order success (trước verify/payment flow)
         await clearCart();
-
-        if (paymentMethod === 'COD') {
-          toast.success('Order placed with COD! Check My Orders.');
-          navigate('/myorders');
-        } else {
-          // Giả lập PayPal: Delay 3s simulate payment success
-          setTimeout(async () => {
-            const verifyRes = await axios.post(`${url}/api/order/verify`, { 
-              orderId: response.data.orderId, 
-              success: 'true' 
-            }, { headers: { token } });
-            if (verifyRes.data.success) {
-              toast.success('PayPal payment successful! Check My Orders.');
-              navigate('/myorders');
-            } else {
-              toast.error('Payment verification failed');
-              // Nếu verify fail, cart đã clear rồi, nhưng có thể rollback nếu cần (không implement để đơn giản)
-            }
-          }, 3000);
-        }
+        toast.success("Order placed successfully!");
+        navigate("/myorders");
       } else {
-        toast.error(response.data.message || 'Error placing order');
+        toast.error(response.data.message || "Error placing order");
       }
     } catch (error) {
-      console.error('Place order error:', error.response?.data || error.message);  // Debug full error
-      toast.error(error.response?.data?.message || 'Server error. Check console.');
+      toast.error(
+        error.response?.data?.message || "Server error. Please try again."
+      );
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePayPalSuccess = async (details) => {
+    await placeOrder({
+      paypalOrderId: details.id,
+      paypalPayerId: details.payer.payer_id,
+      paypalStatus: details.status,
+    });
   };
 
   return (
     <div className="payment">
       <h2>Choose Payment Method</h2>
       <p>Total: ${orderData.amount}</p>
-      <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-        <option value="COD">Cash on Delivery (COD)</option>
-        <option value="PayPal">PayPal (Simulated)</option>
-      </select>
-      <button onClick={placeOrder} disabled={loading} className="confirm-btn">
-        {loading ? 'Processing...' : `Confirm ${paymentMethod} Payment`}
-      </button>
+      
+      <div className="payment-methods">
+        <label className="payment-option">
+          <input
+            type="radio"
+            value="COD"
+            checked={paymentMethod === "COD"}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+          />
+          <span>Cash on Delivery (COD)</span>
+        </label>
+        
+        <label className="payment-option">
+          <input
+            type="radio"
+            value="PayPal"
+            checked={paymentMethod === "PayPal"}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+          />
+          <span>PayPal / Credit or Debit Card</span>
+        </label>
+      </div>
+
+      {paymentMethod === "COD" && (
+        <button onClick={() => placeOrder()} disabled={loading} className="confirm-btn">
+          {loading ? "Processing..." : "Confirm Order"}
+        </button>
+      )}
+
+      {paymentMethod === "PayPal" && (
+        <div className="paypal-container">
+          {!sdkReady ? (
+            <div>Loading PayPal...</div>
+          ) : (
+            <div ref={paypalRef}></div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

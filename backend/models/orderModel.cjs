@@ -61,7 +61,7 @@ const orderSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      required: true,
+      // required: true,
       enum: ["Card", "COD", "PayPal"],
     },
     paymentResult: {
@@ -110,6 +110,41 @@ const orderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Restaurant",
       required: true,
+    },
+    paypalOrderId: {
+      // THÊM: Lưu trữ Order ID từ PayPal
+      type: String,
+      default: null,
+    },
+    qrCode: {
+      type: String,
+      default: null,
+      comment: "Mã QR để khách hàng xác nhận nhận hàng từ drone",
+    },
+    qrScanned: {
+      type: Boolean,
+      default: false,
+      comment: "Đã quét QR code chưa",
+    },
+    qrScannedAt: {
+      type: Date,
+      default: null,
+    },
+    droneId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Drone",
+      default: null,
+      comment: "Drone được gán để giao đơn hàng này",
+    },
+    droneArrivedAt: {
+      type: Date,
+      default: null,
+      comment: "Thời điểm drone tới địa chỉ khách hàng",
+    },
+    cargoChecked: {
+      type: Boolean,
+      default: false,
+      comment: "Đã kiểm tra khoang hàng (trọng lượng + camera)",
     },
   },
   {

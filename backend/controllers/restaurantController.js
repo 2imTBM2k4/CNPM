@@ -1,6 +1,7 @@
 import Restaurant from "../models/restaurantModel.cjs";
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
+import * as userRepo from "../repositories/userRepository.js";
 
 // List restaurants
 export const listRestaurants = async (req, res) => {
@@ -24,13 +25,10 @@ export const updateRestaurant = async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
-    // Xử lý upload hình ảnh lên Cloudinary
     if (req.file) {
       try {
-        // Tìm restaurant hiện tại để xóa ảnh cũ
         const currentRestaurant = await Restaurant.findById(id);
 
-        // Xóa ảnh cũ trên Cloudinary nếu có
         if (currentRestaurant && currentRestaurant.image) {
           try {
             const publicId = currentRestaurant.image
@@ -43,15 +41,12 @@ export const updateRestaurant = async (req, res) => {
           }
         }
 
-        // Upload ảnh mới lên Cloudinary
         const result = await cloudinary.uploader.upload(req.file.path, {
           folder: "restaurants",
           resource_type: "image",
         });
 
         updates.image = result.secure_url;
-
-        // Xóa file tạm
         fs.unlinkSync(req.file.path);
       } catch (uploadError) {
         console.error("Cloudinary upload error:", uploadError);
@@ -92,7 +87,6 @@ export const createRestaurant = async (req, res) => {
     const data = req.body;
     let imageUrl = null;
 
-    // Xử lý upload hình ảnh lên Cloudinary
     if (req.file) {
       try {
         const result = await cloudinary.uploader.upload(req.file.path, {
@@ -100,8 +94,6 @@ export const createRestaurant = async (req, res) => {
           resource_type: "image",
         });
         imageUrl = result.secure_url;
-
-        // Xóa file tạm
         fs.unlinkSync(req.file.path);
       } catch (uploadError) {
         console.error("Cloudinary upload error:", uploadError);
@@ -119,6 +111,10 @@ export const createRestaurant = async (req, res) => {
     const newRestaurant = new Restaurant(data);
     await newRestaurant.save();
 
+    await userRepo.updateById(req.user._id, {
+      restaurantId: newRestaurant._id,
+    });
+
     res.status(201).json({
       success: true,
       message: "Restaurant created successfully",
@@ -132,7 +128,7 @@ export const createRestaurant = async (req, res) => {
   }
 };
 
-// Delete restaurant
+// Delete restaurant - Chỉ xóa được nếu chưa có order nào
 export const deleteRestaurant = async (req, res) => {
   try {
     const { id } = req.body;
@@ -144,7 +140,17 @@ export const deleteRestaurant = async (req, res) => {
         .json({ success: false, message: "Restaurant not found" });
     }
 
-    // Xóa ảnh trên Cloudinary nếu có
+    // Kiểm tra xem nhà hàng đã có order nào chưa (bất kể trạng thái)
+    const Order = (await import("../models/orderModel.cjs")).default;
+    const totalOrders = await Order.countDocuments({ restaurantId: id });
+
+    if (totalOrders > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Không thể xóa nhà hàng. Nhà hàng này đã có ${totalOrders} đơn hàng trong hệ thống.`,
+      });
+    }
+
     if (restaurant.image) {
       try {
         const publicId = restaurant.image.split("/").pop().split(".")[0];
@@ -185,21 +191,39 @@ export const getRestaurantById = async (req, res) => {
   }
 };
 
-// Lock restaurant
+// Lock/Unlock restaurant - SỬA: Đồng bộ với frontend
 export const lockRestaurant = async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ success: false, message: "Admin only" });
+  }
+
   try {
     const { id } = req.params;
-    const { lock } = req.body;
-    const restaurant = await Restaurant.findById(id);
-    if (!restaurant)
+    const { isLocked } = req.body; // SỬA: Nhận isLocked từ frontend
+
+    if (typeof isLocked !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "isLocked must be a boolean",
+      });
+    }
+
+    const restaurant = await Restaurant.findByIdAndUpdate(
+      id,
+      { isLocked: isLocked },
+      { new: true }
+    );
+
+    if (!restaurant) {
       return res
         .status(404)
         .json({ success: false, message: "Restaurant not found" });
-    restaurant.isLocked = lock;
-    await restaurant.save();
+    }
+
     res.json({
       success: true,
-      message: `Restaurant ${lock ? "locked" : "unlocked"}`,
+      message: `Restaurant ${isLocked ? "locked" : "unlocked"} successfully`,
+      data: restaurant,
     });
   } catch (error) {
     console.error("Lock restaurant error:", error);

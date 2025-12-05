@@ -8,6 +8,8 @@ import userRouter from "./routes/userRoute.js";
 import cartRouter from "./routes/cartRoute.js";
 import orderRouter from "./routes/orderRoute.js";
 import restaurantRouter from "./routes/restaurantRoute.js";
+import droneRouter from "./routes/droneRoute.js";
+import configRouter from "./routes/configRoute.js";
 import { Server } from "socket.io";
 import http from "http";
 import { v2 as cloudinary } from "cloudinary"; // Giữ Cloudinary
@@ -18,10 +20,6 @@ cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-console.log("✅ Cloudinary configured:", {
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY ? "***" : "MISSING",
 });
 
 const app = express();
@@ -35,15 +33,15 @@ const io = new Server(server, {
 
 app.set("io", io);
 
-// Socket logic (giữ nguyên)
+// Socket logic
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+  // SỬA LỖI: Thêm kiểm tra để ngăn server crash khi restaurantId không hợp lệ
   socket.on("joinRestaurant", (restaurantId) => {
-    socket.join(`restaurant_${restaurantId}`);
-    console.log(`Joined room: restaurant_${restaurantId}`);
-  });
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
+    if (restaurantId) {
+      socket.join(`restaurant_${restaurantId}`);
+    } else {
+      console.warn("Socket tried to join a room with an invalid restaurantId.");
+    }
   });
 });
 
@@ -56,27 +54,41 @@ import { uploadMiddleware } from "./config/multer.js";
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 
+// THÊM: Middleware để gắn `io` vào mỗi request
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
 // THÊM: Serve static files từ uploads/ với prefix /images (để load ảnh)
 app.use("/images", express.static("uploads"));
 
 // Connect Database
 connectDB();
 
+// Middleware để làm sạch restaurantId trong payload của order
+const cleanOrderPayload = (req, res, next) => {
+  if (req.path === "/place" && req.body.restaurantId) {
+    const { restaurantId } = req.body;
+    if (
+      typeof restaurantId === "object" &&
+      restaurantId !== null &&
+      restaurantId._id
+    ) {
+      req.body.restaurantId = restaurantId._id;
+    }
+  }
+  next();
+};
+
 // Mount routes
 app.use("/api/food", foodRouter);
 app.use("/api/user", userRouter);
-app.use("/api/cart", cartRouter);
-app.use("/api/order", orderRouter);
+app.use("/api/cart", cartRouter); // Giữ nguyên
+app.use("/api/order", cleanOrderPayload, orderRouter); // Thêm middleware
 app.use("/api/restaurant", restaurantRouter);
-
-// Log mounted (debug)
-console.log("Routes mounted:", {
-  food: !!foodRouter,
-  user: !!userRouter,
-  cart: !!cartRouter,
-  order: !!orderRouter,
-  restaurant: !!restaurantRouter,
-});
+app.use("/api/drone", droneRouter);
+app.use("/api/config", configRouter);
 
 // Global error handler
 app.use((err, req, res, next) => {
@@ -88,13 +100,6 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use((req, res) => {
-  console.log(
-    "404 unmatched:",
-    req.method,
-    req.path,
-    "Body:",
-    req.body ? "has body" : "no body"
-  );
   res
     .status(404)
     .json({ success: false, message: `Cannot ${req.method} ${req.path}` });
@@ -130,5 +135,4 @@ app.post("/api/test-save", async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log("Cloudinary configured:", !!cloudinary.config().cloud_name);
 });

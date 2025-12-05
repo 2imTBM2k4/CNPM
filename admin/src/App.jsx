@@ -107,6 +107,7 @@ import Orders from "./pages/Orders/Orders";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import ListUsers from "./pages/ListUsers/ListUsers";
 import Login from "./pages/Login/Login";
+import Drones from "./pages/Drones/Drones";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AuthContext } from "./context/AuthContext"; // Thêm
@@ -145,6 +146,7 @@ const App = () => {
             />
             <Route path="/list-users" element={<ListUsers url={url} />} />
             <Route path="/orders" element={<Orders url={url} />} />
+            <Route path="/drones" element={<Drones url={url} />} />
           </Routes>
         </div>
       </div>

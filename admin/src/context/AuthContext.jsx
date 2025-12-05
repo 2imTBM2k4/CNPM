@@ -1,4 +1,3 @@
-// admin/src/context/AuthContext.jsx
 import React, { createContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -16,21 +15,42 @@ export const AuthProvider = ({ children }) => {
       const response = await fetch(`${apiUrl}/api/user/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Unauthorized - Invalid token");
+        } else if (response.status === 404) {
+          throw new Error("User info endpoint not found");
+        } else {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Response not JSON - Server error");
+      }
+
       const data = await response.json();
+
       if (data.success) {
-        const fetchedUser = data.user;
+        const fetchedUser = data.data || data.user;
+        if (!fetchedUser) {
+          throw new Error("User data missing in response");
+        }
+
         fetchedUser.walletBalance = fetchedUser.balance || 0;
         setUser(fetchedUser);
         localStorage.setItem("userRole", fetchedUser.role);
       } else {
-        localStorage.removeItem("token");
-        localStorage.removeItem("userRole");
+        throw new Error(data.message || "Invalid user data");
       }
     } catch (error) {
       console.error("Fetch user error:", error);
       localStorage.removeItem("token");
       localStorage.removeItem("userRole");
       setUser(null);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -38,30 +58,52 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) fetchUserInfo(token);
-    else setIsLoading(false);
+    if (token) {
+      fetchUserInfo(token).catch(() => {
+        setIsLoading(false);
+      });
+    } else {
+      setIsLoading(false);
+    }
   }, []);
 
   const login = async (email, password) => {
-    const response = await fetch(`${apiUrl}/api/user/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await response.json();
-    if (data.success) {
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("userRole", data.role);
-      await fetchUserInfo(data.token);
-      navigate("/");
-    } else {
-      throw new Error(data.message || "Login failed");
+    try {
+      setIsLoading(true);
+      const response = await fetch(`${apiUrl}/api/user/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        const token = data.token;
+        const role = data.role;
+        if (!token) {
+          throw new Error("Token missing in login response");
+        }
+        localStorage.setItem("token", token);
+        localStorage.setItem("userRole", role);
+        await fetchUserInfo(token);
+        setTimeout(() => {
+          navigate("/");
+        }, 500);
+      } else {
+        throw new Error(data.message || "Login failed");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const logout = () => {
     localStorage.clear();
     setUser(null);
+    setIsLoading(false);
     navigate("/login");
   };
 

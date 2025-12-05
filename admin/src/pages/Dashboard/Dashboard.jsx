@@ -108,6 +108,7 @@ const Dashboard = ({ url }) => {
   const [stats, setStats] = useState({});
   const [period, setPeriod] = useState("day");
   const [revenueData, setRevenueData] = useState([]);
+  const [completedData, setCompletedData] = useState([]);
   const [orderStatusData, setOrderStatusData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -133,6 +134,13 @@ const Dashboard = ({ url }) => {
             revenue: item.totalRevenue,
           })) || [];
         setRevenueData(formattedRevenue);
+
+        const formattedCompleted =
+          response.data.data.completedSeries?.map((item) => ({
+            date: item._id,
+            count: item.count,
+          })) || [];
+        setCompletedData(formattedCompleted);
 
         // Tạo dữ liệu cho biểu đồ tròn order status
         // Giả sử bạn có API để lấy số lượng order theo status
@@ -339,6 +347,30 @@ const Dashboard = ({ url }) => {
               strokeWidth={2}
               activeDot={{ r: 8 }}
               name="Revenue"
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Completed Orders Trend */}
+      <div className="chart-card full-width">
+        <div className="chart-header">
+          <h3>Completed Orders ({period})</h3>
+        </div>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={completedData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis allowDecimals={false} />
+            <Tooltip formatter={(value) => [value, "Orders"]} />
+            <Legend />
+            <Line
+              type="monotone"
+              dataKey="count"
+              stroke="#4CAF50"
+              strokeWidth={2}
+              activeDot={{ r: 6 }}
+              name="Completed"
             />
           </LineChart>
         </ResponsiveContainer>

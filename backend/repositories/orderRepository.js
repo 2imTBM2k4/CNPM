@@ -1,0 +1,75 @@
+// backend/repositories/orderRepository.js
+import { Order } from "../models/index.cjs";
+
+export const create = async (orderData) => {
+  const { totalPrice, paymentMethod, restaurantId } = orderData;
+  if (totalPrice <= 0 || !paymentMethod || !restaurantId) {
+    throw new Error("Invalid order data");
+  }
+  const order = new Order(orderData);
+  return await order.save();
+};
+
+export const findById = async (id) => {
+  return await Order.findById(id)
+    .populate("user")
+    .populate("orderItems.product") // Ref "Food"
+    .populate("restaurantId");
+};
+
+export const findByUser = async (userId) => {
+  return await Order.find({ user: userId })
+    .populate("orderItems.product")
+    .populate("restaurantId")
+    .sort({ createdAt: -1 }); // Recent first
+};
+
+export const findAll = async (filter = {}) => {
+  return await Order.find(filter)
+    .populate("user", "name email")
+    .populate("orderItems.product")
+    .populate("restaurantId");
+};
+
+export const updateById = async (id, updates) => {
+  // Handle specific updates like orderStatus enum
+  if (
+    updates.orderStatus &&
+    !["pending", "preparing", "delivering", "delivered", "cancelled"].includes(
+      updates.orderStatus
+    )
+  ) {
+    throw new Error("Invalid order status");
+  }
+  return await Order.findByIdAndUpdate(id, updates, {
+    new: true,
+    runValidators: true,
+  }).populate("orderItems.product");
+};
+
+export const deleteById = async (id) => {
+  return await Order.findByIdAndDelete(id);
+};
+
+export const aggregateStatusStats = async () => {
+  return await Order.aggregate([
+    {
+      $group: {
+        _id: "$orderStatus",
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $project: {
+        name: {
+          $concat: [
+            { $toUpper: { $substr: ["$_id", 0, 1] } },
+            { $substr: ["$_id", 1, -1] },
+          ],
+        }, // Capitalize first letter
+        value: "$count",
+        _id: 0,
+      },
+    },
+  ]);
+};

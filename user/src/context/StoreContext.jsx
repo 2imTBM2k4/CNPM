@@ -7,28 +7,63 @@ const StoreContextProvider = (props) => {
   const [cartItems, setCartItems] = useState({});
   const [showLogin, setShowLogin] = useState(false);
   const [user, setUser] = useState(null);
-  const url = "http://localhost:4000";
+  const url = import.meta.env.VITE_API_URL;
   const [token, setToken] = useState("");
   const [food_list, setFoodList] = useState([]);
   const [restaurant_list, setRestaurantList] = useState([]);
   const [cartRestaurantId, setCartRestaurantId] = useState(null);
+  const [isLoadingFoods, setIsLoadingFoods] = useState(true);
 
-  // === LOAD DATA ===
+  const getRestaurantId = (item) => {
+    if (!item.restaurantId) return null;
+    
+    if (typeof item.restaurantId === 'string') {
+      return item.restaurantId;
+    }
+    
+    if (typeof item.restaurantId === 'object') {
+      return item.restaurantId._id || null;
+    }
+    
+    return null;
+  };
   const fetchFoodList = async () => {
     try {
+      setIsLoadingFoods(true);
       const res = await axios.get(`${url}/api/food/list`);
-      setFoodList(res.data.data || []);
+      if (res.data.success) {
+        setFoodList(res.data.data || []);
+      } else {
+        throw new Error(res.data.message || "Failed to load foods");
+      }
     } catch (err) {
-      console.error(err);
+      setFoodList([]);
+    } finally {
+      setIsLoadingFoods(false);
     }
   };
 
   const fetchRestaurantList = async () => {
     try {
       const res = await axios.get(`${url}/api/restaurant/list`);
-      setRestaurantList(res.data.data || []);
+      if (res.data.success) {
+        setRestaurantList(res.data.data || []);
+      }
     } catch (err) {
-      console.error(err);
+      console.error("Fetch restaurant error:", err);
+    }
+  };
+
+  const fetchSingleFood = async (itemId) => {
+    try {
+      const res = await axios.get(`${url}/api/food/${itemId}`);
+      if (res.data.success) {
+        return res.data.data;
+      } else {
+        throw new Error(res.data.message || "Food not found");
+      }
+    } catch (err) {
+      throw err;
     }
   };
 
@@ -44,7 +79,7 @@ const StoreContextProvider = (props) => {
         const firstId = Object.keys(cartData)[0];
         if (firstId && food_list.length > 0) {
           const item = food_list.find((p) => p._id === firstId);
-          if (item) setCartRestaurantId(item.restaurantId);
+          if (item) setCartRestaurantId(getRestaurantId(item));
         } else {
           setCartRestaurantId(null);
         }
@@ -68,7 +103,6 @@ const StoreContextProvider = (props) => {
     }
   };
 
-  // === CART ACTIONS ===
   const addToCart = async (itemId, quantity = 1) => {
     if (!token) {
       alert("Vui lòng đăng nhập!");
@@ -76,18 +110,24 @@ const StoreContextProvider = (props) => {
       return false;
     }
 
-    if (food_list.length === 0) {
+    if (isLoadingFoods) {
       alert("Đang tải dữ liệu, vui lòng thử lại!");
       return false;
     }
 
-    const item = food_list.find((p) => p._id === itemId);
+    let item = food_list.find((p) => p._id === itemId);
     if (!item) {
-      alert("Sản phẩm không tồn tại!");
-      return false;
+      try {
+        item = await fetchSingleFood(itemId);
+      } catch (err) {
+        alert("Sản phẩm không tồn tại!");
+        return false;
+      }
     }
 
-    if (cartRestaurantId && cartRestaurantId !== item.restaurantId) {
+    const itemRestaurantId = getRestaurantId(item);
+
+    if (cartRestaurantId && cartRestaurantId !== itemRestaurantId) {
       alert("Chỉ được đặt từ 1 nhà hàng!");
       return false;
     }
@@ -102,11 +142,20 @@ const StoreContextProvider = (props) => {
         if (!res.data.success) throw new Error("Add failed");
       }
       await loadCartData(token);
-      if (!cartRestaurantId) setCartRestaurantId(item.restaurantId);
+      if (!cartRestaurantId) setCartRestaurantId(itemRestaurantId);
       return true;
     } catch (err) {
-      console.error("Add to cart error:", err);
-      alert("Lỗi thêm vào giỏ hàng: " + err.message);
+      const msg = err?.response?.data?.message || err.message || "";
+      const isSingleRestaurantViolation =
+        err?.response?.status === 400 ||
+        msg.includes("một nhà hàng") ||
+        msg.toLowerCase().includes("one restaurant");
+
+      if (isSingleRestaurantViolation) {
+        alert("Chỉ có thể thêm món từ 1 nhà hàng");
+      } else {
+        alert("Lỗi thêm vào giỏ hàng: " + msg);
+      }
       return false;
     }
   };
@@ -169,14 +218,12 @@ const StoreContextProvider = (props) => {
     let total = 0;
     for (const id in cartItems) {
       if (cartItems[id] > 0) {
-        const item = food_list.find((p) => p._id === id);
-        if (item) total += item.price * cartItems[id];
+        const item = food_list.find((p) => p._id === id) || { price: 10 };
+        total += item.price * cartItems[id];
       }
     }
     return total;
   };
-
-  // === EFFECTS ===
   useEffect(() => {
     async function init() {
       await fetchFoodList();
@@ -190,6 +237,17 @@ const StoreContextProvider = (props) => {
     }
     init();
   }, []);
+
+  useEffect(() => {
+    if (token && food_list.length > 0 && Object.keys(cartItems).length > 0) {
+      const firstId = Object.keys(cartItems)[0];
+      const item = food_list.find((p) => p._id === firstId);
+      if (item && !cartRestaurantId) {
+        const restId = getRestaurantId(item);
+        setCartRestaurantId(restId);
+      }
+    }
+  }, [food_list, cartItems, token]);
 
   useEffect(() => {
     if (token) {
@@ -220,6 +278,7 @@ const StoreContextProvider = (props) => {
     cartRestaurantId,
     user,
     setUser,
+    isLoadingFoods,
   };
 
   return (

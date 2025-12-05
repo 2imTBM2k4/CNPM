@@ -1,124 +1,3 @@
-// import React, { useEffect, useState } from "react";
-// import "./ListRestaurant.css";
-// import axios from "axios";
-// import { toast } from "react-toastify";
-// import EditRestaurant from "../Restaurant/EditRestaurant";
-
-// const ListRestaurant = ({ url }) => {
-//   const [list, setList] = useState([]);
-//   const [editingRestaurant, setEditingRestaurant] = useState(null);
-
-//   const fetchList = async () => {
-//     const token = localStorage.getItem("token");
-//     if (!token) {
-//       toast.error("Please login first");
-//       return;
-//     }
-//     try {
-//       const response = await axios.get(`${url}/api/restaurant/list`, {
-//         headers: { Authorization: `Bearer ${token}` },
-//       });
-//       if (response.data.success) {
-//         setList(response.data.data);
-//       } else {
-//         toast.error("Error fetching restaurants");
-//       }
-//     } catch (error) {
-//       toast.error("Network error or unauthorized");
-//     }
-//   };
-
-//   const removeRestaurant = async (restaurantId) => {
-//     const token = localStorage.getItem("token");
-//     if (!token) {
-//       toast.error("Please login first");
-//       return;
-//     }
-//     try {
-//       const response = await axios.post(
-//         `${url}/api/restaurant/delete`,
-//         { id: restaurantId },
-//         {
-//           headers: { Authorization: `Bearer ${token}` },
-//         }
-//       );
-//       await fetchList();
-//       if (response.data.success) {
-//         toast.success(response.data.message);
-//       } else {
-//         toast.error("Error");
-//       }
-//     } catch (error) {
-//       toast.error("Network error");
-//     }
-//   };
-
-//   const editRestaurant = (restaurant) => {
-//     setEditingRestaurant(restaurant);
-//   };
-
-//   const closeEditModal = () => {
-//     setEditingRestaurant(null);
-//   };
-
-//   useEffect(() => {
-//     fetchList();
-//   }, []);
-
-//   return (
-//     <div className="list add flex-col">
-//       <p>All Restaurants List</p>
-//       <div className="list-table">
-//         <div className="list-table-format title">
-//           <b>Name</b>
-//           <b>Address</b>
-//           <b>Phone</b>
-//           <b>Description</b>
-//           <b>Owner Email</b>
-//           <b>Action</b>
-//         </div>
-//         {list.map((item, index) => {
-//           return (
-//             <div key={index} className="list-table-format">
-//               <p>{item.name}</p>
-//               <p>{item.address}</p>
-//               <p>{item.phone || "N/A"}</p>
-//               <p>{item.description || "N/A"}</p>
-//               <p>{item.owner?.email || "N/A"}</p>
-//               <div className="actions">
-//                 <p
-//                   onClick={() => editRestaurant(item)}
-//                   className="cursor edit-btn"
-//                 >
-//                   ✏️
-//                 </p>
-//                 <p
-//                   onClick={() => removeRestaurant(item._id)}
-//                   className="cursor remove-btn"
-//                 >
-//                   X
-//                 </p>
-//               </div>
-//             </div>
-//           );
-//         })}
-//       </div>
-
-//       {editingRestaurant && (
-//         <EditRestaurant
-//           url={url}
-//           restaurant={editingRestaurant}
-//           onClose={closeEditModal}
-//           onUpdate={fetchList}
-//         />
-//       )}
-//     </div>
-//   );
-// };
-
-// export default ListRestaurant;
-
-// admin/src/pages/ListRestaurant/ListRestaurant.jsx
 import React, { useEffect, useState } from "react";
 import "./ListRestaurant.css";
 import axios from "axios";
@@ -126,24 +5,34 @@ import { toast } from "react-toastify";
 
 const ListRestaurant = ({ url }) => {
   const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchList = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
       toast.error("Please login first");
+      setLoading(false);
       return;
     }
+
     try {
+      setLoading(true);
       const response = await axios.get(`${url}/api/restaurant/list`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       if (response.data.success) {
         setList(response.data.data);
       } else {
         toast.error("Error fetching restaurants");
       }
     } catch (error) {
-      toast.error("Network error or unauthorized");
+      console.error("Fetch restaurants error:", error);
+      toast.error(
+        error.response?.data?.message || "Network error or unauthorized"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -153,6 +42,7 @@ const ListRestaurant = ({ url }) => {
       toast.error("Please login first");
       return;
     }
+
     try {
       const response = await axios.put(
         `${url}/api/restaurant/${restaurantId}/lock`,
@@ -161,46 +51,61 @@ const ListRestaurant = ({ url }) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
       if (response.data.success) {
         toast.success(response.data.message);
-        fetchList(); // Refresh list
+        fetchList();
       } else {
-        toast.error("Error");
+        toast.error(
+          response.data.message || "Error locking/unlocking restaurant"
+        );
       }
     } catch (error) {
-      toast.error("Network error");
+      console.error("Toggle lock error:", error);
+      toast.error(error.response?.data?.message || "Network error");
     }
   };
 
-  // Thêm remove nếu cần (từ version cũ)
   const removeRestaurant = async (restaurantId) => {
     const token = localStorage.getItem("token");
     if (!token) {
       toast.error("Please login first");
       return;
     }
+
+    if (!window.confirm("Bạn có chắc muốn xóa nhà hàng này?\n\nLưu ý: Chỉ có thể xóa nhà hàng chưa có đơn hàng nào.")) {
+      return;
+    }
+
     try {
-      const response = await axios.post(
-        `${url}/api/restaurant/delete`,
-        { id: restaurantId },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await axios.delete(`${url}/api/restaurant`, {
+        headers: { Authorization: `Bearer ${token}` },
+        data: { id: restaurantId },
+      });
+
       if (response.data.success) {
         toast.success(response.data.message);
         fetchList();
       } else {
-        toast.error("Error");
+        toast.error(response.data.message || "Error deleting restaurant");
       }
     } catch (error) {
-      toast.error("Network error");
+      console.error("Delete restaurant error:", error);
+      toast.error(error.response?.data?.message || "Không thể xóa nhà hàng");
     }
   };
 
   useEffect(() => {
     fetchList();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="list add flex-col">
+        <p>Loading restaurants...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="list add flex-col">
@@ -212,37 +117,75 @@ const ListRestaurant = ({ url }) => {
           <b>Phone</b>
           <b>Description</b>
           <b>Owner Email</b>
-          <b>Status</b> {/* Mới */}
-          <b>Action</b> {/* Mới */}
+          <b>Status</b>
+          <b>Actions</b>
         </div>
-        {list.map((item, index) => {
-          return (
-            <div key={index} className="list-table-format">
-              <p>{item.name}</p>
-              <p>{item.address}</p>
-              <p>{item.phone || "N/A"}</p>
-              <p>{item.description || "N/A"}</p>
-              <p>{item.owner?.email || "N/A"}</p>
-              <p>{item.isLocked ? "Locked" : "Active"}</p>{" "}
-              {/* Mới: Hiển thị status */}
-              <div className="actions">
-                <button
-                  onClick={() => toggleLock(item._id, !item.isLocked)}
-                  className="cursor lock-btn"
-                >
-                  {item.isLocked ? "Unlock" : "Lock"}
-                </button>
+        {list.length === 0 ? (
+          <div className="no-data">
+            <p>No restaurants found</p>
+          </div>
+        ) : (
+          list.map((item, index) => {
+            return (
+              <div key={index} className="list-table-format">
+                <p>{item.name}</p>
+                <p>{item.address}</p>
+                <p>{item.phone || "N/A"}</p>
+                <p>{item.description || "N/A"}</p>
+                <p>{item.owner?.email || "N/A"}</p>
                 <p
-                  onClick={() => removeRestaurant(item._id)}
-                  className="cursor remove-btn"
+                  style={{
+                    color: item.isLocked ? "#f44336" : "#4CAF50",
+                    fontWeight: "bold",
+                  }}
                 >
-                  X
-                </p>{" "}
-                {/* Giữ remove nếu cần */}
+                  {item.isLocked ? "Locked" : "Active"}
+                </p>
+                <div className="actions">
+                  <button
+                    onClick={() => toggleLock(item._id, !item.isLocked)}
+                    className="cursor lock-btn"
+                    style={{
+                      padding: "8px 16px",
+                      cursor: "pointer",
+                      backgroundColor: item.isLocked ? "#4CAF50" : "#f44336",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "4px",
+                      marginRight: "10px",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      transition: "opacity 0.3s",
+                    }}
+                    onMouseEnter={(e) => (e.target.style.opacity = "0.8")}
+                    onMouseLeave={(e) => (e.target.style.opacity = "1")}
+                  >
+                    {item.isLocked ? "Unlock" : "Lock"}
+                  </button>
+                  <button
+                    onClick={() => removeRestaurant(item._id)}
+                    className="cursor delete-btn"
+                    style={{
+                      padding: "8px 16px",
+                      cursor: "pointer",
+                      backgroundColor: "#ff5722",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "4px",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      transition: "opacity 0.3s",
+                    }}
+                    onMouseEnter={(e) => (e.target.style.opacity = "0.8")}
+                    onMouseLeave={(e) => (e.target.style.opacity = "1")}
+                  >
+                    Xóa
+                  </button>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
     </div>
   );

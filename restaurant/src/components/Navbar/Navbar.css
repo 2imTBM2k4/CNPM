@@ -1,212 +1,206 @@
-.navbar{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 4%;
-}
-.navbar .logo{
-    width: max(10%,80px);
-}
-
-.navbar .profile{
-    width: 40px;
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: var(--navbar-bg);
+  border-bottom: 1px solid var(--border-color);
+  height: 64px;
 }
 
-#visual-toggle-button{
-    width: 140px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
-    cursor: pointer;
-}
-/* checkbox */
-#visual-toggle{
-    appearance: none;
-    display: none;
+.navbar .logo {
+  width: max(10%, 80px);
 }
 
-.svgIcon-toggle{
-    width: 25px;
+.navbar .profile {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border-color);
 }
 
-.moon-svg{
-    width: 13px;
-    position: absolute;
-    transition: all .3s;
+#visual-toggle-button {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  cursor: pointer;
+  background: var(--body-color);
+  transition: all 0.2s ease;
 }
-.sun-svg{
-    opacity: 0;
-    transition: all .3s;
+
+#visual-toggle-button:hover {
+  border-color: var(--text-secondary);
 }
-.lightmode .sun-svg{
-    filter: brightness(0);
-    transform: rotate(180deg);
-    opacity: 1;
+
+#visual-toggle {
+  appearance: none;
+  display: none;
 }
-.lightmode .moon-svg{
-    opacity: 0;
+
+.svgIcon-toggle {
+  width: 20px;
 }
-.animate .moon-svg{
-    transform: rotate(360deg);
-    transition: all .3s;
+
+.moon-svg {
+  width: 13px;
+  position: absolute;
+  transition: all 0.3s;
+}
+
+.sun-svg {
+  opacity: 0;
+  transition: all 0.3s;
+}
+
+.lightmode .sun-svg {
+  filter: brightness(0);
+  transform: rotate(180deg);
+  opacity: 1;
+}
+
+.lightmode .moon-svg {
+  opacity: 0;
+}
+
+.animate .moon-svg {
+  transform: rotate(360deg);
+  transition: all 0.3s;
 }
 
 .lightcolors .logo {
-    filter: none; 
+  filter: none;
 }
 
-
-:root .addd {
-    filter: var(--logos-filter); 
+:root .addd,
+:root .listt,
+:root .orderr,
+:root .profile {
+  filter: var(--logos-filter);
 }
 
-.lightcolors .addd {
-    filter: none; 
+.lightcolors .addd,
+.lightcolors .listt,
+.lightcolors .orderr,
+.lightcolors .profile {
+  filter: none;
 }
 
-:root .listt {
-    filter: var(--logos-filter); 
+:root p {
+  color: var(--text-color);
 }
 
-.lightcolors .listt {
-    filter: none; 
+.lightcolors p {
+  filter: none;
 }
 
-:root .orderr {
-    filter: var(--logos-filter); 
+:root .list-table-format.title {
+  background-color: var(--body-color);
 }
 
-.lightcolors .orderr {
-    filter: none; 
-}
-
-:root p{
-    color: var(--light-text);
-}
-
-.lightcolors p{
-    filter: none;
-}
-
-:root .list-table-format.title{
-    background-color: var(--body-color);
-}
-
-.lightcolors .list-table-format.title{
-    filter: none;
+.lightcolors .list-table-format.title {
+  filter: none;
 }
 
 :root .add-product-name input:focus,
 :root .add-product-description textarea:focus {
-    outline: black;
+  outline: none;
+  border-color: var(--accent-color);
 }
-
-
 
 .lightmode .add-product-name input:focus,
 .lightmode .add-product-description textarea:focus {
-    outline: black;
+  outline: none;
+  border-color: var(--accent-color);
 }
 
-
-/* DARK MODE FOR PRODUCTNAME & PRODUCTDESCRIPTION */
 :root .add-product-name input,
 :root .add-product-description textarea {
-    background-color: var(--background-root);
-    border: var(--border-root);
-    padding: var(--padding-root);
-    color: white; /* Add this line to set text color to white */
+  background-color: var(--body-color);
+  border: 1.5px solid var(--border-color);
+  padding: 12px 14px;
+  color: var(--text-color);
+  border-radius: var(--radius);
+  font-size: 14px;
+  transition: border-color 0.2s ease;
 }
 
-/* LIGHT MODE FOR PRODUCTNAME & PRODUCTDESCRIPTION */
 .lightcolors .add-product-name input,
 .lightcolors .add-product-description textarea {
-    background-color: white; /* Background color for light mode */
-    border: 2px solid gray; /* Border color for light mode */
-    color: black;
+  background-color: #ffffff;
+  border: 1.5px solid var(--border-color);
+  color: var(--text-color);
 }
 
 :root .add-product-name input::placeholder,
 :root .add-product-description textarea::placeholder {
-    color: gray; /* Set the placeholder text color to white */
+  color: var(--text-secondary);
 }
 
 .lightcolors .add-product-name input::placeholder,
 .lightcolors .add-product-description textarea::placeholder {
-    color: black;
+  color: var(--text-secondary);
 }
-
 
 :root .inputclasa,
 :root .selectt {
-    color: white;
-    border: 1px solid white;
-    background-color: black; 
+  color: var(--text-color);
+  border: 1.5px solid var(--border-color);
+  background-color: var(--body-color);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
 }
-
 
 .lightcolors .inputclasa,
 .lightcolors .selectt {
-    border: 1px solid gray;
-    background-color: transparent; 
-    color: black;
+  border: 1.5px solid var(--border-color);
+  background-color: #ffffff;
+  color: var(--text-color);
 }
 
 :root .inputclasa::placeholder,
 :root .selectt::placeholder {
-    color: gray;
+  color: var(--text-secondary);
 }
-
-
-
-
-:root .profile {
-    filter: var(--logos-filter); 
-}
-
-.lightcolors .profile {
-    filter: none; 
-}
-
 
 :root {
-    --input-color: black; /* Define custom color for input elements */
-    --background-root: black;
-    --border-root: 2px solid white;
-    --padding-root: 10px;
-    --upload: brightness(1) invert(1); /* Added a custom variable */
-    --logos-filter: brightness(0) invert(1); /* Added a custom variable */
-    --sidebar: black;
-    --border-color: #27272a;
-    --nav-color-one: #0d0d179a;
-    --nav-color-two: #0d0618;
-    --body-color: #121212;
-    --dark-text: #101010;
-    --light-text: #ffffff;
-    --light-text-secondary: #b9b9b9;
-    --light-text-desc: #d8d8d8;
+  --input-color: var(--text-color);
+  --background-root: var(--body-color);
+  --border-root: 1.5px solid var(--border-color);
+  --padding-root: 12px 14px;
+  --upload: brightness(0.5);
+  --logos-filter: none;
+  --sidebar: var(--sidebar-active);
+  --nav-color-one: var(--navbar-bg);
+  --nav-color-two: var(--body-color);
+  --dark-text: var(--text-color);
+  --light-text: var(--text-color);
+  --light-text-secondary: var(--text-secondary);
+  --light-text-desc: var(--text-secondary);
 }
 
-/* For lightcolors */
 .lightcolors {
-    --sidebar: #fff0ed;
-    --body-color: #FFFFFF;
-    --dark-text: #fff;
-    --light-text: #101010;
-    --nav-color-two: #f6f6f2;
-    --nav-color-one: #f1f1f17e;
-    --border-color: #ddd;
-    --light-text-secondary: #464853;
-    --light-text-desc: #020202;
-    --cards-text-color: #fff; /* White text color for cards container */
+  --sidebar: #fff0ed;
+  --dark-text: var(--text-color);
+  --light-text: var(--text-color);
+  --nav-color-two: #f8fafc;
+  --nav-color-one: #ffffff;
+  --light-text-secondary: var(--text-secondary);
+  --light-text-desc: var(--text-secondary);
+  --cards-text-color: var(--text-color);
 }
 
-/* Reset filter for images with class "image" in light mode */
 .lightcolors label img.image {
-    filter: none; /* Reset filter for images with class "image" in light mode */
+  filter: none;
 }
 
+label img[src*="assets/upload_area"] {
+  filter: var(--upload);
+}

@@ -1,80 +1,118 @@
 .order-item {
-    display: grid;
-    grid-template-columns: 0.5fr 2fr 1fr 1fr 1fr;
-    align-items: start;
-    gap: 30px;
-    border: 1px solid tomato;
-    padding: 20px;
-    margin: 30px 0px;
-    font-size: 14px;
-    color: #505050;
+  display: grid;
+  grid-template-columns: 0.5fr 2fr 1fr 1fr 1fr;
+  align-items: start;
+  gap: 24px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin: 16px 0;
+  font-size: 14px;
+  color: var(--text-color);
+  transition: box-shadow 0.2s ease;
 }
-.order-item-food, .order-item-name {
-    font-weight: 600;
+
+.order-item:hover {
+  box-shadow: var(--shadow);
 }
+
+.order-item img {
+  border-radius: 8px;
+}
+
+.order-item-food,
 .order-item-name {
-    margin-top: 30px;
-    margin-bottom: 5px;
+  font-weight: 600;
 }
+
+.order-item-name {
+  margin-top: 20px;
+  margin-bottom: 5px;
+}
+
 .order-item-address {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
+  color: var(--text-secondary);
+  font-size: 13px;
 }
+
 .order-item select {
-    background-color: #ffe8e4;
-    border: 1px solid tomato;
-    width: max(10vw,120px);
-    padding: 10px;
-    outline: none;
+  background-color: var(--body-color);
+  border: 1.5px solid var(--border-color);
+  width: max(10vw, 130px);
+  padding: 9px 12px;
+  outline: none;
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
 }
+
+.order-item select:focus {
+  border-color: var(--accent-color);
+}
+
 .cancel-reason {
-    color: #ff0000;
-    font-style: italic;
-    margin-top: 5px;
+  color: #ef4444;
+  font-style: italic;
+  margin-top: 5px;
+  font-size: 13px;
 }
+
 .status-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
+
 .status-buttons button {
-    padding: 8px 12px;
-    border: 1px solid tomato;
-    background: #ffe8e4;
-    color: #505050;
-    cursor: pointer;
-    border-radius: 4px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-color);
+  background: var(--body-color);
+  color: var(--text-color);
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
+
 .status-buttons button:hover {
-    background: #ffcccc;
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
 }
 
 :root .order-item select {
-    background-color: black;
-    color: white;
-    border: 1px solid tomato;
+  background-color: var(--body-color);
+  color: var(--text-color);
+  border: 1.5px solid var(--border-color);
 }
 
 .lightcolors .order-item select {
-    background-color: #ffe8e4;
-    color: black;
-    border: 1px solid tomato;
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  border: 1.5px solid var(--border-color);
 }
 
-@media (max-width:1000px) {
-    .order-item {
-        font-size: 12px;
-        grid-template-columns: 0.5fr 2fr 1fr;
-        padding: 15px 8px;
-    }
-    .order-item select {
-        padding: 5px;
-        font-size: 12px;
-    }
-    .order-item img {
-        width: 40px;
-    }
-    .status-buttons button {
-        font-size: 12px;
-        padding: 6px 10px;
-    }
+@media (max-width: 1000px) {
+  .order-item {
+    font-size: 13px;
+    grid-template-columns: 0.5fr 2fr 1fr;
+    padding: 16px 12px;
+    gap: 16px;
+  }
+  .order-item select {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+  .order-item img {
+    width: 40px;
+  }
+  .status-buttons button {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
 }

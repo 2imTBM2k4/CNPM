@@ -12,6 +12,8 @@ body {
   background-color: var(--body-color);
   min-height: 100vh;
   color: var(--text-color);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
@@ -27,31 +29,44 @@ a {
 @keyframes fadeIn {
   0% {
     opacity: 0;
+    transform: translateY(8px);
   }
   100% {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Theme variables - Default light mode ở :root, dark ở .darkmode */
 :root {
   --body-color: #ffffff;
-  --text-color: #101010;
-  --text-secondary: #464853;
-  --accent-color: tomato;
-  --background-secondary: #f8f9fa;
-  --border-color: #ddd;
+  --text-color: #1a1a2e;
+  --text-secondary: #555770;
+  --accent-color: #ff6b35;
+  --accent-hover: #e55a2b;
+  --background-secondary: #f7f8fc;
+  --border-color: #e8e8ee;
   --button-bg: #ffffff;
-  --button-text: #747474;
+  --button-text: #555770;
+  --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --card-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+  --radius: 12px;
 }
 
 .darkmode {
-  --body-color: #121212;
-  --text-color: #ffffff;
-  --text-secondary: #b9b9b9;
-  --accent-color: tomato;
-  --background-secondary: #1e1e1e;
-  --border-color: #27272a;
+  --body-color: #0f0f1a;
+  --text-color: #e8e8ee;
+  --text-secondary: #a0a0b8;
+  --accent-color: #ff6b35;
+  --accent-hover: #ff8555;
+  --background-secondary: #1a1a2e;
+  --border-color: #2a2a3e;
   --button-bg: #ffffff;
   --button-text: #000000;
+  --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  --card-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+::selection {
+  background-color: var(--accent-color);
+  color: white;
 }

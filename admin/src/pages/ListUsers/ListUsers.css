@@ -1,72 +1,48 @@
-/* Copy từ ListRestaurant.css và chỉnh sửa nếu cần
-.list {
-  padding: 20px;
-}
-
-.list-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.list-table-format {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-}
-
-.title {
-  font-weight: bold;
-}
-
-.actions {
-  display: flex;
-  gap: 10px;
-}
-
-.cursor {
-  cursor: pointer;
-}
-
-.edit-btn {
-  color: blue;
-}
-
-.lock-btn {
-  color: orange;
-}
-
-.remove-btn {
-  color: red;
-} */
-
-/* admin/src/pages/ListUsers/ListUsers.css (Tương tự ListRestaurant) */
 .list-table-format {
   display: grid;
   grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr;
   align-items: center;
   gap: 10px;
-  padding: 12px 15px;
-  border: 1px solid #cacaca;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-color);
   font-size: 13px;
+  color: var(--text-primary);
+  transition: background-color 0.15s ease;
+}
+
+.list-table-format:not(.title):hover {
+  background-color: var(--body-color);
 }
 
 .list-table-format.title {
-  background-color: #f9f9f9;
+  background-color: var(--body-color);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  font-size: 12px;
+  border-bottom: 2px solid var(--border-color);
 }
 
 .cursor {
   cursor: pointer;
+  transition: color 0.2s ease;
 }
 
 .lock-btn {
-  color: red;
+  color: var(--danger-color);
+  font-weight: 500;
+}
+
+.lock-btn:hover {
+  color: #dc2626;
 }
 
 @media (max-width: 600px) {
   .list-table-format {
     grid-template-columns: 1fr 2fr 1fr;
-    gap: 15px;
+    gap: 12px;
+    padding: 12px;
   }
   .list-table-format.title {
     display: none;

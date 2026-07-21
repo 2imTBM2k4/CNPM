@@ -4,7 +4,7 @@
   justify-content: space-between;
   gap: 50px;
   margin-top: 100px;
-  max-width: 1200px;
+  max-width: 1100px;
   margin-left: auto;
   margin-right: auto;
   padding: 20px;
@@ -16,26 +16,29 @@
 }
 
 .place-order-left .title {
-  font-size: 28px;
-  font-weight: 600;
-  margin-bottom: 40px;
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 30px;
   color: var(--text-color);
 }
 
 .place-order-left input {
-  margin-bottom: 15px;
+  margin-bottom: 14px;
   width: 100%;
-  padding: 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
+  padding: 12px 16px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 10px;
   outline: none;
   background-color: var(--background-secondary);
   color: var(--text-color);
-  transition: border-color 0.3s ease;
+  font-size: 15px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .place-order-left input:focus {
   border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+  background-color: var(--body-color);
 }
 
 .place-order-left input::placeholder {
@@ -44,7 +47,7 @@
 
 .place-order-left .multi-fields {
   display: flex;
-  gap: 10px;
+  gap: 12px;
 }
 
 .place-order-right {
@@ -53,29 +56,32 @@
 }
 
 .place-order .cart-total button {
-  margin-top: 30px;
+  margin-top: 20px;
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   background-color: var(--accent-color);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.2s ease;
+  letter-spacing: 0.02em;
 }
 
 .place-order .cart-total button:hover {
-  background-color: darken(var(--accent-color), 10%);
-  transform: scale(1.02);
+  background-color: var(--accent-hover);
+  transform: translateY(-1px);
 }
 
 .place-order .cart-total button:disabled {
-  background-color: #ccc;
+  background-color: var(--border-color);
+  color: var(--text-secondary);
   cursor: not-allowed;
+  transform: none;
 }
 
-/* Loading */
 .loading {
   text-align: center;
   padding: 50px;
@@ -83,13 +89,11 @@
   color: var(--text-secondary);
 }
 
-/* Responsive */
 @media (max-width: 900px) {
   .place-order {
     flex-direction: column;
     gap: 30px;
   }
-
   .place-order-left,
   .place-order-right {
     max-width: 100%;

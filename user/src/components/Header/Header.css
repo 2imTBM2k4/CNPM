@@ -1,10 +1,23 @@
 .header {
-  height: 32vw;
-  margin: 25px auto;
+  height: 34vw;
+  min-height: 280px;
+  margin: 20px auto;
   background: url("/header_img.png") no-repeat center/cover;
   position: relative;
-  border-radius: 15px;
+  border-radius: 16px;
   overflow: hidden;
+}
+
+.header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.1) 70%,
+    transparent 100%
+  );
 }
 
 .header-contents {
@@ -16,45 +29,48 @@
   max-width: 45%;
   bottom: 15%;
   left: 5vw;
-  animation: fadeIn 2s ease-out;
+  z-index: 1;
+  animation: fadeIn 1s ease-out;
 }
 
 .header-contents h2 {
-  font-weight: 600;
+  font-weight: 700;
   color: white;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-  font-size: max(4vw, 20px);
-  line-height: 1.2;
+  font-size: max(3.5vw, 22px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
 }
 
 .header-contents p {
-  color: white;
+  color: rgba(255, 255, 255, 0.9);
   font-size: max(1vw, 14px);
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
-.header-contents button {
+.header-contents button,
+.buttonwl {
   border: none;
-  background-color: var(--button-bg);
-  color: var(--button-text);
-  font-weight: 500;
-  padding: 0.8vw 2vw;
-  font-size: max(1vw, 12px);
-  border-radius: 30px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.header-contents button:hover {
   background-color: var(--accent-color);
   color: white;
-  transform: scale(1.05);
+  font-weight: 600;
+  padding: 12px 28px;
+  font-size: max(1vw, 13px);
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.02em;
 }
 
-/* Responsive */
+.header-contents button:hover,
+.buttonwl:hover {
+  background-color: var(--accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.35);
+}
+
 @media (max-width: 1050px) {
   .header-contents {
-    max-width: 50%;
+    max-width: 55%;
   }
 }
 
@@ -64,7 +80,7 @@
   }
 
   .header-contents {
-    max-width: 70%;
+    max-width: 75%;
     bottom: 10%;
     left: 4vw;
     gap: 2vw;
@@ -75,6 +91,6 @@
   }
 
   .header-contents button {
-    padding: 2.5vw 5vw;
+    padding: 10px 24px;
   }
 }

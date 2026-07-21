@@ -1,9 +1,17 @@
 .edit-restaurant {
-  width: 70%;
+  width: 100%;
+  max-width: 700px;
   margin-left: max(5vw, 25px);
-  margin-top: 50px;
-  color: var(--light-text);
-  font-size: 16px;
+  margin-top: 30px;
+  color: var(--text-color);
+  font-size: 15px;
+}
+
+.edit-restaurant h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: var(--text-color);
 }
 
 .edit-restaurant form {
@@ -12,61 +20,85 @@
 
 .edit-restaurant .add-img-upload {
   gap: 10px;
+  margin-bottom: 16px;
+}
+
+.edit-restaurant .add-img-upload p {
+  font-weight: 600;
+  margin-bottom: 10px;
 }
 
 .edit-restaurant .add-img-upload img {
   width: 120px;
   height: 120px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: var(--radius);
   cursor: pointer;
-  border: 2px solid #ddd;
+  border: 2px solid var(--border-color);
+  transition: border-color 0.2s ease;
 }
 
 .edit-restaurant .add-img-upload img:hover {
-  border-color: #666;
+  border-color: var(--accent-color);
 }
 
 .edit-restaurant .file-selected {
-  color: green;
-  font-size: 14px;
+  color: #10b981;
+  font-size: 13px;
   margin-top: 5px;
+  font-weight: 500;
 }
 
 .edit-restaurant .add-product-name,
 .edit-restaurant .add-product-description {
-  width: max(40%, 280px);
+  width: max(50%, 300px);
+  margin-bottom: 16px;
+}
+
+.edit-restaurant .add-product-name p,
+.edit-restaurant .add-product-description p {
+  font-weight: 600;
+  margin-bottom: 8px;
 }
 
 .edit-restaurant .add-product-name input,
 .edit-restaurant .add-product-description textarea {
-  padding: 10px;
+  padding: 12px 14px;
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--card-bg);
+  color: var(--text-color);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .edit-restaurant .add-product-name input:focus,
 .edit-restaurant .add-product-description textarea:focus {
   outline: none;
-  border-color: #666;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
 }
 
 .add-btn {
-  max-width: 120px;
+  max-width: 160px;
   border: none;
-  padding: 10px 20px;
-  background-color: black;
+  padding: 12px 24px;
+  background-color: var(--accent-color);
   color: white;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--radius);
   font-weight: 600;
-  transition: background-color 0.3s;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  letter-spacing: 0.02em;
 }
 
 .add-btn:hover {
-  background-color: #333;
+  background-color: var(--accent-hover);
+  transform: translateY(-1px);
 }
 
 label img[src*="assets/upload_area"] {
@@ -76,11 +108,11 @@ label img[src*="assets/upload_area"] {
 .loading,
 .error {
   text-align: center;
-  padding: 20px;
-  color: var(--light-text);
-  font-size: 18px;
+  padding: 30px;
+  color: var(--text-secondary);
+  font-size: 16px;
 }
 
 .error {
-  color: red;
+  color: #ef4444;
 }

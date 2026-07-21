@@ -4,15 +4,15 @@
 
 .restaurant-display-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 30px;
-  row-gap: 50px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
 }
 
 .no-items-message {
   text-align: center;
   width: 100%;
-  padding: 20px;
-  background-color: #f8f8f8;
-  border-radius: 8px;
+  padding: 40px 20px;
+  background-color: var(--background-secondary);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
 }

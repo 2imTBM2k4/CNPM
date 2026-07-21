@@ -1,34 +1,87 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
 
-*{
+* {
   padding: 0;
   margin: 0;
   box-sizing: border-box;
-  font-family: Outfit;
+  font-family: "Outfit", sans-serif;
 }
 
-body{
+body {
   min-height: 100vh;
   background-color: var(--body-color);
+  color: var(--text-color);
+  -webkit-font-smoothing: antialiased;
 }
 
-a{
+a {
   text-decoration: none;
-  color: inherit
+  color: inherit;
 }
 
-hr{
+hr {
   border: none;
   height: 1px;
-  background-color: #a9a9a9;
+  background-color: var(--border-color);
 }
 
-.app-content{
+.app-content {
   display: flex;
 }
 
-.flex-col{
+.flex-col {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+:root {
+  --body-color: #f8fafc;
+  --text-color: #1e293b;
+  --text-secondary: #64748b;
+  --accent-color: #ff6b35;
+  --accent-hover: #e55a2b;
+  --background-secondary: #ffffff;
+  --border-color: #e2e8f0;
+  --card-bg: #ffffff;
+  --sidebar-bg: #1e293b;
+  --sidebar-active: #334155;
+  --navbar-bg: #ffffff;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --radius: 10px;
+}
+
+.lightcolors {
+  --body-color: #f8fafc;
+  --text-color: #1e293b;
+  --text-secondary: #64748b;
+  --background-secondary: #ffffff;
+  --border-color: #e2e8f0;
+  --card-bg: #ffffff;
+  --sidebar-bg: #1e293b;
+  --sidebar-active: #334155;
+  --navbar-bg: #ffffff;
+}
+
+::selection {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
 }

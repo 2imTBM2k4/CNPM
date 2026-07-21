@@ -1,152 +1,64 @@
-/* .list-table-format {
-  display: grid;
-  grid-template-columns: 0.5fr 2fr 1fr 1fr 0.5fr;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 15px;
-  border: 1px solid #cacaca;
-  font-size: 13px;
-}
-
-.list-table-format.title {
-  background-color: #f9f9f9;
-}
-.list-table-format img {
-  width: 50px;
-}
-
-@media (max-width: 600px) {
-  .list-table-format {
-    grid-template-columns: 1fr 3fr 1fr;
-    gap: 15px;
-  }
-  .list-table-format.title {
-    display: none;
-  }
-}
-
-.cursor {
-  cursor: pointer;
-}
-
-.edit-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.close {
-  font-size: 24px;
-  cursor: pointer;
-}
-
-.actions {
-  display: flex;
-  gap: 10px;
-}
-
-.edit-btn,
-.remove-btn {
-  padding: 5px 10px;
-  border-radius: 5px;
-}
-
-.edit-btn {
-  background: #4caf50;
-  color: white;
-}
-
-.remove-btn {
-  background: #f44336;
-  color: white;
-}
-
-.modal-buttons {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 20px;
-}
-
-.cancel-btn {
-  background: #6c757d;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.update-btn {
-  background: #007bff;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.list.add.flex-col {
-  padding: 1rem;
-  width: 100%;
-  box-sizing: border-box;
-} */
-
-/* admin/src/pages/ListRestaurant/ListRestaurant.css */
 .list-table-format {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr 1fr; /* Thêm cột cho status và actions */
+  grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr 1fr;
   align-items: center;
   gap: 10px;
-  padding: 12px 15px;
-  border: 1px solid #cacaca;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-color);
   font-size: 13px;
+  color: var(--text-primary);
+  transition: background-color 0.15s ease;
+}
+
+.list-table-format:not(.title):hover {
+  background-color: var(--body-color);
 }
 
 .list-table-format.title {
-  background-color: #f9f9f9;
+  background-color: var(--body-color);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  font-size: 12px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.list-table-format img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 8px;
 }
 
 .cursor {
   cursor: pointer;
+  transition: color 0.2s ease;
 }
 
 .approve-btn {
-  color: green;
+  color: var(--accent-color);
+  font-weight: 500;
+}
+
+.approve-btn:hover {
+  color: #059669;
 }
 
 .lock-btn {
-  color: red;
+  color: var(--danger-color);
+  font-weight: 500;
+}
+
+.lock-btn:hover {
+  color: #dc2626;
 }
 
 @media (max-width: 600px) {
   .list-table-format {
     grid-template-columns: 1fr 2fr 1fr;
-    gap: 15px;
+    gap: 12px;
+    padding: 12px;
   }
   .list-table-format.title {
     display: none;

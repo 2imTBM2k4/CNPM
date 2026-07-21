@@ -38,14 +38,14 @@
 
 .login-form input:focus {
   outline: none;
-  border-color: #ff6b35;
-  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+  border-color: #e53935;
+  box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.1);
   background: white;
 }
 
 .login-form button {
   padding: 13px;
-  background: #ff6b35;
+  background: #e53935;
   color: white;
   border: none;
   border-radius: 10px;
@@ -57,7 +57,7 @@
 }
 
 .login-form button:hover {
-  background: #e55a2b;
+  background: #c62828;
   transform: translateY(-1px);
 }
 
@@ -68,11 +68,11 @@
 }
 
 .login-form p a {
-  color: #ff6b35;
+  color: #e53935;
   text-decoration: none;
   font-weight: 600;
 }
 
 .login-form p a:hover {
-  color: #e55a2b;
+  color: #c62828;
 }

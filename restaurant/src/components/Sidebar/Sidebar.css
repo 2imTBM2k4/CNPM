@@ -1,63 +1,71 @@
 .sidebar {
-  width: 220px;
-  min-height: 100vh;
+  width: 240px;
+  min-height: calc(100vh - 64px);
   background: var(--sidebar-bg);
   color: white;
-  border-right: none;
-  font-size: 14px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
 }
 
-.sidebar-options {
-  padding: 24px 12px;
+.sidebar-nav {
+  padding: 20px 12px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
-.sidebar-option {
+.sidebar-item {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 11px 16px;
-  border-radius: var(--radius);
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.6);
   border: none;
   background: none;
   text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
 }
 
-.sidebar-option:hover {
+.sidebar-item:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: white;
+  color: rgba(255, 255, 255, 0.9);
 }
 
-.sidebar-option.active {
-  background-color: var(--sidebar-active);
+.sidebar-item.active {
+  background: rgba(255, 255, 255, 0.1);
   color: white;
   font-weight: 600;
 }
 
-.sidebar-option img {
-  width: 20px;
-  height: 20px;
-  filter: brightness(0) invert(1);
+.sidebar-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  background: var(--accent-color);
+  border-radius: 0 3px 3px 0;
+}
+
+.sidebar-item svg {
+  flex-shrink: 0;
   opacity: 0.7;
 }
 
-.sidebar-option.active img,
-.sidebar-option:hover img {
+.sidebar-item.active svg,
+.sidebar-item:hover svg {
   opacity: 1;
 }
 
-.sidebar-option p {
-  margin: 0;
-  font-size: 14px;
+.sidebar-item span {
   white-space: nowrap;
-  color: inherit;
 }
 
 @media (max-width: 900px) {
@@ -65,12 +73,17 @@
     width: 64px;
   }
 
-  .sidebar-option p {
+  .sidebar-item span {
     display: none;
   }
 
-  .sidebar-option {
+  .sidebar-item {
     justify-content: center;
     padding: 12px;
+  }
+
+  .sidebar-item.active::before {
+    top: 8px;
+    bottom: 8px;
   }
 }

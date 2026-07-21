@@ -1,31 +1,30 @@
-import React, { useEffect, useState, useContext } from "react"; // SỬA: Import AuthContext
-import { AuthContext } from "../../context/AuthContext"; // SỬA: Import để check user
-import { useNavigate } from "react-router-dom"; // SỬA: Import navigate
+import React, { useEffect, useState, useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import "./List.css";
 import axios from "axios";
 import { toast } from "react-toastify";
 import EditProduct from "../Products/EditProduct";
+import { Pencil, Trash2 } from "lucide-react";
 
 const List = ({ url }) => {
   const [list, setList] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
-  const { user } = useContext(AuthContext); // SỬA: Get user từ context
-  const navigate = useNavigate(); // SỬA: Để redirect nếu không auth
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // SỬA: Check user trước fetch, nếu null redirect login
     if (!user) {
       toast.error("Please login to view your foods.");
       navigate("/login");
       return;
     }
     fetchList();
-  }, [user]); // SỬA: Depend on user
+  }, [user]);
 
   const fetchList = async () => {
     const token = localStorage.getItem("token");
     if (!token || !user) {
-      // SỬA: Double check
       toast.error("No authentication. Please login again.");
       navigate("/login");
       return;
@@ -102,44 +101,81 @@ const List = ({ url }) => {
     return img.startsWith("http") ? img : `${url}/images/${img}`;
   };
 
+  const categories = [...new Set(list.map((item) => item.category))];
+
   return (
-    <div className="list add flex-col">
-      <p>All Foods List</p>
-      <div className="list-table">
-        <div className="list-table-format title">
-          <b>Image</b>
-          <b>Name</b>
-          <b>Category</b>
-          <b>Price</b>
-          <b>Action</b>
+    <div className="list-page">
+      <div className="list-header">
+        <div>
+          <h1 className="list-title">Menu Items</h1>
+          <p className="list-subtitle">Manage your restaurant menu</p>
         </div>
-        {list.map((item, index) => {
-          return (
-            <div key={index} className="list-table-format">
-              <img
-                src={getImgSrc(item.image)}
-                alt={item.name}
-                onError={(e) => {
-                  e.target.src = "/placeholder.jpg";
-                }}
-              />
-              <p>{item.name}</p>
-              <p>{item.category}</p>
-              <p>${item.price}</p>
-              <div className="actions">
-                <p onClick={() => editFood(item)} className="cursor edit-btn">
-                  ✏️
-                </p>
-                <p
-                  onClick={() => removeFood(item._id)}
-                  className="cursor remove-btn"
-                >
-                  X
-                </p>
-              </div>
+        <button className="add-item-btn" onClick={() => navigate("/add")}>
+          + Add Item
+        </button>
+      </div>
+
+      <div className="list-stats">
+        <div className="stat-card">
+          <span className="stat-value">{list.length}</span>
+          <span className="stat-label">Total items</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-value">{list.filter((i) => i.price > 0).length}</span>
+          <span className="stat-label">Available</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-value">{categories.length}</span>
+          <span className="stat-label">Categories</span>
+        </div>
+      </div>
+
+      <div className="list-card">
+        <div className="list-table">
+          <div className="list-table-format title">
+            <b>Image</b>
+            <b>Name</b>
+            <b>Category</b>
+            <b>Price</b>
+            <b>Actions</b>
+          </div>
+          {list.length === 0 ? (
+            <div className="list-empty">
+              <p>No menu items yet. Add your first item to get started.</p>
             </div>
-          );
-        })}
+          ) : (
+            list.map((item, index) => (
+              <div key={index} className="list-table-format">
+                <img
+                  src={getImgSrc(item.image)}
+                  alt={item.name}
+                  onError={(e) => {
+                    e.target.src = "/placeholder.jpg";
+                  }}
+                />
+                <p className="item-name">{item.name}</p>
+                <span className="category-badge">{item.category}</span>
+                <p className="item-price">${Number(item.price).toFixed(2)}</p>
+                <div className="actions">
+                  <button
+                    onClick={() => editFood(item)}
+                    className="action-btn action-btn--edit"
+                    title="Edit"
+                  >
+                    <Pencil size={15} />
+                  </button>
+                  <button
+                    onClick={() => removeFood(item._id)}
+                    className="action-btn action-btn--delete"
+                    title="Remove"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       {editingProduct && (

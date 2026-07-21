@@ -1,127 +1,209 @@
 .navbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 12px 24px;
+  justify-content: space-between;
+  padding: 0 24px;
   background: var(--navbar-bg);
   border-bottom: 1px solid var(--border-color);
   height: 64px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
 }
 
 .navbar .logo {
-  width: max(10%, 80px);
+  height: 32px;
+  width: auto;
 }
 
-.navbar .profile {
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.theme-toggle {
   width: 36px;
   height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  background: var(--body-color);
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-color);
+}
+
+.wallet-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--body-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+  transition: all 0.2s ease;
+}
+
+.wallet-badge svg {
+  color: var(--accent-color);
+}
+
+.account-menu {
+  position: relative;
+}
+
+.account-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px 6px 6px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-color);
+}
+
+.account-trigger:hover {
+  background: var(--body-color);
+  border-color: var(--border-color);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid var(--border-color);
 }
 
-#visual-toggle-button {
-  width: 44px;
-  height: 44px;
+.account-name {
+  font-size: 14px;
+  font-weight: 500;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+  padding: 6px;
+  z-index: 200;
+  animation: dropdownIn 0.15s ease;
+}
+
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-item {
   display: flex;
   align-items: center;
-  justify-content: center;
-  position: relative;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius);
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: none;
+  border-radius: 6px;
   cursor: pointer;
-  background: var(--body-color);
-  transition: all 0.2s ease;
-}
-
-#visual-toggle-button:hover {
-  border-color: var(--text-secondary);
-}
-
-#visual-toggle {
-  appearance: none;
-  display: none;
-}
-
-.svgIcon-toggle {
-  width: 20px;
-}
-
-.moon-svg {
-  width: 13px;
-  position: absolute;
-  transition: all 0.3s;
-}
-
-.sun-svg {
-  opacity: 0;
-  transition: all 0.3s;
-}
-
-.lightmode .sun-svg {
-  filter: brightness(0);
-  transform: rotate(180deg);
-  opacity: 1;
-}
-
-.lightmode .moon-svg {
-  opacity: 0;
-}
-
-.animate .moon-svg {
-  transform: rotate(360deg);
-  transition: all 0.3s;
-}
-
-.lightcolors .logo {
-  filter: none;
-}
-
-:root .addd,
-:root .listt,
-:root .orderr,
-:root .profile {
-  filter: var(--logos-filter);
-}
-
-.lightcolors .addd,
-.lightcolors .listt,
-.lightcolors .orderr,
-.lightcolors .profile {
-  filter: none;
-}
-
-:root p {
+  font-size: 14px;
   color: var(--text-color);
+  transition: background-color 0.15s ease;
 }
 
-.lightcolors p {
-  filter: none;
+.dropdown-item:hover {
+  background: var(--body-color);
 }
 
-:root .list-table-format.title {
-  background-color: var(--body-color);
+.dropdown-item svg {
+  color: var(--text-secondary);
 }
 
-.lightcolors .list-table-format.title {
-  filter: none;
+.dropdown-item--danger {
+  color: #ef4444;
 }
 
-:root .add-product-name input:focus,
-:root .add-product-description textarea:focus {
+.dropdown-item--danger svg {
+  color: #ef4444;
+}
+
+.dropdown-item--danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 0;
+}
+
+.login-btn {
+  padding: 8px 20px;
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.login-btn:hover {
+  background: var(--accent-hover);
+}
+
+.add-product-name input:focus,
+.add-product-description textarea:focus {
   outline: none;
   border-color: var(--accent-color);
 }
 
-.lightmode .add-product-name input:focus,
-.lightmode .add-product-description textarea:focus {
-  outline: none;
-  border-color: var(--accent-color);
-}
-
-:root .add-product-name input,
-:root .add-product-description textarea {
-  background-color: var(--body-color);
+.add-product-name input,
+.add-product-description textarea {
+  background-color: var(--card-bg);
   border: 1.5px solid var(--border-color);
   padding: 12px 14px;
   color: var(--text-color);
@@ -130,77 +212,36 @@
   transition: border-color 0.2s ease;
 }
 
-.lightcolors .add-product-name input,
-.lightcolors .add-product-description textarea {
-  background-color: #ffffff;
-  border: 1.5px solid var(--border-color);
-  color: var(--text-color);
-}
-
-:root .add-product-name input::placeholder,
-:root .add-product-description textarea::placeholder {
+.add-product-name input::placeholder,
+.add-product-description textarea::placeholder {
   color: var(--text-secondary);
 }
 
-.lightcolors .add-product-name input::placeholder,
-.lightcolors .add-product-description textarea::placeholder {
-  color: var(--text-secondary);
-}
-
-:root .inputclasa,
-:root .selectt {
+.inputclasa,
+.selectt {
   color: var(--text-color);
   border: 1.5px solid var(--border-color);
-  background-color: var(--body-color);
+  background-color: var(--card-bg);
   border-radius: var(--radius);
   padding: 10px 14px;
   font-size: 14px;
   transition: border-color 0.2s ease;
 }
 
-.lightcolors .inputclasa,
-.lightcolors .selectt {
-  border: 1.5px solid var(--border-color);
-  background-color: #ffffff;
-  color: var(--text-color);
-}
-
-:root .inputclasa::placeholder,
-:root .selectt::placeholder {
-  color: var(--text-secondary);
-}
-
-:root {
-  --input-color: var(--text-color);
-  --background-root: var(--body-color);
-  --border-root: 1.5px solid var(--border-color);
-  --padding-root: 12px 14px;
-  --upload: brightness(0.5);
-  --logos-filter: none;
-  --sidebar: var(--sidebar-active);
-  --nav-color-one: var(--navbar-bg);
-  --nav-color-two: var(--body-color);
-  --dark-text: var(--text-color);
-  --light-text: var(--text-color);
-  --light-text-secondary: var(--text-secondary);
-  --light-text-desc: var(--text-secondary);
-}
-
-.lightcolors {
-  --sidebar: #fff0ed;
-  --dark-text: var(--text-color);
-  --light-text: var(--text-color);
-  --nav-color-two: #f8fafc;
-  --nav-color-one: #ffffff;
-  --light-text-secondary: var(--text-secondary);
-  --light-text-desc: var(--text-secondary);
-  --cards-text-color: var(--text-color);
-}
-
-.lightcolors label img.image {
-  filter: none;
-}
-
 label img[src*="assets/upload_area"] {
   filter: var(--upload);
+}
+
+@media (max-width: 600px) {
+  .account-name {
+    display: none;
+  }
+
+  .wallet-badge span {
+    display: none;
+  }
+
+  .wallet-badge {
+    padding: 8px;
+  }
 }

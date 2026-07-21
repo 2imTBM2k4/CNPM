@@ -3,9 +3,9 @@ import Navbar from './components/Navbar/Navbar';
 import Sidebar from './components/Sidebar/Sidebar';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Add from './pages/Add/Add';
-import List from './pages/List/List';  // Giả sử có List.jsx
+import List from './pages/List/List';
 import Orders from './pages/Orders/Orders';
-import EditRestaurant from './pages/EditRestaurant/EditRestaurant';  // Mới: Import
+import EditRestaurant from './pages/EditRestaurant/EditRestaurant';
 import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -15,10 +15,11 @@ import 'react-toastify/dist/ReactToastify.css';
 const DashboardLayout = () => (
   <>
     <Navbar />
-    <hr />
     <div className="app-content">
       <Sidebar />
-      <Outlet />
+      <div className="page-content">
+        <Outlet />
+      </div>
     </div>
   </>
 );
@@ -37,7 +38,7 @@ const App = () => {
           <Route path="/add" element={<Add url={url} />} />
           <Route path="/list" element={<List url={url} />} />
           <Route path="/orders" element={<Orders url={url} />} />
-          <Route path="/edit-restaurant" element={<EditRestaurant url={url} />} />  {/* Mới */}
+          <Route path="/edit-restaurant" element={<EditRestaurant url={url} />} />
         </Route>
       </Routes>
     </div>

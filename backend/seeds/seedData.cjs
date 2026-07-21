@@ -40,7 +40,7 @@
 // // Sample Restaurants (Mới: Thêm 3 sample restaurants)
 // const sampleRestaurants = [
 //   {
-//     name: 'Hangry Burger Joint',
+//     name: 'Drone Delivery Burger Joint',
 //     address: '123 Food Street, Ho Chi Minh City, Vietnam',
 //     phone: '0901234567',
 //     description: 'Delicious burgers and fast food classics.',
@@ -131,8 +131,8 @@
 //     console.log('👤 Creating users...');
 //     const hashedAdminPassword = await bcrypt.hash('admin123', 10);
 //     const adminUser = await User.create({
-//       name: 'Admin Hangry',
-//       email: 'admin@hangry.com',
+//       name: 'Admin Drone Delivery',
+//       email: 'admin@dronedelivery.com',
 //       password: hashedAdminPassword,
 //       role: 'admin',  // Thêm role
 //       phone: '0901234567'
@@ -196,7 +196,7 @@
 //     console.log('\n🔐 Login Credentials:');
 //     console.log('   ┌─────────────────────────────────────┐');
 //     console.log('   │ ADMIN                               │');
-//     console.log('   │ Email: admin@hangry.com             │');
+//     console.log('   │ Email: admin@dronedelivery.com       │');
 //     console.log('   │ Password: admin123                  │');
 //     console.log('   ├─────────────────────────────────────┤');
 //     console.log('   │ USER                                │');
@@ -243,7 +243,7 @@ const connectDB = async () => {
 // Sample Restaurants (giữ nguyên)
 const sampleRestaurants = [
   {
-    name: "Hangry Burger Joint",
+    name: "Drone Delivery Burger Joint",
     address: "123 Food Street, Ho Chi Minh City, Vietnam",
     phone: "0901234567",
     description: "Delicious burgers and fast food classics.",
@@ -335,8 +335,8 @@ const seedDatabase = async () => {
     console.log("👤 Creating users...");
     const hashedAdminPassword = await bcrypt.hash("admin123", 10);
     const adminUser = await User.create({
-      name: "Admin Hangry",
-      email: "admin@hangry.com",
+      name: "Admin Drone Delivery",
+      email: "admin@dronedelivery.com",
       password: hashedAdminPassword,
       role: "admin", // Thêm role
       phone: "0901234567",
@@ -399,7 +399,7 @@ const seedDatabase = async () => {
     console.log("\n🔐 Login Credentials:");
     console.log("   ┌─────────────────────────────────────┐");
     console.log("   │ ADMIN                               │");
-    console.log("   │ Email: admin@hangry.com             │");
+    console.log("   │ Email: admin@dronedelivery.com       │");
     console.log("   │ Password: admin123                  │");
     console.log("   ├─────────────────────────────────────┤");
     console.log("   │ USER                                │");

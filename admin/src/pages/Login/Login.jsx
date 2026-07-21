@@ -93,7 +93,7 @@
 //         <div className="login-hint">
 //           <p>Default Admin Credentials:</p>
 //           <p>
-//             <strong>Email:</strong> admin@hangry.com
+//             <strong>Email:</strong> admin@dronedelivery.com
 //           </p>
 //           <p>
 //             <strong>Password:</strong> admin123

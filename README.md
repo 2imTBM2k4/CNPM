@@ -1,4 +1,4 @@
-# Food Delivery Platform with Drone Support
+# Drone Delivery - Food Delivery Platform with Drone Support
 
 A full-stack food delivery web application with drone-based delivery, built with Express.js, React, and MongoDB.
 
@@ -137,7 +137,7 @@ Create `backend/.env`:
 
 ```env
 PORT=4000
-MONGODB_URI=mongodb://localhost:27017/hangry
+MONGODB_URI=mongodb://localhost:27017/drone_delivery
 JWT_SECRET=your-secret-key
 
 CLOUDINARY_CLOUD_NAME=your-cloud-name
@@ -281,5 +281,5 @@ npm run test:coverage
 
 | Role | Email | Password |
 |------|-------|----------|
-| Admin | admin@hangry.com | admin123 |
+| Admin | admin@dronedelivery.com | admin123 |
 | User | john@example.com | user123 |

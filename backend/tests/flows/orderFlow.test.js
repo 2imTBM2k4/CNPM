@@ -15,7 +15,7 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
 
     admin = await User.create({
       name: "Admin",
-      email: "admin@hangry.com",
+      email: "admin@dronedelivery.com",
       password: hash,
       role: "admin",
       balance: 0,

@@ -195,8 +195,8 @@
 //   };
 
 //   return (
-//     <div className="order add">
-//       <h3>Order Page</h3>
+//     <div className="order-page">
+//       <h1 className="page-title">Orders</h1>
 //       <div className="order-header-info">
 //         <p>
 //           Tổng số đơn hàng: <strong>{orders.length}</strong>
@@ -474,8 +474,8 @@ const Orders = ({ url }) => {
   };
 
   return (
-    <div className="order add">
-      <h3>Order Page</h3>
+    <div className="order-page">
+      <h1 className="page-title">Orders</h1>
       <div className="order-header-info">
         <p>
           Tổng số đơn hàng: <strong>{orders.length}</strong>

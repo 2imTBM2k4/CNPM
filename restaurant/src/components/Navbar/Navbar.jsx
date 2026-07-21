@@ -1,90 +1,110 @@
-import React, { useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import "./Navbar.css";
 import { assets } from "../../assets/assets";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { Wallet, ChevronDown, LogOut, Settings, Sun, Moon } from "lucide-react";
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isDark, setIsDark] = useState(() => localStorage.getItem("mode") === "dark");
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
-    const toggle = document.getElementById("visual-toggle");
-
-    function applyModePreference() {
-      const mode = localStorage.getItem("mode");
-      if (mode === "light") {
-        toggle.checked = true;
-        document.body.classList.add("lightcolors");
-        document
-          .getElementById("visual-toggle-button")
-          .classList.add("lightmode");
-      } else {
-        toggle.checked = false;
-        document.body.classList.remove("lightcolors");
-        document
-          .getElementById("visual-toggle-button")
-          .classList.remove("lightmode");
-      }
+    const root = document.documentElement;
+    if (isDark) {
+      root.classList.add("dark-mode");
+      localStorage.setItem("mode", "dark");
+    } else {
+      root.classList.remove("dark-mode");
+      localStorage.setItem("mode", "light");
     }
+  }, [isDark]);
 
-    applyModePreference();
-
-    toggle.addEventListener("change", function () {
-      if (toggle.checked) {
-        localStorage.setItem("mode", "light");
-        document.body.classList.add("lightcolors");
-        document
-          .getElementById("visual-toggle-button")
-          .classList.add("lightmode");
-      } else {
-        localStorage.setItem("mode", "dark");
-        document.body.classList.remove("lightcolors");
-        document
-          .getElementById("visual-toggle-button")
-          .classList.remove("lightmode");
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
       }
-    });
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const visualMode = () => {
-    const toggle = document.getElementById("visual-toggle");
-    toggle.checked = !toggle.checked;
-    toggle.dispatchEvent(new Event("change"));
-  };
-
   return (
-    <div className="navbar">
-      <img className="logo" src={assets.logo} alt="Logo" />
+    <nav className="navbar">
+      <div className="navbar-left">
+        <img className="logo" src={assets.logo} alt="Logo" />
+      </div>
 
-      {user ? (
-        <>
-          <span className="balance">
-            Balance: ${user.walletBalance?.toFixed(2) || "0.00"}
-          </span>{" "}
-          <img className="profile" src={assets.profile_image} alt="Profile" />
-          <button onClick={logout} style={{ marginLeft: "10px" }}>
-            Logout
-          </button>
-        </>
-      ) : (
+      <div className="navbar-right">
         <button
-          onClick={() => navigate("/login")}
-          style={{ marginLeft: "auto" }}
+          className="theme-toggle"
+          onClick={() => setIsDark(!isDark)}
+          aria-label="Toggle theme"
         >
-          Login
+          {isDark ? <Sun size={18} /> : <Moon size={18} />}
         </button>
-      )}
 
-      <label
-        htmlFor="visual-toggle"
-        id="visual-toggle-button"
-        onClick={visualMode}
-        style={{ marginLeft: "10px" }}
-      >
-        <input type="checkbox" className="visual-toggle" id="visual-toggle" />
-      </label>
-    </div>
+        {user ? (
+          <>
+            <div className="wallet-badge">
+              <Wallet size={16} />
+              <span>${user.walletBalance?.toFixed(2) || "0.00"}</span>
+            </div>
+
+            <div className="account-menu" ref={dropdownRef}>
+              <button
+                className="account-trigger"
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+              >
+                <img
+                  className="avatar"
+                  src={assets.profile_image}
+                  alt="Profile"
+                />
+                <span className="account-name">
+                  {user.name || "Restaurant"}
+                </span>
+                <ChevronDown size={16} className={`chevron ${dropdownOpen ? "open" : ""}`} />
+              </button>
+
+              {dropdownOpen && (
+                <div className="dropdown">
+                  <button
+                    className="dropdown-item"
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      navigate("/edit-restaurant");
+                    }}
+                  >
+                    <Settings size={16} />
+                    <span>Settings</span>
+                  </button>
+                  <div className="dropdown-divider" />
+                  <button
+                    className="dropdown-item dropdown-item--danger"
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      logout();
+                    }}
+                  >
+                    <LogOut size={16} />
+                    <span>Log out</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <button className="login-btn" onClick={() => navigate("/login")}>
+            Login
+          </button>
+        )}
+      </div>
+    </nav>
   );
 };
 

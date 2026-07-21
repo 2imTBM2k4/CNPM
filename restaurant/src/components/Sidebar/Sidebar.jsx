@@ -1,30 +1,30 @@
 import React from 'react';
 import './Sidebar.css';
-import { assets } from '../../assets/assets';
 import { NavLink } from 'react-router-dom';
+import { PlusCircle, UtensilsCrossed, ClipboardList, Store } from 'lucide-react';
 
 const Sidebar = () => {
   return (
-    <div className='sidebar'>
-      <div className="sidebar-options">
-        <NavLink to='/add' className="sidebar-option">
-          <img className='addd' src={assets.add_icon} alt="" />
-          <p>Add Items</p>
+    <aside className='sidebar'>
+      <nav className="sidebar-nav">
+        <NavLink to='/add' className="sidebar-item">
+          <PlusCircle size={20} />
+          <span>Add Items</span>
         </NavLink>
-        <NavLink to='/list' className="sidebar-option">
-          <img className='listt' src={assets.order_icon} alt="" />
-          <p>List Items</p>
+        <NavLink to='/list' className="sidebar-item">
+          <UtensilsCrossed size={20} />
+          <span>Menu Items</span>
         </NavLink>
-        <NavLink to='/orders' className="sidebar-option">
-          <img className='orderr' src={assets.order_icon} alt="" />
-          <p>Orders</p>
+        <NavLink to='/orders' className="sidebar-item">
+          <ClipboardList size={20} />
+          <span>Orders</span>
         </NavLink>
-        <NavLink to='/edit-restaurant' className="sidebar-option">  {/* Mới */}
-          <img className='edit-rest' src={assets.parcel_icon} alt="" />  {/* Reuse icon hoặc thêm mới */}
-          <p>Edit Restaurant</p>
+        <NavLink to='/edit-restaurant' className="sidebar-item">
+          <Store size={20} />
+          <span>Restaurant</span>
         </NavLink>
-      </div>
-    </div>
+      </nav>
+    </aside>
   );
 };
 

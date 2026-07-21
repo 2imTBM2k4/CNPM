@@ -1,13 +1,30 @@
+.order-page {
+  width: 100%;
+}
+
+.page-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 8px;
+}
+
+.order-header-info {
+  margin-bottom: 20px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.order-header-info p {
+  margin-bottom: 2px;
+}
+
 .order-item {
-  display: grid;
-  grid-template-columns: 0.5fr 2fr 1fr 1fr 1fr;
-  align-items: start;
-  gap: 24px;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius);
-  padding: 20px;
-  margin: 16px 0;
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  margin-bottom: 12px;
   font-size: 14px;
   color: var(--text-color);
   transition: box-shadow 0.2s ease;
@@ -17,8 +34,54 @@
   box-shadow: var(--shadow);
 }
 
-.order-item img {
+.order-item-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.order-item-header img {
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
+  opacity: 0.7;
+}
+
+.order-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.order-id {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+.order-date {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.order-status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  text-transform: capitalize;
+}
+
+.order-item-content {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  margin-bottom: 14px;
 }
 
 .order-item-food,
@@ -27,14 +90,74 @@
 }
 
 .order-item-name {
-  margin-top: 20px;
-  margin-bottom: 5px;
+  margin-top: 10px;
+  margin-bottom: 4px;
 }
 
 .order-item-address {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   color: var(--text-secondary);
   font-size: 13px;
+}
+
+.order-item-phone {
+  font-size: 13px;
+}
+
+.order-item-summary {
+  text-align: right;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.order-item-summary p {
+  margin-bottom: 4px;
+}
+
+.cancel-reason {
+  color: #ef4444;
+  font-style: italic;
+  margin-top: 5px;
+  font-size: 13px;
+}
+
+.status-actions {
+  margin-top: 8px;
+}
+
+.status-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.status-buttons button {
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  background: var(--body-color);
+  color: var(--text-color);
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-accept:hover {
+  background: var(--success);
+  color: white;
+  border-color: var(--success);
+}
+
+.btn-reject:hover {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+.btn-deliver:hover {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
 }
 
 .order-item select {
@@ -54,65 +177,16 @@
   border-color: var(--accent-color);
 }
 
-.cancel-reason {
-  color: #ef4444;
-  font-style: italic;
-  margin-top: 5px;
-  font-size: 13px;
-}
-
-.status-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.status-buttons button {
-  padding: 8px 14px;
-  border: 1px solid var(--border-color);
-  background: var(--body-color);
-  color: var(--text-color);
-  cursor: pointer;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.status-buttons button:hover {
-  background: var(--accent-color);
-  color: white;
-  border-color: var(--accent-color);
-}
-
-:root .order-item select {
-  background-color: var(--body-color);
-  color: var(--text-color);
-  border: 1.5px solid var(--border-color);
-}
-
-.lightcolors .order-item select {
-  background-color: var(--card-bg);
-  color: var(--text-color);
-  border: 1.5px solid var(--border-color);
-}
-
-@media (max-width: 1000px) {
-  .order-item {
-    font-size: 13px;
-    grid-template-columns: 0.5fr 2fr 1fr;
-    padding: 16px 12px;
-    gap: 16px;
+@media (max-width: 768px) {
+  .order-item-content {
+    grid-template-columns: 1fr;
   }
-  .order-item select {
-    padding: 7px 10px;
-    font-size: 12px;
+
+  .order-item-summary {
+    text-align: left;
   }
-  .order-item img {
-    width: 40px;
-  }
-  .status-buttons button {
-    font-size: 12px;
-    padding: 6px 10px;
+
+  .status-buttons {
+    flex-direction: column;
   }
 }

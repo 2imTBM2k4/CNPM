@@ -1,10 +1,15 @@
 .add {
   width: 100%;
-  max-width: 700px;
-  margin-left: max(5vw, 25px);
-  margin-top: 30px;
+  max-width: 680px;
   color: var(--text-color);
-  font-size: 15px;
+  font-size: 14px;
+}
+
+.add > p:first-child,
+.add > h3:first-child {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 24px;
 }
 
 .add form {
@@ -42,10 +47,6 @@
   margin-bottom: 8px;
 }
 
-.add-product-name .add-product-description {
-  width: max(40%, 280px);
-}
-
 .add-product-name input,
 .add-product-description textarea {
   width: 100%;
@@ -63,7 +64,7 @@
 .add-product-description textarea:focus {
   outline: none;
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+  box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.08);
 }
 
 .add-category-price {
@@ -84,7 +85,7 @@
 .add-category-price select,
 .add-category-price input {
   width: 100%;
-  max-width: 180px;
+  max-width: 220px;
   padding: 10px 14px;
   border: 1.5px solid var(--border-color);
   border-radius: var(--radius);

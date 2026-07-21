@@ -1,10 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 * {
   padding: 0;
   margin: 0;
   box-sizing: border-box;
-  font-family: "Outfit", sans-serif;
+  font-family: "Inter", sans-serif;
 }
 
 body {
@@ -19,14 +19,16 @@ a {
   color: inherit;
 }
 
-hr {
-  border: none;
-  height: 1px;
-  background-color: var(--border-color);
-}
-
 .app-content {
   display: flex;
+  min-height: calc(100vh - 64px);
+}
+
+.page-content {
+  flex: 1;
+  min-width: 0;
+  padding: 32px 40px;
+  max-width: 1400px;
 }
 
 .flex-col {
@@ -37,31 +39,42 @@ hr {
 
 :root {
   --body-color: #f8fafc;
-  --text-color: #1e293b;
+  --text-color: #0f172a;
   --text-secondary: #64748b;
-  --accent-color: #ff6b35;
-  --accent-hover: #e55a2b;
+  --accent-color: #e53935;
+  --accent-hover: #c62828;
+  --accent-light: rgba(229, 57, 53, 0.08);
   --background-secondary: #ffffff;
   --border-color: #e2e8f0;
   --card-bg: #ffffff;
-  --sidebar-bg: #1e293b;
-  --sidebar-active: #334155;
+  --sidebar-bg: #0f172a;
+  --sidebar-active: rgba(255, 255, 255, 0.08);
   --navbar-bg: #ffffff;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
   --radius: 10px;
+  --radius-lg: 14px;
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --upload: brightness(0.8);
 }
 
-.lightcolors {
-  --body-color: #f8fafc;
-  --text-color: #1e293b;
-  --text-secondary: #64748b;
-  --background-secondary: #ffffff;
-  --border-color: #e2e8f0;
-  --card-bg: #ffffff;
-  --sidebar-bg: #1e293b;
-  --sidebar-active: #334155;
-  --navbar-bg: #ffffff;
+.dark-mode,
+.dark-mode body {
+  --body-color: #0f172a;
+  --text-color: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --background-secondary: #1e293b;
+  --border-color: #334155;
+  --card-bg: #1e293b;
+  --sidebar-bg: #020617;
+  --sidebar-active: rgba(255, 255, 255, 0.1);
+  --navbar-bg: #1e293b;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --upload: brightness(0.6);
 }
 
 ::selection {
@@ -84,4 +97,10 @@ hr {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+  .page-content {
+    padding: 24px 20px;
+  }
 }

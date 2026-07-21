@@ -45,7 +45,7 @@ const Footer = () => {
       </div>
       <hr />
       <p className="footer-copyright">
-        Copyright 2024 © Hangry.com - All rights reserved.
+        Copyright 2024 © DroneDelivery.com - All rights reserved.
       </p>
     </div>
   );

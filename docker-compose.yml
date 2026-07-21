@@ -1,7 +1,7 @@
 services:
   backend:
     build: ./backend
-    container_name: hangry-backend
+    container_name: drone-delivery-backend
     env_file:
       - ./backend/.env
     ports:
@@ -10,7 +10,7 @@ services:
 
   user:
     build: ./user
-    container_name: hangry-user
+    container_name: drone-delivery-user
     ports:
       - "5173:80"
     depends_on:
@@ -19,7 +19,7 @@ services:
 
   admin:
     build: ./admin
-    container_name: hangry-admin
+    container_name: drone-delivery-admin
     ports:
       - "5174:80"
     depends_on:
@@ -28,7 +28,7 @@ services:
 
   restaurant:
     build: ./restaurant
-    container_name: hangry-restaurant
+    container_name: drone-delivery-restaurant
     ports:
       - "5175:80"
     depends_on:

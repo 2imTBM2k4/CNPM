@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
 import foodRouter from "./routes/foodRoute.js";
 import userRouter from "./routes/userRoute.js";
 import cartRouter from "./routes/cartRoute.js";
@@ -10,8 +11,11 @@ import configRouter from "./routes/configRoute.js";
 
 const app = express();
 
-app.use(cors());
-app.use(express.json({ limit: "50mb" }));
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(",") : ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"],
+  credentials: true,
+}));
+app.use(express.json({ limit: "2mb" }));
 
 app.use("/images", express.static("uploads"));
 

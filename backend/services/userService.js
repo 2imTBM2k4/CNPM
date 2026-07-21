@@ -5,7 +5,7 @@ import * as userRepo from "../repositories/userRepository.js";
 import * as restaurantRepo from "../repositories/restaurantRepository.js";
 
 const createToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET);
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
 export const loginUser = async ({ email, password }) => {

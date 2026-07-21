@@ -14,12 +14,19 @@ import {
 } from "../controllers/userController.js";
 
 import { protect } from "../middleware/auth.js";
+import rateLimit from "express-rate-limit";
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { success: false, message: "Too many attempts, please try again after 15 minutes" },
+});
 
 const userRouter = express.Router();
 
 // ============ PUBLIC ROUTES ============
-userRouter.post("/register", registerUser);
-userRouter.post("/login", loginUser);
+userRouter.post("/register", authLimiter, registerUser);
+userRouter.post("/login", authLimiter, loginUser);
 userRouter.post("/logout", logoutUser);
 
 // ============ PROTECTED ROUTES ============

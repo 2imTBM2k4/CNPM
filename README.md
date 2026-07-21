@@ -1,4 +1,4 @@
-# Hangry - Food Delivery Platform with Drone Support
+# Food Delivery Platform with Drone Support
 
 A full-stack food delivery web application with drone-based delivery, built with Express.js, React, and MongoDB.
 

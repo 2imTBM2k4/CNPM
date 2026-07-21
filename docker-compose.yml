@@ -1,0 +1,36 @@
+services:
+  backend:
+    build: ./backend
+    container_name: hangry-backend
+    env_file:
+      - ./backend/.env
+    ports:
+      - "4000:4000"
+    restart: unless-stopped
+
+  user:
+    build: ./user
+    container_name: hangry-user
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  admin:
+    build: ./admin
+    container_name: hangry-admin
+    ports:
+      - "5174:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  restaurant:
+    build: ./restaurant
+    container_name: hangry-restaurant
+    ports:
+      - "5175:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

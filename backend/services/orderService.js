@@ -1,8 +1,8 @@
 import Stripe from "stripe";
-import bcrypt from "bcrypt";
 import * as orderRepo from "../repositories/orderRepository.js";
 import * as restaurantRepo from "../repositories/restaurantRepository.js";
 import * as userRepo from "../repositories/userRepository.js";
+import * as cartRepo from "../repositories/cartRepository.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -76,11 +76,12 @@ export const placeOrder = async (user, orderData) => {
     }),
   };
   const newOrder = await orderRepo.create(newOrderData);
+  await cartRepo.deleteByUserId(user._id);
   await userRepo.updateById(user._id, { cart: [] });
 
   let sessionUrl = null;
   
-  if (paymentMethod === "Stripe") {
+  if (paymentMethod === "Card") {
     const line_items = items.map((item) => ({
       price_data: {
         currency: "usd",
@@ -120,7 +121,7 @@ export const placeOrder = async (user, orderData) => {
 };
 
 export const verifyOrder = async (orderId, success) => {
-  if (success === "true") {
+  if (success === true || success === "true") {
     await orderRepo.updateById(orderId, { isPaid: true, paidAt: Date.now() });
     return { success: true, message: "Paid" };
   } else {
@@ -137,7 +138,14 @@ export const userOrders = async (userId) => {
 export const listOrders = async (user) => {
   let filter = {};
   if (user.role === "restaurant_owner") {
-    filter.restaurantId = user.restaurantId;
+    let restId = user.restaurantId;
+    if (!restId) {
+      const restaurant = await restaurantRepo.findByOwner(user._id);
+      if (restaurant) {
+        restId = restaurant._id;
+      }
+    }
+    filter.restaurantId = restId;
   } // else all for admin
   if (user.role !== "restaurant_owner" && user.role !== "admin") {
     throw new Error("Unauthorized");
@@ -264,20 +272,17 @@ export const updateStatus = async (user, updateData) => {
     }
     // ... (tương tự các check khác từ code gốc)
   } else if (user.role === "user") {
-    // Kiểm tra quyền sở hữu đơn hàng
     if (order.user._id.toString() !== user._id.toString()) {
       throw new Error("Unauthorized: Not your order");
     }
-    
-    // User có thể: delivered hoặc cancelled (timeout)
+
     if (status === "delivered") {
       if (order.orderStatus !== "delivering") {
         throw new Error("Cannot mark received yet (not delivering)");
       }
     } else if (status === "cancelled") {
-      // Cho phép user hủy đơn khi timeout (đang ở trạng thái delivering)
-      if (order.orderStatus !== "delivering") {
-        throw new Error("Cannot cancel order (not delivering)");
+      if (order.orderStatus !== "pending") {
+        throw new Error("Chỉ có thể hủy đơn hàng khi đang chờ xác nhận");
       }
       if (!reason || reason.trim() === "") {
         throw new Error("Reason required for cancellation");
@@ -310,9 +315,13 @@ export const updateStatus = async (user, updateData) => {
   if (status === "delivered") {
     updateDataObj.isDelivered = true;
     updateDataObj.deliveredAt = Date.now();
+
     if (isPaid === true) {
       updateDataObj.isPaid = true;
       updateDataObj.paidAt = paidAt || Date.now();
+    } else if (order.paymentMethod === "COD") {
+      updateDataObj.isPaid = true;
+      updateDataObj.paidAt = Date.now();
     }
 
     // Cập nhật drone về trạng thái available
@@ -321,7 +330,7 @@ export const updateStatus = async (user, updateData) => {
       const drone = await droneRepo.findById(order.droneId);
       if (drone) {
         drone.status = "available";
-        drone.currentOrder = null; // Xóa currentOrder
+        drone.currentOrder = null;
         drone.cargoWeight = 0;
         drone.cargoLidStatus = "closed";
         drone.totalDeliveries += 1;
@@ -329,19 +338,11 @@ export const updateStatus = async (user, updateData) => {
       }
     }
 
-    // Balance update logic từ gốc
-    if (!order.isDelivered && updateDataObj.isPaid) {
+    if (!order.isDelivered && (updateDataObj.isPaid || order.isPaid)) {
       const restaurant = await restaurantRepo.findById(order.restaurantId);
-      let admin = await userRepo.findAdmin();
+      const admin = await userRepo.findAdmin();
       if (!admin) {
-        const hashed = await bcrypt.hash("admin123", 10);
-        admin = await userRepo.create({
-          name: "Admin",
-          email: "admin@hangry.com",
-          password: hashed,
-          role: "admin",
-          balance: 0,
-        });
+        throw new Error("Admin account not found. Cannot process balance update.");
       }
       if (restaurant && admin) {
         const restaurantShare = order.totalPrice * 0.8;

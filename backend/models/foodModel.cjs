@@ -9,4 +9,4 @@ const foodSchema = new mongoose.Schema({
     restaurantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', required: true }  // Mới: Liên kết với restaurant
 });
 
-module.exports = mongoose.model('Food', foodSchema);
+module.exports = mongoose.models.Food || mongoose.model('Food', foodSchema);

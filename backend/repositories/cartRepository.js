@@ -6,8 +6,15 @@ export const findByUserId = async (userId) => {
 };
 
 export const create = async (userId) => {
-  const cart = new Cart({ userId, items: [] });
-  return await cart.save();
+  try {
+    const cart = new Cart({ userId, items: [] });
+    return await cart.save();
+  } catch (error) {
+    if (error.code === 11000) {
+      return await findByUserId(userId);
+    }
+    throw error;
+  }
 };
 
 export const update = async (userId, updatedItems) => {

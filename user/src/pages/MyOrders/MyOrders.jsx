@@ -11,6 +11,8 @@ const MyOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showDroneModal, setShowDroneModal] = useState(false);
   const [canReceiveOrder, setCanReceiveOrder] = useState({});
+  const [showCancelModal, setShowCancelModal] = useState(null);
+  const [cancelReason, setCancelReason] = useState("");
 
   const fetchOrders = async () => {
     if (!token) return;
@@ -67,6 +69,30 @@ const MyOrders = () => {
         ...prev,
         [selectedOrder._id]: true,
       }));
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    if (!cancelReason.trim()) {
+      toast.error("Vui lòng nhập lý do hủy đơn");
+      return;
+    }
+    try {
+      const response = await axios.post(
+        `${url}/api/order/status`,
+        { orderId: showCancelModal, status: "cancelled", reason: cancelReason },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data.success) {
+        toast.success("Đã hủy đơn hàng");
+        setShowCancelModal(null);
+        setCancelReason("");
+        fetchOrders();
+      } else {
+        toast.error(response.data.message || "Hủy đơn thất bại");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Hủy đơn thất bại");
     }
   };
 
@@ -170,6 +196,17 @@ const MyOrders = () => {
                 </div>
               </div>
 
+              {order.orderStatus === "pending" && (
+                <div className="order-actions">
+                  <button
+                    onClick={() => setShowCancelModal(order._id)}
+                    className="cancel-order-btn"
+                  >
+                    Hủy đơn hàng
+                  </button>
+                </div>
+              )}
+
               {order.orderStatus === "delivering" && (
                 <div className="order-actions">
                   <button
@@ -197,6 +234,50 @@ const MyOrders = () => {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Cancel Order Modal */}
+      {showCancelModal && (
+        <div
+          className="drone-modal-overlay"
+          onClick={() => {
+            setShowCancelModal(null);
+            setCancelReason("");
+          }}
+        >
+          <div
+            className="cancel-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Hủy đơn hàng</h3>
+            <p>Vui lòng cho biết lý do hủy đơn:</p>
+            <textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Nhập lý do hủy đơn..."
+              rows={3}
+              className="cancel-reason-input"
+            />
+            <div className="cancel-modal-actions">
+              <button
+                onClick={() => {
+                  setShowCancelModal(null);
+                  setCancelReason("");
+                }}
+                className="cancel-modal-back-btn"
+              >
+                Quay lại
+              </button>
+              <button
+                onClick={handleCancelOrder}
+                className="cancel-modal-confirm-btn"
+                disabled={!cancelReason.trim()}
+              >
+                Xác nhận hủy
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

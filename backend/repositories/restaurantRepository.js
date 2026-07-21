@@ -9,6 +9,10 @@ export const findById = async (id) => {
   return await Restaurant.findById(id).populate("owner", "name email");
 };
 
+export const findByOwner = async (ownerId) => {
+  return await Restaurant.findOne({ owner: ownerId });
+};
+
 export const create = async (restaurantData) => {
   const { name, address, email, owner } = restaurantData;
   if (!name || !address || !email || !owner) {

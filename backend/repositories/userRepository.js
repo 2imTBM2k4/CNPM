@@ -55,14 +55,27 @@ export const countCompletedOrders = async () => {
 
 // Thêm cho stats aggregate nếu cần (dùng trong service)
 export const aggregateRevenue = async (period = "day") => {
-  const match = { orderStatus: "delivered" }; // Định nghĩa match
+  const match = { orderStatus: "delivered" };
   const groupFormat = period === "month" ? "%Y-%m" : "%Y-%m-%d";
   return await Order.aggregate([
-    { $match: match }, // FIX: Dùng { $match: match }
+    { $match: match },
     {
       $group: {
         _id: { $dateToString: { format: groupFormat, date: "$deliveredAt" } },
         totalRevenue: { $sum: { $multiply: ["$totalPrice", 0.2] } },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ]);
+};
+
+export const aggregateCompletedSeries = async (groupFormat) => {
+  return await Order.aggregate([
+    { $match: { orderStatus: "delivered" } },
+    {
+      $group: {
+        _id: { $dateToString: { format: groupFormat, date: "$deliveredAt" } },
+        count: { $sum: 1 },
       },
     },
     { $sort: { _id: 1 } },

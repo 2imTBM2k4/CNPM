@@ -60,4 +60,4 @@ restaurantSchema.pre("deleteMany", async function (next) {
   next();
 });
 
-module.exports = mongoose.model("Restaurant", restaurantSchema);
+module.exports = mongoose.models.Restaurant || mongoose.model("Restaurant", restaurantSchema);

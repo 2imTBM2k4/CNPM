@@ -82,4 +82,4 @@ droneSchema.pre(["deleteOne", "findOneAndDelete"], async function (next) {
   next();
 });
 
-module.exports = mongoose.model("Drone", droneSchema);
+module.exports = mongoose.models.Drone || mongoose.model("Drone", droneSchema);

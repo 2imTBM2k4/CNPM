@@ -9,7 +9,6 @@ const createToken = (id) => {
 };
 
 export const loginUser = async ({ email, password }) => {
-  console.log("loginUser - Data:", { email }); // DEBUG
   const user = await userRepo.findByEmail(email);
   if (!user) {
     throw new Error("User doesn't exist.");
@@ -21,6 +20,19 @@ export const loginUser = async ({ email, password }) => {
   if (!isMatch) {
     throw new Error("Invalid credentials");
   }
+
+  if (user.role === "restaurant_owner" && user.restaurantId) {
+    const restaurant = await restaurantRepo.findById(user.restaurantId);
+    if (!restaurant) {
+      throw new Error("Restaurant not found");
+    }
+    if (restaurant.isLocked) {
+      throw new Error(
+        "Your restaurant account is pending admin approval. Please wait for approval."
+      );
+    }
+  }
+
   const token = createToken(user._id);
   const userRole = user.role || "user";
   return {
@@ -37,10 +49,6 @@ export const loginUser = async ({ email, password }) => {
 };
 
 export const registerUser = async (userData) => {
-  console.log("registerUser - Data:", {
-    email: userData.email,
-    role: userData.role,
-  }); // DEBUG
   const { name, password, email, role, restaurantName, address, phone } =
     userData;
   const exists = await userRepo.findByEmail(email);
@@ -55,28 +63,31 @@ export const registerUser = async (userData) => {
   }
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(password, salt);
-  // FIX: Chuyển address string thành object { street: address } để match schema User.address
+
   const newUserData = {
     name,
     email,
     password: hash,
     role: role || "user",
     phone,
-    address: { street: address }, // FIX: Set street từ address string
+    address: {
+      fullName: name,
+      address: address,
+      phone: phone,
+    },
   };
   let newUser = await userRepo.create(newUserData);
   const token = createToken(newUser._id);
 
   if (role === "restaurant_owner") {
-    // FIX: Thêm email (dùng email của user cho restaurant)
-    const newRestaurantData = {
+    const newRestaurant = await restaurantRepo.create({
       name: restaurantName,
       owner: newUser._id,
-      address: address, // Restaurant address là string, ok
+      address: address,
       phone: newUser.phone,
-      email: email, // FIX: Thêm email required
-    };
-    const newRestaurant = await restaurantRepo.create(newRestaurantData);
+      email: email,
+      isLocked: true,
+    });
     newUser = await userRepo.updateRestaurantForUser(
       newUser._id,
       newRestaurant._id
@@ -87,55 +98,88 @@ export const registerUser = async (userData) => {
 };
 
 export const lockUser = async (userId, lock) => {
-  console.log("lockUser - Params:", { userId, lock }); // DEBUG
+  if (!userId) {
+    throw new Error("Missing userId parameter");
+  }
+  if (lock === undefined) {
+    throw new Error("Missing lock parameter");
+  }
   const user = await userRepo.findById(userId);
-  console.log(
-    "lockUser - Found user:",
-    user ? { _id: user._id, locked: user.locked, role: user.role } : "null"
-  ); // DEBUG
   if (!user) {
     throw new Error("User not found");
   }
-  await userRepo.updateById(userId, { locked: lock });
-  console.log("lockUser - Updated to:", lock); // DEBUG
-  return { success: true, message: `User ${lock ? "locked" : "unlocked"}` };
+  const updated = await userRepo.updateById(userId, { locked: lock });
+  return {
+    success: true,
+    message: `User ${lock ? "locked" : "unlocked"}`,
+    data: updated,
+  };
 };
 
-export const getMe = (user) => ({ success: true, user });
-
-export const updateUserAddress = async (userId, updates) => {
-  const { name, phone, address } = updates;
-  if (!address || !address.street || !address.city) {
-    throw new Error("Invalid address data");
+export const getMe = async (userId) => {
+  const user = await userRepo.findById(userId);
+  if (!user) {
+    throw new Error("User not found");
   }
-  const currentUser = await userRepo.findById(userId);
+  const userObj = user.toObject ? user.toObject() : { ...user };
+  if (userObj.restaurantId) {
+    userObj.restaurantId = userObj.restaurantId.toString();
+  }
+  return { success: true, data: userObj };
+};
+
+export const updateUserAddress = async (userId, addressData) => {
+  const { fullName, phone, address, city, state, country, zipCode } =
+    addressData;
   const updateData = {
-    name: name || currentUser.name,
-    phone: phone || currentUser.phone,
-    address: { ...currentUser.address, ...address },
+    "address.fullName": fullName,
+    "address.phone": phone,
+    "address.address": address,
+    "address.city": city,
+    "address.state": state,
+    "address.country": country,
+    "address.zipCode": zipCode,
   };
   const updatedUser = await userRepo.updateById(userId, updateData);
   if (!updatedUser) {
     throw new Error("User not found");
   }
-  return {
-    success: true,
-    user: updatedUser,
-    message: "Address updated successfully",
-  };
+  return { success: true, data: updatedUser };
 };
 
 export const listUsers = async () => {
   const users = await userRepo.findAll();
-  return { success: true, data: users };
+  const usersData = users.map((u) => {
+    const obj = u.toObject ? u.toObject() : { ...u };
+    if (obj.restaurantId) obj.restaurantId = obj.restaurantId.toString();
+    return obj;
+  });
+  return { success: true, data: usersData };
+};
+
+export const updateProfile = async (userId, currentEmail, updates) => {
+  const { name, email, phone } = updates;
+  if (email && email !== currentEmail) {
+    const existing = await userRepo.findByEmail(email);
+    if (existing) {
+      throw new Error("Email already exists");
+    }
+  }
+  const user = await userRepo.updateById(userId, { name, email, phone });
+  return { success: true, data: user };
 };
 
 export const updateUserByAdmin = async (userId, updates) => {
+  if (updates.password) {
+    updates.password = await bcrypt.hash(updates.password, 10);
+  }
   const updatedUser = await userRepo.updateById(userId, updates);
   if (!updatedUser) {
     throw new Error("User not found");
   }
-  return { success: true, data: updatedUser };
+  const obj = updatedUser.toObject ? updatedUser.toObject() : { ...updatedUser };
+  if (obj.restaurantId) obj.restaurantId = obj.restaurantId.toString();
+  return { success: true, data: obj };
 };
 
 export const deleteUser = async (userId) => {
@@ -152,29 +196,27 @@ export const logoutUser = () => ({
   message: "Logged out successfully",
 });
 
-export const updateProfile = async (userId, updates) => {
-  const user = await userRepo.updateById(userId, updates);
-  return { success: true, data: user };
-};
-
 export const getStats = async (period = "day") => {
-  console.log("getStats - Period:", period);
-  const userCount = await userRepo.countDocuments();
-  const restaurantCount = await restaurantRepo.countDocuments(); // FIX: Dùng repo đúng
-  const completedOrdersCount = await userRepo.countCompletedOrders();
-  let revenueAggregation;
-  if (period === "month") {
-    revenueAggregation = await userRepo.aggregateRevenue("month");
-  } else {
-    revenueAggregation = await userRepo.aggregateRevenue("day");
-  }
+  const [userCount, restaurantCount, completedOrdersCount] = await Promise.all([
+    userRepo.countDocuments(),
+    restaurantRepo.countDocuments(),
+    userRepo.countCompletedOrders(),
+  ]);
+
+  const groupFormat = period === "month" ? "%Y-%m" : "%Y-%m-%d";
+  const [revenue, completedSeries] = await Promise.all([
+    userRepo.aggregateRevenue(period),
+    userRepo.aggregateCompletedSeries(groupFormat),
+  ]);
+
   return {
     success: true,
     data: {
       userCount,
       restaurantCount,
       completedOrdersCount,
-      revenue: revenueAggregation,
+      revenue,
+      completedSeries,
     },
   };
 };

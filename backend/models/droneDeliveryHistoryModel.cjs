@@ -43,4 +43,4 @@ const droneDeliveryHistorySchema = new mongoose.Schema(
 droneDeliveryHistorySchema.index({ droneId: 1, createdAt: -1 });
 droneDeliveryHistorySchema.index({ orderId: 1 });
 
-module.exports = mongoose.model("DroneDeliveryHistory", droneDeliveryHistorySchema);
+module.exports = mongoose.models.DroneDeliveryHistory || mongoose.model("DroneDeliveryHistory", droneDeliveryHistorySchema);

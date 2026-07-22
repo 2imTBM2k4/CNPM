@@ -14,26 +14,32 @@ import {
   getAllDeliveryHistory,
 } from "../controllers/droneController.js";
 import { protect } from "../middleware/auth.js";
+import validate from "../middleware/validate.js";
+import {
+  createDroneSchema,
+  updateDroneSchema,
+  assignDroneSchema,
+  scanQRSchema,
+  confirmDeliverySchema,
+  cargoWeightSchema,
+  historyQuerySchema,
+} from "../validations/droneValidation.js";
 
 const router = express.Router();
 
-// Drone delivery routes
 router.get("/addresses/:orderId", protect, getDeliveryAddresses);
-router.post("/assign", protect, assignDrone);
-router.post("/scan-qr", protect, scanQR);
-router.post("/confirm-delivery", protect, confirmDelivery);
-router.post("/cargo-weight", protect, updateCargoWeight);
+router.post("/assign", protect, validate(assignDroneSchema), assignDrone);
+router.post("/scan-qr", protect, validate(scanQRSchema), scanQR);
+router.post("/confirm-delivery", protect, validate(confirmDeliverySchema), confirmDelivery);
+router.post("/cargo-weight", protect, validate(cargoWeightSchema), updateCargoWeight);
 
-// Delivery history routes (Admin)
-router.get("/history/all", protect, getAllDeliveryHistory);
+router.get("/history/all", protect, validate(historyQuerySchema, "query"), getAllDeliveryHistory);
 router.get("/history/:id", protect, getDroneDeliveryHistory);
 
-// Drone management routes (Admin)
 router.get("/", protect, getAllDrones);
 router.get("/:id", protect, getDroneById);
-router.post("/create", protect, createDrone);
-router.put("/:id", protect, updateDrone);
+router.post("/create", protect, validate(createDroneSchema), createDrone);
+router.put("/:id", protect, validate(updateDroneSchema), updateDrone);
 router.delete("/:id", protect, deleteDrone);
 
 export default router;
-

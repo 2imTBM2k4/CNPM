@@ -5,9 +5,9 @@ export const loginUser = async (req, res) => {
     const result = await userService.loginUser(req.body);
     res.json(result);
   } catch (error) {
-    console.error("Login error:", error);
-    const status = error.message.includes("pending admin") ? 403 : 200;
-    res.status(status).json({ success: false, message: error.message });
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
   }
 };
 
@@ -16,8 +16,9 @@ export const registerUser = async (req, res) => {
     const result = await userService.registerUser(req.body);
     res.json(result);
   } catch (error) {
-    console.error("Register error:", error);
-    res.json({ success: false, message: error.message });
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
   }
 };
 
@@ -40,8 +41,9 @@ export const getMe = async (req, res) => {
     const result = await userService.getMe(req.user._id);
     res.json(result);
   } catch (error) {
-    console.error("GetMe error:", error.message);
-    res.status(500).json({ success: false, message: error.message });
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
   }
 };
 
@@ -50,7 +52,9 @@ export const updateUserAddress = async (req, res) => {
     const result = await userService.updateUserAddress(req.user._id, req.body);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
   }
 };
 
@@ -63,8 +67,9 @@ export const updateProfile = async (req, res) => {
     );
     res.json(result);
   } catch (error) {
-    const status = error.message.includes("already exists") ? 400 : 500;
-    res.status(status).json({ success: false, message: error.message });
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
   }
 };
 
@@ -79,9 +84,9 @@ export const lockUser = async (req, res) => {
     const result = await userService.lockUser(userId, locked);
     res.json(result);
   } catch (error) {
-    console.error("Lock user error:", error);
-    const status = error.message.includes("not found") ? 404 : 500;
-    res.status(status).json({ success: false, message: error.message });
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
   }
 };
 
@@ -93,7 +98,9 @@ export const listUsers = async (req, res) => {
     const result = await userService.listUsers();
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
   }
 };
 
@@ -106,7 +113,9 @@ export const updateUserByAdmin = async (req, res) => {
     const result = await userService.updateUserByAdmin(userId, updates);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
   }
 };
 
@@ -118,7 +127,9 @@ export const deleteUser = async (req, res) => {
     const result = await userService.deleteUser(req.body.userId);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
   }
 };
 
@@ -133,6 +144,8 @@ export const getStats = async (req, res) => {
     const result = await userService.getStats(period);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
   }
 };

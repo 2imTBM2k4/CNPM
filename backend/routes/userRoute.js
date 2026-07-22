@@ -14,6 +14,17 @@ import {
 } from "../controllers/userController.js";
 
 import { protect } from "../middleware/auth.js";
+import validate from "../middleware/validate.js";
+import {
+  registerSchema,
+  loginSchema,
+  updateAddressSchema,
+  updateProfileSchema,
+  lockUserSchema,
+  updateByAdminSchema,
+  deleteUserSchema,
+  statsQuerySchema,
+} from "../validations/userValidation.js";
 import rateLimit from "express-rate-limit";
 
 const authLimiter = rateLimit({
@@ -25,24 +36,20 @@ const authLimiter = rateLimit({
 const userRouter = express.Router();
 
 // ============ PUBLIC ROUTES ============
-userRouter.post("/register", authLimiter, registerUser);
-userRouter.post("/login", authLimiter, loginUser);
+userRouter.post("/register", authLimiter, validate(registerSchema), registerUser);
+userRouter.post("/login", authLimiter, validate(loginSchema), loginUser);
 userRouter.post("/logout", logoutUser);
 
 // ============ PROTECTED ROUTES ============
 userRouter.get("/me", protect, getMe);
-userRouter.put("/update-address", protect, updateUserAddress);
-userRouter.put("/profile", protect, updateProfile);
+userRouter.put("/update-address", protect, validate(updateAddressSchema), updateUserAddress);
+userRouter.put("/profile", protect, validate(updateProfileSchema), updateProfile);
 
 // ============ ADMIN ROUTES ============
 userRouter.get("/list", protect, listUsers);
-userRouter.get("/stats", protect, getStats);
-
-// QUAN TRỌNG: Đặt route /lock TRƯỚC các route dynamic khác
-userRouter.post("/lock", protect, lockUser);
-
-// Các route update và delete
-userRouter.put("/update-by-admin", protect, updateUserByAdmin);
-userRouter.delete("/delete", protect, deleteUser);
+userRouter.get("/stats", protect, validate(statsQuerySchema, "query"), getStats);
+userRouter.post("/lock", protect, validate(lockUserSchema), lockUser);
+userRouter.put("/update-by-admin", protect, validate(updateByAdminSchema), updateUserByAdmin);
+userRouter.delete("/delete", protect, validate(deleteUserSchema), deleteUser);
 
 export default userRouter;

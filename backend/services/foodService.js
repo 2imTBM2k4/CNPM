@@ -2,17 +2,19 @@ import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 import * as foodRepo from "../repositories/foodRepository.js";
 import foodModel from "../models/foodModel.cjs";
+import AppError from "../utils/AppError.js";
 export const addFood = async (user, foodData, file) => {
   if (user.role !== "restaurant_owner" || !user.restaurantId) {
-    throw new Error(
-      "Only restaurant owners with a valid restaurant can add food"
+    throw new AppError(
+      "Only restaurant owners with a valid restaurant can add food",
+      403
     );
   }
   const { name, description, price, category } = foodData;
   let imageUrl = null;
 
   if (!file) {
-    throw new Error("Image required");
+    throw new AppError("Image required", 400);
   }
 
   const result = await cloudinary.uploader.upload(file.path, {
@@ -63,7 +65,7 @@ export const listFood = async (user, restaurantId) => {
 export const removeFood = async (user, id) => {
   const food = await foodRepo.findById(id);
   if (!food) {
-    throw new Error("Food not found");
+    throw new AppError("Food not found", 404);
   }
 
   let foodRestIdStr = food.restaurantId;
@@ -82,7 +84,7 @@ export const removeFood = async (user, id) => {
     : null;
 
   if (user.role === "restaurant_owner" && userRestIdStr !== foodRestIdStr) {
-    throw new Error("Unauthorized: Not your restaurant's food");
+    throw new AppError("Unauthorized: Not your restaurant's food", 403);
   }
 
   if (food.image) {
@@ -99,7 +101,7 @@ export const updateFood = async (user, updates, file) => {
   const food = await foodRepo.findById(id);
 
   if (!food) {
-    throw new Error("Food not found");
+    throw new AppError("Food not found", 404);
   }
 
   let foodRestIdStr = food.restaurantId;
@@ -118,7 +120,7 @@ export const updateFood = async (user, updates, file) => {
     : null;
 
   if (user.role === "restaurant_owner" && userRestIdStr !== foodRestIdStr) {
-    throw new Error("Unauthorized: Not your restaurant's food");
+    throw new AppError("Unauthorized: Not your restaurant's food", 403);
   }
 
   const updateData = { name, description, price, category };
@@ -154,6 +156,6 @@ export const getFoodById = async (foodId) => {
     return { success: true, data: food };
   } catch (error) {
     console.error("Service getFoodById error:", error);
-    throw new Error("Failed to fetch food");
+    throw new AppError("Failed to fetch food", 500);
   }
 };

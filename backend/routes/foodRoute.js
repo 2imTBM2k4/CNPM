@@ -4,27 +4,24 @@ import {
   listFood,
   removeFood,
   updateFood,
-  getFoodById, // Đã import từ controller
+  getFoodById,
 } from "../controllers/foodController.js";
 import { uploadMiddleware } from "../config/multer.js";
 import { protect, optionalAuth } from "../middleware/auth.js";
+import validate from "../middleware/validate.js";
+import {
+  addFoodSchema,
+  updateFoodSchema,
+  removeFoodSchema,
+  listFoodQuerySchema,
+} from "../validations/foodValidation.js";
 
 const foodRouter = express.Router();
 
-foodRouter.post("/add", protect, uploadMiddleware.single("image"), addFood);
-
-// SỬA: ĐẶT /list TRƯỚC /:id ĐỂ TRÁNH CONFLICT
-foodRouter.get("/list", optionalAuth, listFood);
-
-// GET single food by ID (public, no auth)
+foodRouter.post("/add", protect, uploadMiddleware.single("image"), validate(addFoodSchema), addFood);
+foodRouter.get("/list", optionalAuth, validate(listFoodQuerySchema, "query"), listFood);
 foodRouter.get("/:id", getFoodById);
-
-foodRouter.post("/remove", protect, removeFood);
-foodRouter.post(
-  "/update",
-  protect,
-  uploadMiddleware.single("image"),
-  updateFood
-);
+foodRouter.post("/remove", protect, validate(removeFoodSchema), removeFood);
+foodRouter.post("/update", protect, uploadMiddleware.single("image"), validate(updateFoodSchema), updateFood);
 
 export default foodRouter;

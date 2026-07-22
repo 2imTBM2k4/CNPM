@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import validator from "validator";
 import * as userRepo from "../repositories/userRepository.js";
 import * as restaurantRepo from "../repositories/restaurantRepository.js";
+import AppError from "../utils/AppError.js";
 
 const createToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -11,24 +12,25 @@ const createToken = (id) => {
 export const loginUser = async ({ email, password }) => {
   const user = await userRepo.findByEmail(email);
   if (!user) {
-    throw new Error("User doesn't exist.");
+    throw new AppError("User doesn't exist.", 401);
   }
   if (user.locked) {
-    throw new Error("Account is locked.");
+    throw new AppError("Account is locked.", 403);
   }
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    throw new Error("Invalid credentials");
+    throw new AppError("Invalid credentials", 401);
   }
 
   if (user.role === "restaurant_owner" && user.restaurantId) {
     const restaurant = await restaurantRepo.findById(user.restaurantId);
     if (!restaurant) {
-      throw new Error("Restaurant not found");
+      throw new AppError("Restaurant not found", 404);
     }
     if (restaurant.isLocked) {
-      throw new Error(
-        "Your restaurant account is pending admin approval. Please wait for approval."
+      throw new AppError(
+        "Your restaurant account is pending admin approval. Please wait for approval.",
+        403
       );
     }
   }
@@ -53,13 +55,13 @@ export const registerUser = async (userData) => {
     userData;
   const exists = await userRepo.findByEmail(email);
   if (exists) {
-    throw new Error("User already exists.");
+    throw new AppError("User already exists.", 409);
   }
   if (!validator.isEmail(email)) {
-    throw new Error("Please enter a valid email.");
+    throw new AppError("Please enter a valid email.", 400);
   }
   if (password.length < 8) {
-    throw new Error("Please enter a strong password.");
+    throw new AppError("Please enter a strong password.", 400);
   }
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(password, salt);
@@ -99,14 +101,14 @@ export const registerUser = async (userData) => {
 
 export const lockUser = async (userId, lock) => {
   if (!userId) {
-    throw new Error("Missing userId parameter");
+    throw new AppError("Missing userId parameter", 400);
   }
   if (lock === undefined) {
-    throw new Error("Missing lock parameter");
+    throw new AppError("Missing lock parameter", 400);
   }
   const user = await userRepo.findById(userId);
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError("User not found", 404);
   }
   const updated = await userRepo.updateById(userId, { locked: lock });
   return {
@@ -119,7 +121,7 @@ export const lockUser = async (userId, lock) => {
 export const getMe = async (userId) => {
   const user = await userRepo.findById(userId);
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError("User not found", 404);
   }
   const userObj = user.toObject ? user.toObject() : { ...user };
   if (userObj.restaurantId) {
@@ -142,7 +144,7 @@ export const updateUserAddress = async (userId, addressData) => {
   };
   const updatedUser = await userRepo.updateById(userId, updateData);
   if (!updatedUser) {
-    throw new Error("User not found");
+    throw new AppError("User not found", 404);
   }
   return { success: true, data: updatedUser };
 };
@@ -162,7 +164,7 @@ export const updateProfile = async (userId, currentEmail, updates) => {
   if (email && email !== currentEmail) {
     const existing = await userRepo.findByEmail(email);
     if (existing) {
-      throw new Error("Email already exists");
+      throw new AppError("Email already exists", 409);
     }
   }
   const user = await userRepo.updateById(userId, { name, email, phone });
@@ -175,7 +177,7 @@ export const updateUserByAdmin = async (userId, updates) => {
   }
   const updatedUser = await userRepo.updateById(userId, updates);
   if (!updatedUser) {
-    throw new Error("User not found");
+    throw new AppError("User not found", 404);
   }
   const obj = updatedUser.toObject ? updatedUser.toObject() : { ...updatedUser };
   if (obj.restaurantId) obj.restaurantId = obj.restaurantId.toString();
@@ -185,7 +187,7 @@ export const updateUserByAdmin = async (userId, updates) => {
 export const deleteUser = async (userId) => {
   const user = await userRepo.findById(userId);
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError("User not found", 404);
   }
   await userRepo.deleteById(userId);
   return { success: true, message: "User deleted successfully" };

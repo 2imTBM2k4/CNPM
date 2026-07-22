@@ -1,4 +1,5 @@
-import * as cartRepo from "../repositories/cartRepository.js"; // DÙNG REPO (đã populate OK)
+import * as cartRepo from "../repositories/cartRepository.js";
+import AppError from "../utils/AppError.js";
 
 export const getCart = async (userId) => {
   let cart = await cartRepo.findByUserId(userId);
@@ -15,7 +16,7 @@ export const getCart = async (userId) => {
 export const addToCart = async (userId, itemId) => {
   const food = await cartRepo.findFoodById(itemId);
   if (!food) {
-    throw new Error("Food not found");
+    throw new AppError("Food not found", 404);
   }
 
   let cart = await cartRepo.findByUserId(userId);
@@ -33,7 +34,7 @@ export const addToCart = async (userId, itemId) => {
       newRestaurantId &&
       existingRestaurantId !== newRestaurantId
     ) {
-      throw new Error("Chỉ được đặt món từ một nhà hàng trong mỗi giỏ hàng");
+      throw new AppError("Chỉ được đặt món từ một nhà hàng trong mỗi giỏ hàng", 400);
     }
   }
 
@@ -55,12 +56,12 @@ export const addToCart = async (userId, itemId) => {
 export const removeFromCart = async (userId, itemId) => {
   let cart = await cartRepo.findByUserId(userId);
   if (!cart) {
-    throw new Error("Cart not found");
+    throw new AppError("Cart not found", 404);
   }
 
   const idx = cart.items.findIndex((i) => i.foodId._id.toString() === itemId);
   if (idx === -1) {
-    throw new Error("Item not in cart");
+    throw new AppError("Item not in cart", 404);
   }
 
   if (cart.items[idx].quantity > 1) {

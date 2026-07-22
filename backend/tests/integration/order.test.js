@@ -153,7 +153,7 @@ describe("Order API", () => {
         .get("/api/order/list")
         .set("Authorization", `Bearer ${token}`);
 
-      expect(res.status).toBe(500);
+      expect(res.status).toBe(403);
       expect(res.body.success).toBe(false);
     });
   });

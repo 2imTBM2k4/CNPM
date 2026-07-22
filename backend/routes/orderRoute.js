@@ -5,19 +5,23 @@ import {
   userOrders,
   listOrders,
   updateStatus,
-  getStatusStats, // Thêm function mới
+  getStatusStats,
 } from "../controllers/orderController.js";
-import { protect } from "../middleware/auth.js"; // Sửa: named { protect }
+import { protect } from "../middleware/auth.js";
+import validate from "../middleware/validate.js";
+import {
+  placeOrderSchema,
+  updateStatusSchema,
+  verifyOrderSchema,
+} from "../validations/orderValidation.js";
 
 const router = express.Router();
 
-router.post("/place", protect, placeOrder); // Thay auth bằng protect
-router.get("/verify", verifyOrder); // SỬA: Thay đổi thành GET để xử lý redirect từ PayPal/Stripe
+router.post("/place", protect, validate(placeOrderSchema), placeOrder);
+router.get("/verify", validate(verifyOrderSchema, "query"), verifyOrder);
 router.get("/userorders", protect, userOrders);
 router.get("/list", protect, listOrders);
-// THÊM HOẶC SỬA ROUTE UPDATE STATUS
-router.post("/status", protect, updateStatus);
-// THÊM ROUTE MỚI CHO STATS
+router.post("/status", protect, validate(updateStatusSchema), updateStatus);
 router.get("/status-stats", protect, getStatusStats);
 
 export default router;

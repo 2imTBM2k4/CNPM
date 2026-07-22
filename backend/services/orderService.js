@@ -3,6 +3,7 @@ import * as orderRepo from "../repositories/orderRepository.js";
 import * as restaurantRepo from "../repositories/restaurantRepository.js";
 import * as userRepo from "../repositories/userRepository.js";
 import * as cartRepo from "../repositories/cartRepository.js";
+import AppError from "../utils/AppError.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -22,16 +23,16 @@ export const placeOrder = async (user, orderData) => {
   const { items, address, amount, paymentMethod, restaurantId, paymentDetails } = orderData;
 
   if (!items || !Array.isArray(items) || items.length === 0) {
-    throw new Error("Cart is empty. Please add items to your cart.");
+    throw new AppError("Cart is empty. Please add items to your cart.", 400);
   }
   if (!address) {
-    throw new Error("Shipping address is required.");
+    throw new AppError("Shipping address is required.", 400);
   }
   if (typeof amount !== "number" || isNaN(amount)) {
-    throw new Error("Invalid total amount.");
+    throw new AppError("Invalid total amount.", 400);
   }
   if (!restaurantId) {
-    throw new Error("Restaurant ID is required.");
+    throw new AppError("Restaurant ID is required.", 400);
   }
 
   const restaurantLocation = getRandomCoordinates();
@@ -148,7 +149,7 @@ export const listOrders = async (user) => {
     filter.restaurantId = restId;
   } // else all for admin
   if (user.role !== "restaurant_owner" && user.role !== "admin") {
-    throw new Error("Unauthorized");
+    throw new AppError("Unauthorized", 403);
   }
   const orders = await orderRepo.findAll(filter);
   return { success: true, data: orders };
@@ -158,7 +159,7 @@ export const updateStatus = async (user, updateData) => {
   const { orderId, status, reason, isPaid, paidAt } = updateData;
   const order = await orderRepo.findById(orderId);
   if (!order) {
-    throw new Error("Order not found");
+    throw new AppError("Order not found", 404);
   }
 
   // Tự động gán drone khi chuyển sang trạng thái "delivering"
@@ -194,7 +195,7 @@ export const updateStatus = async (user, updateData) => {
   // THAY THẾ TOÀN BỘ PHẦN CHECK CHO ROLE "restaurant_owner" (fallback + auto-fix, FIX: dùng order.restaurantId thay vì order.restaurant)
   if (user.role === "restaurant_owner") {
     if (!order.restaurantId) {
-      throw new Error("Unauthorized: Order missing restaurantId");
+      throw new AppError("Unauthorized: Order missing restaurantId", 403);
     }
 
     // Priority check: user.restaurantId vs order.restaurantId (fast)
@@ -253,45 +254,45 @@ export const updateStatus = async (user, updateData) => {
     }
 
     if (!isAuthorized) {
-      throw new Error(
+      throw new AppError(
         `Unauthorized: Not your restaurant (user: ${user._id.toString()}, order: { restaurantId: ${orderRestStr}, owner: ${
           order.restaurantId?.owner?._id || order.restaurantId?.owner
-        }})`
+        }})`,
+        403
       );
     }
 
     // Validation rules từ gốc (status transitions)
     if (order.orderStatus !== "pending" && status === "preparing") {
-      throw new Error("Cannot accept (not pending)");
+      throw new AppError("Cannot accept (not pending)", 400);
     }
     if (order.orderStatus !== "preparing" && status === "delivering") {
-      throw new Error("Cannot handover (not preparing)");
+      throw new AppError("Cannot handover (not preparing)", 400);
     }
     if (status === "cancelled" && (!reason || reason.trim() === "")) {
-      throw new Error("Reason required for cancellation");
+      throw new AppError("Reason required for cancellation", 400);
     }
-    // ... (tương tự các check khác từ code gốc)
   } else if (user.role === "user") {
     if (order.user._id.toString() !== user._id.toString()) {
-      throw new Error("Unauthorized: Not your order");
+      throw new AppError("Unauthorized: Not your order", 403);
     }
 
     if (status === "delivered") {
       if (order.orderStatus !== "delivering") {
-        throw new Error("Cannot mark received yet (not delivering)");
+        throw new AppError("Cannot mark received yet (not delivering)", 400);
       }
     } else if (status === "cancelled") {
       if (order.orderStatus !== "pending") {
-        throw new Error("Chỉ có thể hủy đơn hàng khi đang chờ xác nhận");
+        throw new AppError("Chỉ có thể hủy đơn hàng khi đang chờ xác nhận", 400);
       }
       if (!reason || reason.trim() === "") {
-        throw new Error("Reason required for cancellation");
+        throw new AppError("Reason required for cancellation", 400);
       }
     } else {
-      throw new Error("Only delivered or cancelled status allowed for users");
+      throw new AppError("Only delivered or cancelled status allowed for users", 400);
     }
   } else if (user.role !== "admin") {
-    throw new Error("Unauthorized: Invalid role");
+    throw new AppError("Unauthorized: Invalid role", 403);
   }
 
   const updateDataObj = { orderStatus: status };
@@ -342,7 +343,7 @@ export const updateStatus = async (user, updateData) => {
       const restaurant = await restaurantRepo.findById(order.restaurantId);
       const admin = await userRepo.findAdmin();
       if (!admin) {
-        throw new Error("Admin account not found. Cannot process balance update.");
+        throw new AppError("Admin account not found. Cannot process balance update.", 500);
       }
       if (restaurant && admin) {
         const restaurantShare = order.totalPrice * 0.8;

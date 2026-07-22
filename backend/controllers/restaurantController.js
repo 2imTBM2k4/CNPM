@@ -6,10 +6,9 @@ export const listRestaurants = async (req, res) => {
     const result = await restaurantService.listRestaurants();
     res.json(result);
   } catch (error) {
-    console.error("List restaurants error:", error);
     res
-      .status(500)
-      .json({ success: false, message: "Error listing restaurants" });
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
   }
 };
 
@@ -23,10 +22,10 @@ export const updateRestaurant = async (req, res) => {
     );
     res.json(result);
   } catch (error) {
-    console.error("Update restaurant error:", error);
     if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-    const status = error.message.includes("not found") ? 404 : 500;
-    res.status(status).json({ success: false, message: error.message });
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
   }
 };
 
@@ -39,11 +38,10 @@ export const createRestaurant = async (req, res) => {
     );
     res.status(201).json(result);
   } catch (error) {
-    console.error("Create restaurant error:", error);
     if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     res
-      .status(500)
-      .json({ success: false, message: "Error creating restaurant" });
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
   }
 };
 
@@ -53,13 +51,9 @@ export const deleteRestaurant = async (req, res) => {
     const result = await restaurantService.deleteRestaurant(id);
     res.json(result);
   } catch (error) {
-    console.error("Delete restaurant error:", error);
-    const status = error.message.includes("not found")
-      ? 404
-      : error.message.includes("Không thể xóa")
-      ? 400
-      : 500;
-    res.status(status).json({ success: false, message: error.message });
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
   }
 };
 
@@ -69,9 +63,9 @@ export const getRestaurantById = async (req, res) => {
     const result = await restaurantService.getRestaurantById(id);
     res.json(result);
   } catch (error) {
-    console.error("Get restaurant by ID error:", error);
-    const status = error.message.includes("not found") ? 404 : 500;
-    res.status(status).json({ success: false, message: error.message });
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
   }
 };
 
@@ -85,8 +79,8 @@ export const lockRestaurant = async (req, res) => {
     const result = await restaurantService.lockRestaurant(id, isLocked);
     res.json(result);
   } catch (error) {
-    console.error("Lock restaurant error:", error);
-    const status = error.message.includes("not found") ? 404 : 400;
-    res.status(status).json({ success: false, message: error.message });
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
   }
 };

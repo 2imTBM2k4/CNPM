@@ -46,9 +46,43 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.error("Global error:", err.stack || err);
+  if (err.isJoi) {
+    const messages = err.details.map((d) => d.message).join(", ");
+    return res.status(400).json({ success: false, message: messages });
+  }
+
+  if (err.name === "CastError") {
+    return res
+      .status(400)
+      .json({ success: false, message: `ID không hợp lệ: ${err.value}` });
+  }
+
+  if (err.name === "ValidationError") {
+    const messages = Object.values(err.errors)
+      .map((e) => e.message)
+      .join(", ");
+    return res.status(400).json({ success: false, message: messages });
+  }
+
+  if (err.code === 11000) {
+    const field = Object.keys(err.keyValue).join(", ");
+    return res
+      .status(409)
+      .json({ success: false, message: `${field} đã tồn tại` });
+  }
+
+  if (err.type === "entity.parse.failed") {
+    return res
+      .status(400)
+      .json({ success: false, message: "JSON không hợp lệ" });
+  }
+
+  const statusCode = err.statusCode || err.status || 500;
+  if (statusCode === 500) {
+    console.error("Server error:", err.stack || err);
+  }
   res
-    .status(err.status || 500)
+    .status(statusCode)
     .json({ success: false, message: err.message || "Server error" });
 });
 

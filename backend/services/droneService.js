@@ -3,6 +3,7 @@ import * as restaurantRepo from "../repositories/restaurantRepository.js";
 import * as droneRepo from "../repositories/droneRepository.js";
 import crypto from "crypto";
 import DroneDeliveryHistory from "../models/droneDeliveryHistoryModel.cjs";
+import AppError from "../utils/AppError.js";
 
 /**
  * Lấy thông tin địa chỉ đầy đủ cho drone delivery
@@ -10,7 +11,7 @@ import DroneDeliveryHistory from "../models/droneDeliveryHistoryModel.cjs";
 export const getDeliveryAddresses = async (orderId) => {
   const order = await orderRepo.findById(orderId);
   if (!order) {
-    throw new Error("Order not found");
+    throw new AppError("Order not found", 404);
   }
 
   let restaurant;
@@ -21,12 +22,12 @@ export const getDeliveryAddresses = async (orderId) => {
   }
   
   if (!restaurant) {
-    throw new Error("Restaurant not found");
+    throw new AppError("Restaurant not found", 404);
   }
 
   const customerAddress = order.shippingAddress;
   if (!customerAddress) {
-    throw new Error("Customer address not found");
+    throw new AppError("Customer address not found", 404);
   }
 
   const customerFullAddress = [
@@ -84,16 +85,16 @@ export const generateQRCode = (orderId) => {
 export const assignDroneToOrder = async (orderId, droneId) => {
   const order = await orderRepo.findById(orderId);
   if (!order) {
-    throw new Error("Order not found");
+    throw new AppError("Order not found", 404);
   }
 
   const drone = await droneRepo.findById(droneId);
   if (!drone) {
-    throw new Error("Drone not found");
+    throw new AppError("Drone not found", 404);
   }
 
   if (drone.status !== "available") {
-    throw new Error("Drone is not available");
+    throw new AppError("Drone is not available", 400);
   }
 
   const restaurant = await restaurantRepo.findById(order.restaurantId);
@@ -150,19 +151,19 @@ export const assignDroneToOrder = async (orderId, droneId) => {
 export const scanQRCode = async (orderId, qrCode) => {
   const order = await orderRepo.findById(orderId);
   if (!order) {
-    throw new Error("Order not found");
+    throw new AppError("Order not found", 404);
   }
 
   if (!order.qrCode) {
-    throw new Error("Order does not have QR code");
+    throw new AppError("Order does not have QR code", 400);
   }
 
   if (order.qrCode !== qrCode) {
-    throw new Error("Invalid QR code");
+    throw new AppError("Invalid QR code", 400);
   }
 
   if (order.qrScanned) {
-    throw new Error("QR code already scanned");
+    throw new AppError("QR code already scanned", 400);
   }
 
   // Đánh dấu đã quét QR (khách hàng đã xác nhận)
@@ -232,15 +233,15 @@ export const closeCargoLid = async (droneId, orderId) => {
 export const confirmDelivery = async (orderId) => {
   const order = await orderRepo.findById(orderId);
   if (!order) {
-    throw new Error("Order not found");
+    throw new AppError("Order not found", 404);
   }
 
   if (!order.qrScanned) {
-    throw new Error("QR code has not been scanned yet");
+    throw new AppError("QR code has not been scanned yet", 400);
   }
 
   if (!order.cargoChecked) {
-    throw new Error("Cargo has not been checked yet. Please wait for the lid to close.");
+    throw new AppError("Cargo has not been checked yet. Please wait for the lid to close.", 400);
   }
 
   order.orderStatus = "delivered";
@@ -293,7 +294,7 @@ export const getAllDrones = async () => {
 export const createDrone = async (droneData) => {
   const existingDrone = await droneRepo.findByCode(droneData.droneCode);
   if (existingDrone) {
-    throw new Error("Drone code already exists");
+    throw new AppError("Drone code already exists", 409);
   }
 
   const drone = await droneRepo.create(droneData);
@@ -310,14 +311,14 @@ export const createDrone = async (droneData) => {
 export const updateDrone = async (droneId, updateData) => {
   const drone = await droneRepo.findById(droneId);
   if (!drone) {
-    throw new Error("Drone not found");
+    throw new AppError("Drone not found", 404);
   }
 
   // Nếu thay đổi droneCode, kiểm tra trùng
   if (updateData.droneCode && updateData.droneCode !== drone.droneCode) {
     const existingDrone = await droneRepo.findByCode(updateData.droneCode);
     if (existingDrone) {
-      throw new Error("Drone code already exists");
+      throw new AppError("Drone code already exists", 409);
     }
   }
 
@@ -335,15 +336,15 @@ export const updateDrone = async (droneId, updateData) => {
 export const deleteDrone = async (droneId) => {
   const drone = await droneRepo.findById(droneId);
   if (!drone) {
-    throw new Error("Drone not found");
+    throw new AppError("Drone not found", 404);
   }
 
   if (drone.status === "delivering") {
-    throw new Error("Không thể xóa drone đang giao hàng");
+    throw new AppError("Không thể xóa drone đang giao hàng", 400);
   }
 
   if (drone.totalDeliveries > 0) {
-    throw new Error(`Không thể xóa drone đã hoàn thành ${drone.totalDeliveries} đơn hàng. Drone này có lịch sử giao hàng.`);
+    throw new AppError(`Không thể xóa drone đã hoàn thành ${drone.totalDeliveries} đơn hàng. Drone này có lịch sử giao hàng.`, 409);
   }
 
   await droneRepo.deleteById(droneId);
@@ -359,7 +360,7 @@ export const deleteDrone = async (droneId) => {
 export const getDroneById = async (droneId) => {
   const drone = await droneRepo.findById(droneId);
   if (!drone) {
-    throw new Error("Drone not found");
+    throw new AppError("Drone not found", 404);
   }
 
   return {
@@ -413,7 +414,7 @@ export const checkDeliveryTimeout = async (orderId) => {
 export const getDroneDeliveryHistory = async (droneId) => {
   const drone = await droneRepo.findById(droneId);
   if (!drone) {
-    throw new Error("Drone not found");
+    throw new AppError("Drone not found", 404);
   }
 
   const history = await DroneDeliveryHistory.find({ droneId })
@@ -472,7 +473,7 @@ export const getAllDeliveryHistory = async (page = 1, limit = 20) => {
 export const updateCargoWeight = async (droneId, weight) => {
   const drone = await droneRepo.findById(droneId);
   if (!drone) {
-    throw new Error("Drone not found");
+    throw new AppError("Drone not found", 404);
   }
 
   drone.cargoWeight = weight;

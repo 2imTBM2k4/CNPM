@@ -2,6 +2,7 @@ import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 import * as restaurantRepo from "../repositories/restaurantRepository.js";
 import * as userRepo from "../repositories/userRepository.js";
+import AppError from "../utils/AppError.js";
 
 export const listRestaurants = async () => {
   const restaurants = await restaurantRepo.findAll();
@@ -28,7 +29,7 @@ export const updateRestaurant = async (id, updates, file) => {
   }
   const restaurant = await restaurantRepo.updateById(id, updates);
   if (!restaurant) {
-    throw new Error("Restaurant not found");
+    throw new AppError("Restaurant not found", 404);
   }
   return {
     success: true,
@@ -62,14 +63,15 @@ export const createRestaurant = async (user, data, file) => {
 export const deleteRestaurant = async (id) => {
   const restaurant = await restaurantRepo.findById(id);
   if (!restaurant) {
-    throw new Error("Restaurant not found");
+    throw new AppError("Restaurant not found", 404);
   }
 
   const { Order } = await import("../models/index.cjs");
   const totalOrders = await Order.countDocuments({ restaurantId: id });
   if (totalOrders > 0) {
-    throw new Error(
-      `Không thể xóa nhà hàng. Nhà hàng này đã có ${totalOrders} đơn hàng trong hệ thống.`
+    throw new AppError(
+      `Không thể xóa nhà hàng. Nhà hàng này đã có ${totalOrders} đơn hàng trong hệ thống.`,
+      409
     );
   }
 
@@ -88,18 +90,18 @@ export const deleteRestaurant = async (id) => {
 export const getRestaurantById = async (id) => {
   const restaurant = await restaurantRepo.findById(id);
   if (!restaurant) {
-    throw new Error("Restaurant not found");
+    throw new AppError("Restaurant not found", 404);
   }
   return { success: true, data: restaurant };
 };
 
 export const lockRestaurant = async (id, isLocked) => {
   if (typeof isLocked !== "boolean") {
-    throw new Error("isLocked must be a boolean");
+    throw new AppError("isLocked must be a boolean", 400);
   }
   const restaurant = await restaurantRepo.updateById(id, { isLocked });
   if (!restaurant) {
-    throw new Error("Restaurant not found");
+    throw new AppError("Restaurant not found", 404);
   }
   return {
     success: true,

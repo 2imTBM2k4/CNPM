@@ -7,10 +7,12 @@ import { StoreContext } from "../../context/StoreContext";
 
 const Navbar = ({ setShowLogin }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const { getTotalCartAmount, token, setToken } = useContext(StoreContext);
   const navigate = useNavigate();
   const location = useLocation();
   const menuRef = useRef(null);
+  const profileRef = useRef(null);
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -20,6 +22,7 @@ const Navbar = ({ setShowLogin }) => {
 
   useEffect(() => {
     setMobileMenuOpen(false);
+    setProfileOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -27,12 +30,15 @@ const Navbar = ({ setShowLogin }) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setMobileMenuOpen(false);
       }
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileOpen(false);
+      }
     };
-    if (mobileMenuOpen) {
+    if (mobileMenuOpen || profileOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [mobileMenuOpen]);
+  }, [mobileMenuOpen, profileOpen]);
 
   const isActive = (path) => location.pathname === path;
 
@@ -67,7 +73,11 @@ const Navbar = ({ setShowLogin }) => {
             Sign in
           </button>
         ) : (
-          <div className="navbar-profile">
+          <div
+            className={`navbar-profile ${profileOpen ? "open" : ""}`}
+            ref={profileRef}
+            onClick={() => setProfileOpen((prev) => !prev)}
+          >
             <img src={assets.profile_icon} alt="Profile" />
             <ul className="nav-profile-dropdown">
               <li onClick={() => navigate("/myorders")}>

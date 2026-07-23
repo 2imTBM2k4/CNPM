@@ -127,7 +127,8 @@
   transition: border-color 0.2s ease;
 }
 
-.navbar-profile:hover img {
+.navbar-profile:hover img,
+.navbar-profile.open img {
   border-color: var(--accent-color);
 }
 
@@ -148,7 +149,8 @@
   transition: all 0.2s ease;
 }
 
-.navbar-profile:hover .nav-profile-dropdown {
+.navbar-profile:hover .nav-profile-dropdown,
+.navbar-profile.open .nav-profile-dropdown {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);

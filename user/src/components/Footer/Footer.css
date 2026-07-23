@@ -30,15 +30,18 @@
 .footer-content-center li {
   list-style: none;
   margin-bottom: 6px;
-  cursor: pointer;
+  cursor: default;
   font-size: 14px;
   color: var(--text-secondary);
   transition: color 0.2s ease;
 }
 
-.footer-content-left li:hover,
-.footer-content-right li:hover,
-.footer-content-center li:hover {
+.footer-content-center li a {
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+
+.footer-content-center li a:hover {
   color: var(--accent-color);
 }
 

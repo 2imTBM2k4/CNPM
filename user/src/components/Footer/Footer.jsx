@@ -1,51 +1,38 @@
-import React, { useEffect } from "react";
+import React from "react";
 import "./Footer.css";
 import { assets } from "../../assets/assets";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
-  useEffect(() => {
-    // Ensure the footer logo stays the same for both light and dark modes
-    document.querySelector(".tomatologofooter").style.filter = "none";
-  }, []);
-
   return (
     <div className="footer" id="footer">
       <div className="footer-content">
         <div className="footer-content-left">
-          <img className="tomatologofooter" src={assets.logo} alt="Drone Delivery" />
-          <p>This website is just for my portfolio, it's not a real website.</p>
+          <img className="footer-logo" src={assets.logo} alt="Drone Delivery" />
+          <p>Fast, reliable drone-powered food delivery straight to your door.</p>
           <div className="footer-social-icons">
             <img src={assets.facebook_icon} alt="Facebook" />
             <img src={assets.twitter_icon} alt="Twitter" />
-            <a
-              href="https://www.linkedin.com/in/your-linkedin-profile"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <img src={assets.linkedin_icon} alt="LinkedIn" />
-            </a>
+            <img src={assets.linkedin_icon} alt="LinkedIn" />
           </div>
         </div>
         <div className="footer-content-center">
           <h2>COMPANY</h2>
           <ul>
-            <li>Home</li>
-            <li>About us</li>
-            <li>Delivery</li>
-            <li>Privacy Policy</li>
+            <li><Link to="/">Home</Link></li>
+            <li><Link to="/food">Menu</Link></li>
           </ul>
         </div>
         <div className="footer-content-right">
           <h2>GET IN TOUCH</h2>
           <ul>
-            <li>+1-212-456-7890</li>
-            <li>contact@fastfood.com</li>
+            <li>support@dronedelivery.com</li>
           </ul>
         </div>
       </div>
       <hr />
       <p className="footer-copyright">
-        Copyright 2024 © DroneDelivery.com - All rights reserved.
+        Copyright {new Date().getFullYear()} &copy; Drone Delivery - All rights reserved.
       </p>
     </div>
   );

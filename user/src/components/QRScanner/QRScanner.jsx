@@ -20,7 +20,7 @@ const QRScanner = ({ onScan, onClose, expectedQRCode }) => {
     const initScanner = () => {
       const qrReaderElement = document.getElementById("qr-reader");
       if (!qrReaderElement) {
-        setError("Không tìm thấy element camera. Vui lòng thử lại.");
+        setError("Camera element not found. Please try again.");
         return;
       }
 
@@ -46,16 +46,16 @@ const QRScanner = ({ onScan, onClose, expectedQRCode }) => {
           scanner.clear().catch(console.error);
           onScanRef.current(decodedText);
         } else {
-          setError(`Mã QR không hợp lệ! Mã quét được: ${decodedText.substring(0, 16)}...`);
+          setError(`Invalid QR code! Scanned: ${decodedText.substring(0, 16)}...`);
           setTimeout(() => setError(null), 3000);
         }
       };
 
       const onScanError = (errorMessage) => {
         if (errorMessage.includes("NotAllowedError")) {
-          setError("Quyền truy cập camera bị từ chối.");
+          setError("Camera access denied.");
         } else if (errorMessage.includes("NotFoundError")) {
-          setError("Không tìm thấy camera.");
+          setError("Camera not found.");
         }
       };
 
@@ -63,7 +63,7 @@ const QRScanner = ({ onScan, onClose, expectedQRCode }) => {
         scanner.render(onScanSuccess, onScanError);
       } catch (err) {
         console.error("Error initializing scanner:", err);
-        setError("Lỗi khởi tạo camera. Vui lòng thử lại.");
+        setError("Camera initialization failed. Please try again.");
       }
     };
 
@@ -83,7 +83,7 @@ const QRScanner = ({ onScan, onClose, expectedQRCode }) => {
     <div className="qr-scanner-overlay">
       <div className="qr-scanner-container">
         <div className="qr-scanner-header">
-          <h3>📷 Quét mã QR</h3>
+          <h3>Scan QR Code</h3>
           <button className="close-btn" onClick={onClose}>✕</button>
         </div>
 
@@ -95,8 +95,8 @@ const QRScanner = ({ onScan, onClose, expectedQRCode }) => {
             </div>
           )}
           <div className="qr-scanner-instructions">
-            <p>Đưa camera vào mã QR để quét</p>
-            <p className="qr-scanner-hint">💡 Mã QR cần khớp với mã hiển thị trên màn hình</p>
+            <p>Point your camera at the QR code to scan</p>
+            <p className="qr-scanner-hint">The QR code must match the one displayed on screen</p>
           </div>
         </div>
       </div>

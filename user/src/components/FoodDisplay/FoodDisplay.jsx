@@ -151,8 +151,8 @@ const FoodDisplay = ({ category = "All", restaurantId, foods = [] }) => {
         ))}
         {displayItems.length === 0 && (
           <div className="no-items-message">
-            <p>Không có món ăn nào trong danh mục này.</p>
-            {restaurantId && <p>(Chỉ món của nhà hàng này)</p>}
+            <p>No items found in this category.</p>
+            {restaurantId && <p>(Showing items from this restaurant only)</p>}
           </div>
         )}
       </div>

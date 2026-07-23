@@ -41,7 +41,7 @@ function FoodItem({ id, name, price, description, image }) {
     if (tempQuantity > 0) {
       const success = await addToCart(id, tempQuantity); // Luôn cộng dồn quantity
       if (success) {
-        toast.success("Đã thêm vào giỏ hàng!");
+        toast.success("Added to cart!");
       }  // Không toast nếu false (chưa login, lỗi, etc.)
       setTempQuantity(0);
       setShowCounter(false); // Ẩn counter sau confirm, hiện lại nút add
@@ -83,7 +83,7 @@ function FoodItem({ id, name, price, description, image }) {
               <img onClick={handleAddClick} src={assets.add_icon_green} alt="+" />
             </div>
             <button className="confirm-btn" onClick={handleConfirmAdd}>
-              Thêm vào giỏ hàng
+              Add to cart
             </button>
           </div>
         )}
@@ -91,7 +91,7 @@ function FoodItem({ id, name, price, description, image }) {
       <div className="food-item-info">
         <div className="food-item-name-rating">
           <p className="namewe">{name}</p>
-          <img className="ratingstars" src={assets.rating_starts} alt="" />
+          <img className="ratingstars" src={assets.rating_starts} alt="Rating" />
         </div>
         <p className="food-item-desc">{description}</p>
         <p className="food-item-price">${price}</p>

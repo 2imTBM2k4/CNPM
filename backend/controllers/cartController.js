@@ -13,7 +13,7 @@ export const getCart = async (req, res) => {
 
 export const addToCart = async (req, res) => {
   try {
-    const result = await cartService.addToCart(req.user._id, req.body.itemId);
+    const result = await cartService.addToCart(req.user._id, req.body.itemId, req.body.quantity || 1);
     res.json(result);
   } catch (error) {
     res

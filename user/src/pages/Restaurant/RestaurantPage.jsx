@@ -18,7 +18,7 @@
 //   }, [id, restaurant_list]);
 
 //   if (!restaurant) {
-//     return <div>Nhà hàng không tồn tại.</div>;
+//     return <div>Restaurant not found.</div>;
 //   }
 
 //   // SỬA: Xử lý URL ảnh động - kiểm tra full URL hay path local (với prefix /images/ đã có trong DB)
@@ -162,15 +162,15 @@ const RestaurantPage = () => {
 
   // Conditional renders sau tất cả hooks
   if (!restaurant) {
-    return <div>Nhà hàng không tồn tại.</div>;
+    return <div>Restaurant not found.</div>;
   }
 
   if (loading) {
-    return <div>Đang tải món ăn...</div>;
+    return <div>Loading menu...</div>;
   }
 
   if (error) {
-    return <div>Lỗi: {error}</div>;
+    return <div>Error: {error}</div>;
   }
 
   const buildImgSrc = (image) => {
@@ -203,9 +203,9 @@ const RestaurantPage = () => {
         </div>
         <div className="restaurant-text-info" style={{ flex: 1 }}>
           <h1>{restaurant.name}</h1>
-          <p>Địa chỉ: {restaurant.address}</p>
-          <p>Số điện thoại: {restaurant.phone || "Không có"}</p>
-          <p>Mô tả: {restaurant.description || "Không có mô tả"}</p>
+          <p>Address: {restaurant.address}</p>
+          <p>Phone: {restaurant.phone || "N/A"}</p>
+          <p>Description: {restaurant.description || "No description"}</p>
         </div>
       </div>
 

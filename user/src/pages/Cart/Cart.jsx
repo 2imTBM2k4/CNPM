@@ -35,7 +35,7 @@ const Cart = () => {
         throw new Error(res.data.message || "Item not found");
       }
     } catch (err) {
-      toast.error(`Lỗi tải món ăn: ${err.message}`);
+      toast.error(`Failed to load item: ${err.message}`);
       // Optional: Remove từ cartItems nếu invalid
     } finally {
       setLoadingItems((prev) => {
@@ -84,10 +84,10 @@ const Cart = () => {
   const handleConfirmRemove = async (itemId) => {
     if (confirmAction === "delete") {
       await removeItemFromCart(itemId);
-      toast.success("Đã xóa sản phẩm khỏi giỏ hàng");
+      toast.success("Item removed from cart");
     } else {
       await removeFromCart(itemId);
-      toast.success("Đã xóa sản phẩm khỏi giỏ hàng");
+      toast.success("Item removed from cart");
     }
     setShowConfirm(null);
     setConfirmAction("");
@@ -102,9 +102,9 @@ const Cart = () => {
   // Lấy thông báo confirm dựa trên action
   const getConfirmMessage = () => {
     if (confirmAction === "delete") {
-      return "Bạn có chắc chắn muốn xóa hoàn toàn sản phẩm này khỏi giỏ hàng?";
+      return "Are you sure you want to completely remove this item from the cart?";
     } else {
-      return "Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?";
+      return "Are you sure you want to remove this item from the cart?";
     }
   };
 
@@ -138,12 +138,12 @@ const Cart = () => {
 
   const handleProceedCheckout = () => {
     if (!token) {
-      toast.error("Vui lòng đăng nhập để tiếp tục");
+      toast.error("Please sign in to continue");
       setShowLogin(true);
       return;
     }
     if (cartTotalAmount === 0) {
-      toast.error("Giỏ hàng trống");
+      toast.error("Your cart is empty");
       return;
     }
     navigate("/placeorder");
@@ -155,17 +155,17 @@ const Cart = () => {
       {showConfirm && (
         <div className="confirm-dialog-overlay">
           <div className="confirm-dialog">
-            <h3>Xác nhận xóa</h3>
+            <h3>Confirm removal</h3>
             <p>{getConfirmMessage()}</p>
             <div className="confirm-dialog-buttons">
               <button
                 className="confirm-btn"
                 onClick={() => handleConfirmRemove(showConfirm)}
               >
-                Có, xóa sản phẩm
+                Yes, remove it
               </button>
               <button className="cancel-btn" onClick={handleCancelRemove}>
-                Không, giữ lại
+                No, keep it
               </button>
             </div>
           </div>
@@ -174,18 +174,18 @@ const Cart = () => {
 
       <div className="cart-items">
         <div className="cart-items-title">
-          <p>Hình ảnh</p>
-          <p>Tên món</p>
-          <p>Giá</p>
-          <p>Số lượng</p>
-          <p>Tổng</p>
-          <p>Xóa</p>
+          <p>Image</p>
+          <p>Name</p>
+          <p>Price</p>
+          <p>Quantity</p>
+          <p>Total</p>
+          <p>Remove</p>
         </div>
         <br />
         <hr />
         {cartItemIds.length === 0 ? (
           <div className="empty-cart-message">
-            <p>Giỏ hàng của bạn đang trống</p>
+            <p>Your cart is empty</p>
           </div>
         ) : (
           cartItemIds.map((itemId) => {
@@ -215,8 +215,8 @@ const Cart = () => {
               // Fallback nếu fetch fail (hiếm)
               return (
                 <div key={itemId} className="cart-items-item error-item">
-                  <p>Lỗi tải món ăn ID: {itemId}</p>
-                  <button onClick={() => handleDeleteClick(itemId)}>Xóa</button>
+                  <p>Failed to load item ID: {itemId}</p>
+                  <button onClick={() => handleDeleteClick(itemId)}>Remove</button>
                   <hr />
                 </div>
               );
@@ -262,7 +262,7 @@ const Cart = () => {
                   <p
                     onClick={() => handleDeleteClick(itemId)}
                     className="cross"
-                    title="Xóa sản phẩm"
+                    title="Remove item"
                   >
                     x
                   </p>

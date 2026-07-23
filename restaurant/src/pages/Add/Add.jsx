@@ -66,7 +66,7 @@ const Add = ({ url }) => {
             <img
               className="image"
               src={image ? URL.createObjectURL(image) : assets.upload_area}
-              alt=""
+              alt="Product image preview"
             />
           </label>
           <input

@@ -1,28 +1,8 @@
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap");
-
-* {
-  padding: 0;
-  margin: 0;
-  box-sizing: border-box;
-  font-family: "Outfit", sans-serif;
-  scroll-behavior: smooth;
-}
-
-body {
-  background-color: var(--body-color);
-  min-height: 100vh;
-  color: var(--text-color);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  text-decoration: none;
-  color: inherit;
-}
+@import "../../shared/tokens.css";
 
 .app {
   width: 80%;
+  max-width: 1400px;
   margin: auto;
 }
 
@@ -35,38 +15,4 @@ a {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-:root {
-  --body-color: #ffffff;
-  --text-color: #1a1a2e;
-  --text-secondary: #555770;
-  --accent-color: #ff6b35;
-  --accent-hover: #e55a2b;
-  --background-secondary: #f7f8fc;
-  --border-color: #e8e8ee;
-  --button-bg: #ffffff;
-  --button-text: #555770;
-  --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  --card-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
-  --radius: 12px;
-}
-
-.darkmode {
-  --body-color: #0f0f1a;
-  --text-color: #e8e8ee;
-  --text-secondary: #a0a0b8;
-  --accent-color: #ff6b35;
-  --accent-hover: #ff8555;
-  --background-secondary: #1a1a2e;
-  --border-color: #2a2a3e;
-  --button-bg: #ffffff;
-  --button-text: #000000;
-  --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-  --card-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.35);
-}
-
-::selection {
-  background-color: var(--accent-color);
-  color: white;
 }

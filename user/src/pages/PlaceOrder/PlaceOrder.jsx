@@ -4,6 +4,7 @@ import { useContext } from "react";
 import { StoreContext } from "../../context/StoreContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const PlaceOrder = () => {
   const {
@@ -142,7 +143,7 @@ const PlaceOrder = () => {
     }
 
     if (orderItems.length === 0) {
-      alert("Giỏ hàng trống hoặc dữ liệu món ăn chưa sẵn sàng!");
+      toast.error("Cart is empty or food data is not ready!");
       return;
     }
 
@@ -166,7 +167,7 @@ const PlaceOrder = () => {
   }, [token, navigate, getTotalCartAmount]);
 
   if (isLoading) {
-    return <div className="loading">Đang cập nhật thông tin...</div>;
+    return <div className="loading">Updating information...</div>;
   }
 
   return (

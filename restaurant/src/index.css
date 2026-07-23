@@ -1,23 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-* {
-  padding: 0;
-  margin: 0;
-  box-sizing: border-box;
-  font-family: "Inter", sans-serif;
-}
-
-body {
-  min-height: 100vh;
-  background-color: var(--body-color);
-  color: var(--text-color);
-  -webkit-font-smoothing: antialiased;
-}
-
-a {
-  text-decoration: none;
-  color: inherit;
-}
+@import "../../shared/tokens.css";
 
 .app-content {
   display: flex;
@@ -35,68 +16,6 @@ a {
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-:root {
-  --body-color: #f8fafc;
-  --text-color: #0f172a;
-  --text-secondary: #64748b;
-  --accent-color: #e53935;
-  --accent-hover: #c62828;
-  --accent-light: rgba(229, 57, 53, 0.08);
-  --background-secondary: #ffffff;
-  --border-color: #e2e8f0;
-  --card-bg: #ffffff;
-  --sidebar-bg: #0f172a;
-  --sidebar-active: rgba(255, 255, 255, 0.08);
-  --navbar-bg: #ffffff;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
-  --radius: 10px;
-  --radius-lg: 14px;
-  --success: #16a34a;
-  --warning: #f59e0b;
-  --upload: brightness(0.8);
-}
-
-.dark-mode,
-.dark-mode body {
-  --body-color: #0f172a;
-  --text-color: #e2e8f0;
-  --text-secondary: #94a3b8;
-  --background-secondary: #1e293b;
-  --border-color: #334155;
-  --card-bg: #1e293b;
-  --sidebar-bg: #020617;
-  --sidebar-active: rgba(255, 255, 255, 0.1);
-  --navbar-bg: #1e293b;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.3);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.2);
-  --upload: brightness(0.6);
-}
-
-::selection {
-  background-color: var(--accent-color);
-  color: white;
-}
-
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
 }
 
 @media (max-width: 900px) {

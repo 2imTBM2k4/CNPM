@@ -1,16 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./Navbar.css";
 import { assets } from "../../assets/assets";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useContext } from "react";
 import { StoreContext } from "../../context/StoreContext";
 
 const Navbar = ({ setShowLogin }) => {
-  const [menu, setMenu] = useState("home");
-
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { getTotalCartAmount, token, setToken } = useContext(StoreContext);
-
   const navigate = useNavigate();
+  const location = useLocation();
+  const menuRef = useRef(null);
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -18,50 +18,82 @@ const Navbar = ({ setShowLogin }) => {
     navigate("/");
   };
 
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMobileMenuOpen(false);
+      }
+    };
+    if (mobileMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [mobileMenuOpen]);
+
+  const isActive = (path) => location.pathname === path;
+
   return (
-    <div className="navbar">
-      <Link to="/">
-        <img src={assets.logo} alt="" className="logo" />
+    <nav className="navbar">
+      <Link to="/" aria-label="Home">
+        <img src={assets.logo} alt="Drone Delivery" className="logo" />
       </Link>
-      <ul className="navbar-menu">
-        <Link
-          to="/"
-          onClick={() => setMenu("home")}
-          className={menu === "home" ? "active" : ""}
-        >
-          home
-        </Link>
-        {/* ĐÃ XOÁ MENU FOOD VÀ RESTAURANT */}
+
+      <ul className={`navbar-menu ${mobileMenuOpen ? "open" : ""}`} ref={menuRef}>
+        <li>
+          <Link to="/" className={isActive("/") ? "active" : ""}>
+            Home
+          </Link>
+        </li>
+        <li>
+          <Link to="/food" className={isActive("/food") ? "active" : ""}>
+            Menu
+          </Link>
+        </li>
       </ul>
+
       <div className="navbar-right">
         <div className="navbar-search-icon">
-          <Link to="/cart">
-            <img className="basketlogo" src={assets.basket_icon} alt="" />
+          <Link to="/cart" aria-label="Cart">
+            <img className="basketlogo" src={assets.basket_icon} alt="Cart" />
           </Link>
-          <div className={getTotalCartAmount() === 0 ? "" : "dot"}></div>
+          {getTotalCartAmount() > 0 && <div className="dot"></div>}
         </div>
         {!token ? (
           <button className="signbutton" onClick={() => setShowLogin(true)}>
-            sign in
+            Sign in
           </button>
         ) : (
           <div className="navbar-profile">
-            <img src={assets.profile_icon} alt="" />
+            <img src={assets.profile_icon} alt="Profile" />
             <ul className="nav-profile-dropdown">
               <li onClick={() => navigate("/myorders")}>
-                <img src={assets.bag_icon} alt="" />
+                <img src={assets.bag_icon} alt="Orders" />
                 <p>Orders</p>
               </li>
               <hr />
               <li onClick={logout}>
-                <img src={assets.logout_icon} alt="" />
+                <img src={assets.logout_icon} alt="Logout" />
                 <p>Logout</p>
               </li>
             </ul>
           </div>
         )}
+        <button
+          className={`hamburger ${mobileMenuOpen ? "open" : ""}`}
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle menu"
+          aria-expanded={mobileMenuOpen}
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
       </div>
-    </div>
+    </nav>
   );
 };
 

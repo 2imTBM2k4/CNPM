@@ -9,7 +9,9 @@ services:
     restart: unless-stopped
 
   user:
-    build: ./user
+    build:
+      context: .
+      dockerfile: user/Dockerfile
     container_name: drone-delivery-user
     ports:
       - "5173:80"
@@ -18,7 +20,9 @@ services:
     restart: unless-stopped
 
   admin:
-    build: ./admin
+    build:
+      context: .
+      dockerfile: admin/Dockerfile
     container_name: drone-delivery-admin
     ports:
       - "5174:80"
@@ -27,7 +31,9 @@ services:
     restart: unless-stopped
 
   restaurant:
-    build: ./restaurant
+    build:
+      context: .
+      dockerfile: restaurant/Dockerfile
     container_name: drone-delivery-restaurant
     ports:
       - "5175:80"

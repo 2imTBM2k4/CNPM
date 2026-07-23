@@ -25,7 +25,7 @@ const MyOrders = () => {
       }
     } catch (error) {
       console.error("Fetch orders error:", error);
-      toast.error("Không thể tải đơn hàng");
+      toast.error("Failed to load orders");
     }
   };
 
@@ -44,15 +44,15 @@ const MyOrders = () => {
       });
 
       if (response.data.success) {
-        toast.success("Đã xác nhận nhận hàng!");
+        toast.success("Delivery confirmed!");
         fetchOrders();
         setShowDroneModal(false);
         setSelectedOrder(null);
       } else {
-        toast.error(response.data.message || "Cập nhật thất bại");
+        toast.error(response.data.message || "Update failed");
       }
     } catch (error) {
-      toast.error("Cập nhật thất bại");
+      toast.error("Update failed");
     }
   };
 
@@ -74,7 +74,7 @@ const MyOrders = () => {
 
   const handleCancelOrder = async () => {
     if (!cancelReason.trim()) {
-      toast.error("Vui lòng nhập lý do hủy đơn");
+      toast.error("Please enter a cancellation reason");
       return;
     }
     try {
@@ -84,22 +84,22 @@ const MyOrders = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (response.data.success) {
-        toast.success("Đã hủy đơn hàng");
+        toast.success("Order cancelled");
         setShowCancelModal(null);
         setCancelReason("");
         fetchOrders();
       } else {
-        toast.error(response.data.message || "Hủy đơn thất bại");
+        toast.error(response.data.message || "Cancellation failed");
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Hủy đơn thất bại");
+      toast.error(error.response?.data?.message || "Cancellation failed");
     }
   };
 
   // Hàm helper để format date (giữ nguyên từ code cũ)
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleString("vi-VN", {
+    return date.toLocaleString("en-US", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -111,11 +111,11 @@ const MyOrders = () => {
   // Hàm helper cho status text và color (giữ nguyên)
   const getStatusText = (status) => {
     const statusMap = {
-      pending: "Chờ xác nhận",
-      preparing: "Đang chuẩn bị",
-      delivering: "Đang giao hàng",
-      delivered: "Đã giao",
-      cancelled: "Đã hủy",
+      pending: "Pending",
+      preparing: "Preparing",
+      delivering: "Delivering",
+      delivered: "Delivered",
+      cancelled: "Cancelled",
     };
     return statusMap[status] || status;
   };
@@ -137,16 +137,16 @@ const MyOrders = () => {
 
   return (
     <div className="my-orders">
-      <h2>Đơn hàng của tôi</h2>
+      <h2>My Orders</h2>
       {orders.length === 0 ? (
-        <p className="no-orders">Chưa có đơn hàng nào</p>
+        <p className="no-orders">No orders yet</p>
       ) : (
         <div className="orders-list">
           {orders.map((order) => (
             <div key={order._id} className="order-card">
               <div className="order-header">
                 <div className="order-info">
-                  <h4>Đơn hàng #{order._id.slice(-8).toUpperCase()}</h4>
+                  <h4>Order #{order._id.slice(-8).toUpperCase()}</h4>
                   <span className="order-date">
                     {formatDate(order.createdAt || order.orderDate)}
                   </span>
@@ -161,7 +161,7 @@ const MyOrders = () => {
 
               <div className="order-details">
                 <div className="order-items">
-                  <strong>Sản phẩm:</strong>
+                  <strong>Items:</strong>
                   <div className="items-list">
                     {order.orderItems?.map((item, index) => (
                       <div key={index} className="order-item">
@@ -175,19 +175,19 @@ const MyOrders = () => {
 
                 <div className="order-summary">
                   <div className="summary-row">
-                    <span>Tổng tiền:</span>
+                    <span>Total:</span>
                     <strong>${order.totalPrice}</strong>
                   </div>
                   <div className="summary-row">
-                    <span>Phương thức thanh toán:</span>
+                    <span>Payment method:</span>
                     <span>
                       {order.paymentMethod === "COD"
-                        ? "Thanh toán khi nhận hàng"
-                        : "Thẻ tín dụng"}
+                        ? "Cash on delivery"
+                        : "Credit card"}
                     </span>
                   </div>
                   <div className="summary-row">
-                    <span>Địa chỉ giao hàng:</span>
+                    <span>Delivery address:</span>
                     <span>
                       {order.shippingAddress?.address},{" "}
                       {order.shippingAddress?.city}
@@ -202,7 +202,7 @@ const MyOrders = () => {
                     onClick={() => setShowCancelModal(order._id)}
                     className="cancel-order-btn"
                   >
-                    Hủy đơn hàng
+                    Cancel order
                   </button>
                 </div>
               )}
@@ -213,7 +213,7 @@ const MyOrders = () => {
                     onClick={() => handleViewDelivery(order)}
                     className="view-delivery-btn"
                   >
-                    🚁 Xem chi tiết giao hàng
+                    View delivery details
                   </button>
                   <button
                     onClick={() => confirmReceived(order._id)}
@@ -222,14 +222,14 @@ const MyOrders = () => {
                     }`}
                     disabled={!canReceiveOrder[order._id]}
                   >
-                    ✅ Xác nhận đã nhận hàng
+                    Confirm received
                   </button>
                 </div>
               )}
 
               {order.orderStatus === "cancelled" && order.reason && (
                 <div className="cancel-reason">
-                  <strong>Lý do hủy:</strong> {order.reason}
+                  <strong>Cancellation reason:</strong> {order.reason}
                 </div>
               )}
             </div>
@@ -250,12 +250,12 @@ const MyOrders = () => {
             className="cancel-modal-content"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3>Hủy đơn hàng</h3>
-            <p>Vui lòng cho biết lý do hủy đơn:</p>
+            <h3>Cancel order</h3>
+            <p>Please provide a reason for cancellation:</p>
             <textarea
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
-              placeholder="Nhập lý do hủy đơn..."
+              placeholder="Enter cancellation reason..."
               rows={3}
               className="cancel-reason-input"
             />
@@ -267,14 +267,14 @@ const MyOrders = () => {
                 }}
                 className="cancel-modal-back-btn"
               >
-                Quay lại
+                Go back
               </button>
               <button
                 onClick={handleCancelOrder}
                 className="cancel-modal-confirm-btn"
                 disabled={!cancelReason.trim()}
               >
-                Xác nhận hủy
+                Confirm cancellation
               </button>
             </div>
           </div>
@@ -307,7 +307,7 @@ const MyOrders = () => {
                   onClick={() => confirmReceived(selectedOrder._id)}
                   className="confirm-received-btn enabled"
                 >
-                  ✅ Xác nhận đã nhận hàng
+                  Confirm received
                 </button>
               </div>
             )}

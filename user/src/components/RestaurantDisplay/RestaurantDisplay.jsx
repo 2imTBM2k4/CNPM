@@ -21,7 +21,7 @@ const RestaurantDisplay = () => {
         ))}
         {restaurant_list.length === 0 && (
           <div className="no-items-message">
-            <p>Không có nhà hàng nào.</p>
+            <p>No restaurants available.</p>
           </div>
         )}
       </div>

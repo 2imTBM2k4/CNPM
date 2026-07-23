@@ -1,21 +1,49 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import "./LoginPopup.css";
-import { assets } from "../../assets/assets";
 import { StoreContext } from "../../context/StoreContext";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const LoginPopup = ({ setShowLogin }) => {
   const { url, setToken } = useContext(StoreContext);
   const navigate = useNavigate();
+  const dialogRef = useRef(null);
 
   const [currState, setCurrState] = useState("Login");
-  // Bỏ role selection - chỉ cho phép đăng ký as user
   const [data, setData] = useState({
     name: "",
-    email: "test@gmail.com",
-    password: "123456789",
+    email: "",
+    password: "",
   });
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setShowLogin(false);
+        return;
+      }
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll(
+          'button, input, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    const firstInput = dialogRef.current?.querySelector("input");
+    firstInput?.focus();
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [setShowLogin]);
 
   const onChangeHandler = (event) => {
     const name = event.target.name;
@@ -43,20 +71,18 @@ const LoginPopup = ({ setShowLogin }) => {
       setShowLogin(false);
       navigate("/");
     } else {
-      alert(response.data.message);
+      toast.error(response.data.message);
     }
   };
 
   return (
-    <div className="login-popup">
-      <form onSubmit={onLogin} className="login-popup-container">
+    <div className="login-popup" onClick={(e) => e.target === e.currentTarget && setShowLogin(false)}>
+      <form onSubmit={onLogin} className="login-popup-container" ref={dialogRef} role="dialog" aria-label={currState}>
         <div className="login-popup-title">
           <h2>{currState}</h2>
-          <img
-            onClick={() => setShowLogin(false)}
-            src={assets.cross_icon}
-            alt=""
-          />
+          <button type="button" className="login-close-btn" onClick={() => setShowLogin(false)} aria-label="Close">
+            &times;
+          </button>
         </div>
         <div className="login-popup-inputs">
           {/* Chỉ hiện input name khi Sign Up */}

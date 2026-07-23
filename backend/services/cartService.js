@@ -13,7 +13,7 @@ export const getCart = async (userId) => {
   return { success: true, cartData: cartObj };
 };
 
-export const addToCart = async (userId, itemId) => {
+export const addToCart = async (userId, itemId, quantity = 1) => {
   const food = await cartRepo.findFoodById(itemId);
   if (!food) {
     throw new AppError("Food not found", 404);
@@ -24,9 +24,7 @@ export const addToCart = async (userId, itemId) => {
     cart = await cartRepo.create(userId);
   }
 
-  // Enforce single-restaurant rule: all items must share same restaurantId
   if (cart.items.length > 0) {
-    // cart.items.foodId is populated in repository
     const existingRestaurantId = cart.items[0].foodId.restaurantId?.toString();
     const newRestaurantId = food.restaurantId?.toString();
     if (
@@ -34,15 +32,15 @@ export const addToCart = async (userId, itemId) => {
       newRestaurantId &&
       existingRestaurantId !== newRestaurantId
     ) {
-      throw new AppError("Chỉ được đặt món từ một nhà hàng trong mỗi giỏ hàng", 400);
+      throw new AppError("Only items from one restaurant allowed per cart", 400);
     }
   }
 
   const existing = cart.items.find((i) => i.foodId._id.toString() === itemId);
   if (existing) {
-    existing.quantity += 1;
+    existing.quantity += quantity;
   } else {
-    cart.items.push({ foodId: itemId, quantity: 1 });
+    cart.items.push({ foodId: itemId, quantity });
   }
 
   const updatedCart = await cartRepo.update(userId, cart.items);

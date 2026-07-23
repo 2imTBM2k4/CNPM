@@ -28,6 +28,7 @@ const App = () => {
         <Navbar setShowLogin={setShowLogin} />
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/food" element={<FoodPage />} />
           <Route path="/restaurant/:id" element={<RestaurantPage />} />{" "}
           {/* Thêm route */}
           <Route path="/cart" element={<Cart />} />

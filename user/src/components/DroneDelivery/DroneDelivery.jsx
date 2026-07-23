@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { toast } from "react-toastify";
 import {
   MapContainer,
   TileLayer,
@@ -163,8 +164,8 @@ const DroneDelivery = ({ order, onDeliveryComplete }) => {
   const [start, setStart] = useState(null);
   const [end, setEnd] = useState(null);
   const [path, setPath] = useState([]);
-  const [startAddress, setStartAddress] = useState("Đang tải...");
-  const [endAddress, setEndAddress] = useState("Đang tải...");
+  const [startAddress, setStartAddress] = useState("Loading...");
+  const [endAddress, setEndAddress] = useState("Loading...");
   const [droneArrived, setDroneArrived] = useState(false);
   const [qrScanned, setQrScanned] = useState(false);
   const [lidOpen, setLidOpen] = useState(false);
@@ -199,11 +200,11 @@ const DroneDelivery = ({ order, onDeliveryComplete }) => {
       const storageKey = `drone_location_${order._id}`;
       let startPos, endPos;
 
-      const restaurantAddr = order.restaurantId?.address || "TP. Hồ Chí Minh, Việt Nam";
+      const restaurantAddr = order.restaurantId?.address || "Ho Chi Minh City, Vietnam";
       const shipping = order.shippingAddress;
       const customerAddr = shipping 
         ? `${shipping.address}, ${shipping.city}, ${shipping.state}, ${shipping.country}`
-        : "TP. Hồ Chí Minh, Việt Nam";
+        : "Ho Chi Minh City, Vietnam";
 
       setStartAddress(restaurantAddr);
       setEndAddress(customerAddr);
@@ -259,14 +260,14 @@ const DroneDelivery = ({ order, onDeliveryComplete }) => {
           body: JSON.stringify({
             orderId: order._id,
             status: "cancelled",
-            reason: "⏳ Hết thời gian chờ nhận hàng - Drone đã đợi tại điểm giao nhưng không nhận được tín hiệu xác nhận. Đơn hàng đã bị hủy.",
+            reason: "Pickup timed out - Drone waited at the delivery point but received no confirmation. Order has been cancelled.",
           }),
         });
       } catch (error) {
         console.error("Error updating order status:", error);
       }
       
-      alert("⏳ Hết thời gian chờ nhận hàng\n\nDrone đã đợi tại điểm giao nhưng không nhận được tín hiệu xác nhận. Đơn hàng đã bị hủy.");
+      toast.error("Pickup timed out. The drone waited at the delivery point but received no confirmation. Order has been cancelled.");
       window.location.reload();
     }, 300000);
   };
@@ -305,11 +306,11 @@ const DroneDelivery = ({ order, onDeliveryComplete }) => {
           if (onDeliveryComplete) onDeliveryComplete();
         }, 5000);
       } else {
-        alert(data.message || "Lỗi khi quét QR code");
+        toast.error(data.message || "QR code scan failed");
       }
     } catch (error) {
       console.error("Error scanning QR:", error);
-      alert("Lỗi khi quét QR code");
+      toast.error("QR code scan failed");
     }
   };
 
@@ -328,7 +329,7 @@ const DroneDelivery = ({ order, onDeliveryComplete }) => {
     return (
       <div className="drone-delivery-loading">
         <div className="loading-spinner"></div>
-        <p>Đang tải lộ trình giao hàng...</p>
+        <p>Loading delivery route...</p>
       </div>
     );
   }
@@ -337,11 +338,11 @@ const DroneDelivery = ({ order, onDeliveryComplete }) => {
   return (
     <div className="drone-delivery-container">
       <div className="drone-delivery-header">z
-        <h3>🚁 Theo dõi Drone giao hàng</h3>
+        <h3>Drone Delivery Tracking</h3>
         <div className="delivery-info">
-          <p><strong>🏪 Từ:</strong> {startAddress}</p>
-          <p><strong>🏠 Đến:</strong> {endAddress}</p>
-          <p><strong>⏱️ Thời gian tới ước tính:</strong> 10 giây</p>
+          <p><strong>From:</strong> {startAddress}</p>
+          <p><strong>To:</strong> {endAddress}</p>
+          <p><strong>Estimated arrival:</strong> 10 seconds</p>
         </div>
       </div>
       
@@ -352,12 +353,12 @@ const DroneDelivery = ({ order, onDeliveryComplete }) => {
           {path.length > 0 && <Polyline positions={path} color="#FF6B6B" weight={5} />}
           {start && (
             <Marker position={start} icon={L.divIcon({ html: "🏪", className: "", iconSize: [30, 30] })}>
-              <Popup><strong>Nhà hàng:</strong><br/>{startAddress}</Popup>
+              <Popup><strong>Restaurant:</strong><br/>{startAddress}</Popup>
             </Marker>
           )}
           {end && (
             <Marker position={end} icon={L.divIcon({ html: "🏠", className: "", iconSize: [30, 30] })}>
-              <Popup><strong>Khách hàng:</strong><br/>{endAddress}</Popup>
+              <Popup><strong>Customer:</strong><br/>{endAddress}</Popup>
             </Marker>
           )}
           {path.length > 0 && <DroneAnimation path={path} onComplete={handleComplete} />}
@@ -367,32 +368,32 @@ const DroneDelivery = ({ order, onDeliveryComplete }) => {
       {droneArrived && order.qrCode && (
         <div className="qr-section">
           <div className="qr-header">
-            <h4>📱 Drone đã tới! Vui lòng xác nhận</h4>
-            {qrScanned && <span className="qr-status success">✓ Đã xác nhận</span>}
+            <h4>Drone has arrived! Please confirm</h4>
+            {qrScanned && <span className="qr-status success">Confirmed</span>}
           </div>
           
           <div className="qr-code-display">
             <div className="qr-code-box">
               <QRCodeSVG value={order.qrCode} size={200} level="H" marginSize={2} />
-              <p className="qr-code-text">Mã QR của bạn: {order.qrCode}</p>
-              <p className="qr-instruction">⚠️ Đưa mã QR này cho drone quét để mở nắp khoang hàng</p>
+              <p className="qr-code-text">Your QR code: {order.qrCode}</p>
+              <p className="qr-instruction">Show this QR code to the drone to open the cargo lid</p>
             </div>
             
             {!qrScanned && !timeoutExpired && (
               <div className="qr-actions">
                 <button className="scan-qr-btn camera" onClick={handleOpenScanner}>
-                  📷 Quét bằng Camera
+                  Scan with Camera
                 </button>
                 <div className="confirm-button-wrapper">
                   <button className="scan-qr-btn manual" onClick={() => handleScanQR()}>
-                    ✓ Xác nhận thủ công
+                    Manual confirm
                   </button>
                   <span className={`countdown-timer ${countdown <= 30 ? 'urgent' : ''}`}>
                     {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, '0')}
                   </span>
                 </div>
                 <p className="timeout-warning">
-                  ⏱️ Vui lòng xác nhận trong {Math.floor(countdown / 60)} phút {countdown % 60} giây
+                  Please confirm within {Math.floor(countdown / 60)}m {countdown % 60}s
                 </p>
               </div>
             )}
@@ -402,13 +403,13 @@ const DroneDelivery = ({ order, onDeliveryComplete }) => {
             <div className="delivery-status">
               <div className={`status-item ${lidOpen ? 'active' : 'completed'}`}>
                 <span className="status-icon">{lidOpen ? '🔓' : '🔒'}</span>
-                <span className="status-text">Nắp khoang: {lidOpen ? 'Đang mở (5s)' : 'Đã đóng'}</span>
+                <span className="status-text">Cargo lid: {lidOpen ? 'Opening (5s)' : 'Closed'}</span>
               </div>
               {lidOpen && (
-                <div className="countdown-message">⏱️ Nắp đang mở trong 5 giây. Vui lòng lấy đồ ăn ngay!</div>
+                <div className="countdown-message">Lid is open for 5 seconds. Please collect your food now!</div>
               )}
               {canConfirm && (
-                <div className="confirm-message">✅ Đã lấy hàng thành công! Bạn có thể xác nhận hoàn tất bên dưới.</div>
+                <div className="confirm-message">Pickup successful! You can confirm delivery below.</div>
               )}
             </div>
           )}

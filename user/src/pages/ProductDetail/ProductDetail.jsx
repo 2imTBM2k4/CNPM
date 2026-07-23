@@ -36,28 +36,21 @@ const ProductDetail = () => {
     }
   };
 
-  // Effect: Tìm từ list, nếu không có + không loading → fetch single
   useEffect(() => {
-    if (isLoadingFoods) {
-      setLoading(true); // Đợi list load
-      return;
-    }
+    if (isLoadingFoods) return;
     const foundItem = food_list.find((product) => product._id === id);
     if (foundItem) {
       setItem(foundItem);
       setLoading(false);
-    } else if (!loading) {
-      // Fallback fetch nếu list không có (hoặc list rỗng)
-      fetchSingleProduct();
     } else {
-      setLoading(false);
+      fetchSingleProduct();
     }
-  }, [food_list, id, isLoadingFoods, loading]);
+  }, [food_list, id, isLoadingFoods]);
 
   if (loading || isLoadingFoods) {
     return (
       <div className="product-detail">
-        <div className="loading">Đang tải sản phẩm...</div>
+        <div className="loading">Loading product...</div>
       </div>
     );
   }
@@ -65,8 +58,8 @@ const ProductDetail = () => {
   if (error || (!item && !loading)) {
     return (
       <div className="product-detail">
-        <h2>{error || "Sản phẩm không tồn tại!"}</h2>
-        <button onClick={() => navigate("/")}>Quay về trang chủ</button>
+        <h2>{error || "Product not found!"}</h2>
+        <button onClick={() => navigate("/")}>Back to home</button>
       </div>
     );
   }
@@ -95,7 +88,7 @@ const ProductDetail = () => {
     if (tempQuantity > 0) {
       const success = await addToCart(id, tempQuantity);
       if (success) {
-        toast.success("Đã thêm vào giỏ hàng!");
+        toast.success("Added to cart!");
       }
       setShowCounter(false);
       setTempQuantity(1);
@@ -105,7 +98,7 @@ const ProductDetail = () => {
   return (
     <div className="product-detail">
       <button className="back-btn" onClick={() => navigate(-1)}>
-        ← Quay về
+        ← Back
       </button>
       <div className="product-detail-container">
         <div className="product-detail-image">
@@ -146,7 +139,7 @@ const ProductDetail = () => {
                   />
                 </div>
                 <button className="confirm-btn" onClick={handleConfirmAdd}>
-                  Thêm vào giỏ hàng
+                  Add to cart
                 </button>
               </div>
             )}

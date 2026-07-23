@@ -85,7 +85,7 @@ const Orders = ({ url }) => {
       <div className="order-list">
         {orders.map((order, index) => (
           <div key={index} className="order-item">
-            <img src={assets.parcel_icon} alt="" />
+            <img src={assets.parcel_icon} alt="Order" />
             <div>
               <p className="order-item-food">
                 {order.orderItems.map((item, idx) =>

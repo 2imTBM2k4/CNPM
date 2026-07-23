@@ -1,5 +1,6 @@
 import axios from "axios";
 import { createContext, useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 export const StoreContext = createContext(null);
 
@@ -105,13 +106,13 @@ const StoreContextProvider = (props) => {
 
   const addToCart = async (itemId, quantity = 1) => {
     if (!token) {
-      alert("Vui lòng đăng nhập!");
+      toast.warning("Please sign in to continue!");
       setShowLogin(true);
       return false;
     }
 
     if (isLoadingFoods) {
-      alert("Đang tải dữ liệu, vui lòng thử lại!");
+      toast.info("Still loading data, please try again!");
       return false;
     }
 
@@ -120,7 +121,7 @@ const StoreContextProvider = (props) => {
       try {
         item = await fetchSingleFood(itemId);
       } catch (err) {
-        alert("Sản phẩm không tồn tại!");
+        toast.error("Product not found!");
         return false;
       }
     }
@@ -128,20 +129,22 @@ const StoreContextProvider = (props) => {
     const itemRestaurantId = getRestaurantId(item);
 
     if (cartRestaurantId && cartRestaurantId !== itemRestaurantId) {
-      alert("Chỉ được đặt từ 1 nhà hàng!");
+      toast.warning("You can only order from one restaurant at a time!");
       return false;
     }
 
     try {
-      for (let i = 0; i < quantity; i++) {
-        const res = await axios.post(
-          `${url}/api/cart/add`,
-          { itemId },
-          { headers: { token } }
-        );
-        if (!res.data.success) throw new Error("Add failed");
+      const res = await axios.post(
+        `${url}/api/cart/add`,
+        { itemId, quantity },
+        { headers: { token } }
+      );
+      if (!res.data.success) throw new Error("Add failed");
+      if (res.data.cartData) {
+        setCartItems(res.data.cartData);
+      } else {
+        await loadCartData(token);
       }
-      await loadCartData(token);
       if (!cartRestaurantId) setCartRestaurantId(itemRestaurantId);
       return true;
     } catch (err) {
@@ -152,9 +155,9 @@ const StoreContextProvider = (props) => {
         msg.toLowerCase().includes("one restaurant");
 
       if (isSingleRestaurantViolation) {
-        alert("Chỉ có thể thêm món từ 1 nhà hàng");
+        toast.warning("You can only add items from one restaurant!");
       } else {
-        alert("Lỗi thêm vào giỏ hàng: " + msg);
+        toast.error("Failed to add to cart: " + msg);
       }
       return false;
     }

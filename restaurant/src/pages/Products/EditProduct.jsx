@@ -83,7 +83,7 @@ const EditProduct = ({ url, product, onClose, onUpdate }) => {
                     ? URL.createObjectURL(image)
                     : `${url}/images/${product?.image}`
                 }
-                alt=""
+                alt="Product image preview"
               />
             </label>
             <input

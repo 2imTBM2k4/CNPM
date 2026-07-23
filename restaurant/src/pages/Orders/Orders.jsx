@@ -210,7 +210,7 @@
 //           orders.map((order, index) => (
 //             <div key={order._id || index} className="order-item">
 //               <div className="order-item-header">
-//                 <img src={assets.parcel_icon} alt="" />
+//                 <img src={assets.parcel_icon} alt="Order" />
 //                 <div className="order-meta">
 //                   <span className="order-id">
 //                     Order #{order._id?.slice(-8)?.toUpperCase()}
@@ -489,7 +489,7 @@ const Orders = ({ url }) => {
           orders.map((order, index) => (
             <div key={order._id || index} className="order-item">
               <div className="order-item-header">
-                <img src={assets.parcel_icon} alt="" />
+                <img src={assets.parcel_icon} alt="Order" />
                 <div className="order-meta">
                   <span className="order-id">
                     Order #{order._id?.slice(-8)?.toUpperCase()}

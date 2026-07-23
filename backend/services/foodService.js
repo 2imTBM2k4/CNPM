@@ -52,10 +52,8 @@ export const listFood = async (user, restaurantId) => {
   else if (user && user.role === "admin") {
     filter = {};
   }
-  // User thường không có restaurantId query -> trả về rỗng hoặc tất cả (tùy logic)
   else {
-    // Có thể return empty hoặc all - ở đây return empty cho an toàn
-    filter.restaurantId = null; // Sẽ không match gì cả
+    filter = {};
   }
 
   const foods = await foodRepo.findAll(filter);

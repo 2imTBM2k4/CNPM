@@ -35,7 +35,7 @@ const RestaurantItem = ({ id, name, address, phone, image }) => {
       <div className="restaurant-item-info">
         <p className="restaurant-name">{name}</p>
         <p className="restaurant-address">{address}</p>
-        <p className="restaurant-phone">{phone || 'Không có số điện thoại'}</p>
+        <p className="restaurant-phone">{phone || 'No phone number'}</p>
       </div>
     </div>
   );

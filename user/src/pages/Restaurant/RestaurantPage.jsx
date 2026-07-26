@@ -119,17 +119,14 @@ const RestaurantPage = () => {
       setError(null);
       fetch(`${url}/api/food/list?restaurantId=${id}`)
         .then((response) => {
-          console.log("Fetch response status:", response.status);
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
           return response.json();
         })
         .then((data) => {
-          console.log("Fetch data:", data);
           if (data.success && data.data) {
             setRestaurantFoods(data.data);
-            console.log("Set restaurantFoods:", data.data.length);
           } else {
             setError("No foods found");
           }
@@ -148,7 +145,6 @@ const RestaurantPage = () => {
       "All",
       ...new Set(restaurantFoods.map((item) => item.category).filter(Boolean)),
     ];
-    console.log("Computed categories:", cats); // DEBUG
     return cats;
   }, [restaurantFoods]);
 

@@ -82,7 +82,6 @@ const EditRestaurant = ({ url }) => {
   const onImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      console.log("New image selected:", file.name, file.size);
       setImage(file);
     }
   };
@@ -103,7 +102,6 @@ const EditRestaurant = ({ url }) => {
     formData.append("description", data.description);
 
     if (image && image instanceof File) {
-      console.log("Uploading new image to Cloudinary:", image.name);
       formData.append("image", image);
     }
 

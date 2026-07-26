@@ -62,5 +62,8 @@ export const verifyOrderSchema = Joi.object({
   }),
   success: Joi.alternatives()
     .try(Joi.boolean(), Joi.string().valid("true", "false"))
-    .required(),
+    .required()
+    .messages({
+      "any.required": "success là bắt buộc",
+    }),
 });

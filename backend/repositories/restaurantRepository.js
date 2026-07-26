@@ -22,10 +22,11 @@ export const create = async (restaurantData) => {
   return await restaurant.save();
 };
 
-export const updateById = async (id, updates) => {
+export const updateById = async (id, updates, options = {}) => {
   return await Restaurant.findByIdAndUpdate(id, updates, {
     new: true,
     runValidators: true,
+    ...options,
   });
 };
 

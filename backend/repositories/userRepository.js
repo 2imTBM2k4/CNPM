@@ -16,10 +16,11 @@ export const create = async (userData) => {
   return await user.save({ validateBeforeSave: true });
 };
 
-export const updateById = async (id, updates, select = "-password") => {
+export const updateById = async (id, updates, select = "-password", options = {}) => {
   return await User.findByIdAndUpdate(id, updates, {
     new: true,
-    runValidators: true, // Enforce minlength, enum, etc.
+    runValidators: true,
+    ...options,
   })
     .select(select)
     .populate("restaurantId");

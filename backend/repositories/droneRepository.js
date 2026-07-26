@@ -16,6 +16,20 @@ export const findAvailable = async () => {
   return await Drone.find({ status: "available" }).sort({ totalDeliveries: 1 });
 };
 
+export const claimAvailable = async (orderId, cargoWeight) => {
+  return await Drone.findOneAndUpdate(
+    { status: "available" },
+    {
+      $set: {
+        status: "delivering",
+        currentOrder: orderId,
+        cargoWeight,
+      },
+    },
+    { new: true, sort: { totalDeliveries: 1 } }
+  );
+};
+
 export const create = async (droneData) => {
   const drone = new Drone(droneData);
   return await drone.save();

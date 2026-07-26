@@ -22,9 +22,9 @@ export const placeOrder = async (req, res) => {
 
 export const verifyOrder = async (req, res) => {
   try {
-    const { orderId, success } = req.query;
+    const { orderId, success } = req.body;
     const isSuccess = success === true || success === "true";
-    const result = await orderService.verifyOrder(orderId, isSuccess);
+    const result = await orderService.verifyOrder(req.user, orderId, isSuccess);
     res.json(result);
   } catch (error) {
     res

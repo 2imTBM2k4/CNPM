@@ -18,7 +18,7 @@ import {
 const router = express.Router();
 
 router.post("/place", protect, validate(placeOrderSchema), placeOrder);
-router.get("/verify", validate(verifyOrderSchema, "query"), verifyOrder);
+router.post("/verify", protect, validate(verifyOrderSchema), verifyOrder);
 router.get("/userorders", protect, userOrders);
 router.get("/list", protect, listOrders);
 router.post("/status", protect, validate(updateStatusSchema), updateStatus);

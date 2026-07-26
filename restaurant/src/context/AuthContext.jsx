@@ -115,8 +115,6 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({ email, password }),
       });
       const data = await response.json();
-      console.log("Login full response:", data); // DEBUG
-
       if (data.success) {
         const token = data.data?.token || data.token;
         if (!token) {
@@ -172,8 +170,6 @@ export const AuthProvider = ({ children }) => {
         }),
       });
       const data = await response.json();
-      console.log("Register response:", data); // DEBUG
-
       if (data.success) {
         return data; // Success, không throw
       } else {

@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Stripe from "stripe";
 import * as orderRepo from "../repositories/orderRepository.js";
 import * as restaurantRepo from "../repositories/restaurantRepository.js";
@@ -121,12 +122,23 @@ export const placeOrder = async (user, orderData) => {
   };
 };
 
-export const verifyOrder = async (orderId, success) => {
+export const verifyOrder = async (user, orderId, success) => {
+  const order = await orderRepo.findById(orderId);
+  if (!order) {
+    throw new AppError("Order not found", 404);
+  }
+  if (order.user._id.toString() !== user._id.toString()) {
+    throw new AppError("Unauthorized: Not your order", 403);
+  }
+
   if (success === true || success === "true") {
     await orderRepo.updateById(orderId, { isPaid: true, paidAt: Date.now() });
     return { success: true, message: "Paid" };
   } else {
-    await orderRepo.deleteById(orderId);
+    await orderRepo.updateById(orderId, {
+      orderStatus: "cancelled",
+      reason: "Payment failed",
+    });
     return { success: false, message: "Not Paid" };
   }
 };
@@ -162,33 +174,20 @@ export const updateStatus = async (user, updateData) => {
     throw new AppError("Order not found", 404);
   }
 
-  // Tự động gán drone khi chuyển sang trạng thái "delivering"
   if (status === "delivering" && !order.droneId) {
     const droneRepo = await import("../repositories/droneRepository.js");
-    const availableDrones = await droneRepo.findAvailable();
-    
-    if (availableDrones && availableDrones.length > 0) {
-      const drone = availableDrones[0];
-      
-      // Tạo QR code
-      const crypto = await import("crypto");
+    const crypto = await import("crypto");
+    const cargoWeight = Math.floor(Math.random() * 1500) + 500;
+    const drone = await droneRepo.claimAvailable(orderId, cargoWeight);
+
+    if (drone) {
       const hash = crypto.default.createHash("sha256");
       hash.update(`${orderId}-${Date.now()}-${process.env.JWT_SECRET || "secret"}`);
       const qrCode = hash.digest("hex").substring(0, 16).toUpperCase();
-      
-      // Tính trọng lượng hàng (giả lập: random từ 500g đến 2000g)
-      const cargoWeight = Math.floor(Math.random() * 1500) + 500; // 500-2000g
-      
-      // Cập nhật order với drone và QR code
+
       order.droneId = drone._id;
       order.qrCode = qrCode;
       await order.save();
-      
-      // Cập nhật drone với trọng lượng khoang hàng
-      drone.status = "delivering";
-      drone.currentOrder = orderId;
-      drone.cargoWeight = cargoWeight; // Set trọng lượng khi bắt đầu giao
-      await drone.save();
     }
   }
 
@@ -348,14 +347,44 @@ export const updateStatus = async (user, updateData) => {
       if (restaurant && admin) {
         const restaurantShare = order.totalPrice * 0.8;
         const adminShare = order.totalPrice * 0.2;
-        restaurant.balance = (restaurant.balance || 0) + restaurantShare;
-        admin.balance = (admin.balance || 0) + adminShare;
-        await Promise.all([
-          restaurantRepo.updateById(restaurant._id, {
-            balance: restaurant.balance,
-          }),
-          userRepo.updateById(admin._id, { balance: admin.balance }),
-        ]);
+
+        try {
+          const session = await mongoose.startSession();
+          try {
+            await session.withTransaction(async () => {
+              await restaurantRepo.updateById(
+                restaurant._id,
+                { $inc: { balance: restaurantShare } },
+                { session }
+              );
+              await userRepo.updateById(
+                admin._id,
+                { $inc: { balance: adminShare } },
+                undefined,
+                { session }
+              );
+            });
+          } finally {
+            await session.endSession();
+          }
+        } catch (txnError) {
+          if (
+            txnError.message?.includes("Transaction") ||
+            txnError.message?.includes("replica set") ||
+            txnError.codeName === "IllegalOperation"
+          ) {
+            await Promise.all([
+              restaurantRepo.updateById(restaurant._id, {
+                $inc: { balance: restaurantShare },
+              }),
+              userRepo.updateById(admin._id, {
+                $inc: { balance: adminShare },
+              }),
+            ]);
+          } else {
+            throw txnError;
+          }
+        }
       }
     }
   }

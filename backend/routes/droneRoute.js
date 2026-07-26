@@ -13,7 +13,7 @@ import {
   getDroneDeliveryHistory,
   getAllDeliveryHistory,
 } from "../controllers/droneController.js";
-import { protect } from "../middleware/auth.js";
+import { protect, authorize } from "../middleware/auth.js";
 import validate from "../middleware/validate.js";
 import {
   createDroneSchema,
@@ -28,18 +28,18 @@ import {
 const router = express.Router();
 
 router.get("/addresses/:orderId", protect, getDeliveryAddresses);
-router.post("/assign", protect, validate(assignDroneSchema), assignDrone);
+router.post("/assign", protect, authorize("admin", "restaurant_owner"), validate(assignDroneSchema), assignDrone);
 router.post("/scan-qr", protect, validate(scanQRSchema), scanQR);
 router.post("/confirm-delivery", protect, validate(confirmDeliverySchema), confirmDelivery);
-router.post("/cargo-weight", protect, validate(cargoWeightSchema), updateCargoWeight);
+router.post("/cargo-weight", protect, authorize("admin"), validate(cargoWeightSchema), updateCargoWeight);
 
-router.get("/history/all", protect, validate(historyQuerySchema, "query"), getAllDeliveryHistory);
-router.get("/history/:id", protect, getDroneDeliveryHistory);
+router.get("/history/all", protect, authorize("admin"), validate(historyQuerySchema, "query"), getAllDeliveryHistory);
+router.get("/history/:id", protect, authorize("admin"), getDroneDeliveryHistory);
 
-router.get("/", protect, getAllDrones);
-router.get("/:id", protect, getDroneById);
-router.post("/create", protect, validate(createDroneSchema), createDrone);
-router.put("/:id", protect, validate(updateDroneSchema), updateDrone);
-router.delete("/:id", protect, deleteDrone);
+router.get("/", protect, authorize("admin"), getAllDrones);
+router.get("/:id", protect, authorize("admin"), getDroneById);
+router.post("/create", protect, authorize("admin"), validate(createDroneSchema), createDrone);
+router.put("/:id", protect, authorize("admin"), validate(updateDroneSchema), updateDrone);
+router.delete("/:id", protect, authorize("admin"), deleteDrone);
 
 export default router;

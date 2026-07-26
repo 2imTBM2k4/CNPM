@@ -23,11 +23,8 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      console.log("Register submit data:", formData); // DEBUG: Check data gửi
-      // Thêm role vào formData
       const registerData = { ...formData, role: "restaurant_owner" };
       const response = await register(registerData);
-      console.log("Register response received:", response); // DEBUG: Check response
 
       if (response && response.success) {
         // SỬA: Check response tồn tại và success

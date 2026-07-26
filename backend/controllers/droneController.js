@@ -28,6 +28,7 @@ export const assignDrone = async (req, res) => {
 export const scanQR = async (req, res) => {
   try {
     const result = await droneService.scanQRCode(
+      req.user,
       req.body.orderId,
       req.body.qrCode
     );
@@ -41,7 +42,7 @@ export const scanQR = async (req, res) => {
 
 export const confirmDelivery = async (req, res) => {
   try {
-    const result = await droneService.confirmDelivery(req.body.orderId);
+    const result = await droneService.confirmDelivery(req.user, req.body.orderId);
     res.json(result);
   } catch (error) {
     res

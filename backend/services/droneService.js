@@ -2,6 +2,7 @@ import * as orderRepo from "../repositories/orderRepository.js";
 import * as restaurantRepo from "../repositories/restaurantRepository.js";
 import * as droneRepo from "../repositories/droneRepository.js";
 import crypto from "crypto";
+import Drone from "../models/droneModel.cjs";
 import DroneDeliveryHistory from "../models/droneDeliveryHistoryModel.cjs";
 import AppError from "../utils/AppError.js";
 
@@ -88,29 +89,32 @@ export const assignDroneToOrder = async (orderId, droneId) => {
     throw new AppError("Order not found", 404);
   }
 
-  const drone = await droneRepo.findById(droneId);
-  if (!drone) {
-    throw new AppError("Drone not found", 404);
-  }
+  const cargoWeight = Math.floor(Math.random() * 1500) + 500;
 
-  if (drone.status !== "available") {
-    throw new AppError("Drone is not available", 400);
+  const drone = await Drone.findOneAndUpdate(
+    { _id: droneId, status: "available" },
+    {
+      $set: {
+        status: "delivering",
+        currentOrder: orderId,
+        cargoWeight,
+      },
+    },
+    { new: true }
+  );
+
+  if (!drone) {
+    throw new AppError("Drone not found or not available", 400);
   }
 
   const restaurant = await restaurantRepo.findById(order.restaurantId);
   const qrCode = generateQRCode(orderId);
-  const cargoWeight = Math.floor(Math.random() * 1500) + 500;
 
   order.droneId = droneId;
   order.qrCode = qrCode;
   order.orderStatus = "delivering";
   order.droneArrivedAt = new Date();
   await order.save();
-
-  drone.status = "delivering";
-  drone.currentOrder = orderId;
-  drone.cargoWeight = cargoWeight;
-  await drone.save();
 
   // Lưu lịch sử giao hàng
   const customerAddress = order.shippingAddress;
@@ -148,10 +152,13 @@ export const assignDroneToOrder = async (orderId, droneId) => {
  * Xác nhận khách hàng đã quét QR (giả lập drone quét QR của khách)
  * Logic: Khách hàng nhấn nút "Xác nhận đã quét" → Nắp mở 5s
  */
-export const scanQRCode = async (orderId, qrCode) => {
+export const scanQRCode = async (user, orderId, qrCode) => {
   const order = await orderRepo.findById(orderId);
   if (!order) {
     throw new AppError("Order not found", 404);
+  }
+  if (order.user._id.toString() !== user._id.toString()) {
+    throw new AppError("Unauthorized: Not your order", 403);
   }
 
   if (!order.qrCode) {
@@ -230,10 +237,13 @@ export const closeCargoLid = async (droneId, orderId) => {
 /**
  * Xác nhận đã nhận hàng (khách hàng nhấn nút)
  */
-export const confirmDelivery = async (orderId) => {
+export const confirmDelivery = async (user, orderId) => {
   const order = await orderRepo.findById(orderId);
   if (!order) {
     throw new AppError("Order not found", 404);
+  }
+  if (order.user._id.toString() !== user._id.toString()) {
+    throw new AppError("Unauthorized: Not your order", 403);
   }
 
   if (!order.qrScanned) {

@@ -58,7 +58,6 @@ const EditProduct = ({ url, product, onClose, onUpdate }) => {
         toast.error(response.data.message);
       }
     } catch (error) {
-      console.log("Update error:", error);
       toast.error("Error updating product");
     }
   };

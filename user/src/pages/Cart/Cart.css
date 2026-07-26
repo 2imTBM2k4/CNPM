@@ -226,6 +226,106 @@
   100% { background-position: -200% 0; }
 }
 
+.confirm-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  animation: fadeIn 0.2s ease;
+}
+
+.confirm-dialog {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  animation: slideUp 0.25s ease;
+}
+
+.confirm-dialog h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.confirm-dialog p {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.confirm-dialog-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.confirm-dialog-buttons .confirm-btn {
+  flex: 1;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--danger);
+  color: white;
+}
+
+.confirm-dialog-buttons .confirm-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.confirm-dialog-buttons .cancel-btn {
+  flex: 1;
+  padding: 10px 18px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--card-bg);
+  color: var(--text-color);
+}
+
+.confirm-dialog-buttons .cancel-btn:hover {
+  background: var(--background-secondary);
+  transform: translateY(-1px);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 450px) {
+  .confirm-dialog {
+    padding: 24px 20px;
+  }
+
+  .confirm-dialog-buttons {
+    flex-direction: column;
+  }
+}
+
 .error-item {
   color: var(--danger-text);
   text-align: center;

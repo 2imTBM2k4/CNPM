@@ -30,8 +30,17 @@ export const deleteById = async (id) => {
   return await User.findByIdAndDelete(id);
 };
 
-export const findAll = async (select = "-password -cart -wishlist") => {
-  return await User.find({}).select(select).populate("restaurantId");
+export const findAll = async (select = "-password -cart -wishlist", { page, limit } = {}) => {
+  let query = User.find({}).select(select).populate("restaurantId");
+
+  if (page && limit) {
+    const total = await User.countDocuments();
+    const data = await query.skip((page - 1) * limit).limit(limit);
+    return { data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  const data = await query;
+  return { data };
 };
 
 export const countDocuments = async () => {
@@ -40,6 +49,20 @@ export const countDocuments = async () => {
 
 export const findAdmin = async () => {
   return await User.findOne({ role: "admin" }).select("+password +balance");
+};
+
+export const findByResetToken = async (hashedToken) => {
+  return await User.findOne({
+    resetPasswordToken: hashedToken,
+    resetPasswordExpires: { $gt: Date.now() },
+  }).select("+resetPasswordToken +resetPasswordExpires");
+};
+
+export const findByRefreshToken = async (userId, hashedToken) => {
+  return await User.findOne({
+    _id: userId,
+    refreshToken: hashedToken,
+  }).select("+refreshToken");
 };
 
 export const updateRestaurantForUser = async (userId, restaurantId) => {

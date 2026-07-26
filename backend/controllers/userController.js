@@ -74,9 +74,6 @@ export const updateProfile = async (req, res) => {
 };
 
 export const lockUser = async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ success: false, message: "Admin only" });
-  }
   try {
     const userId = req.body.id || req.body.userId;
     const locked =
@@ -91,11 +88,10 @@ export const lockUser = async (req, res) => {
 };
 
 export const listUsers = async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ success: false, message: "Admin only" });
-  }
   try {
-    const result = await userService.listUsers();
+    const { page, limit } = req.query;
+    const pagination = page && limit ? { page: parseInt(page), limit: parseInt(limit) } : {};
+    const result = await userService.listUsers(pagination);
     res.json(result);
   } catch (error) {
     res
@@ -105,9 +101,6 @@ export const listUsers = async (req, res) => {
 };
 
 export const updateUserByAdmin = async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ success: false, message: "Admin only" });
-  }
   try {
     const { userId, ...updates } = req.body;
     const result = await userService.updateUserByAdmin(userId, updates);
@@ -120,9 +113,6 @@ export const updateUserByAdmin = async (req, res) => {
 };
 
 export const deleteUser = async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ success: false, message: "Admin only" });
-  }
   try {
     const result = await userService.deleteUser(req.body.userId);
     res.json(result);
@@ -133,12 +123,40 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-export const getStats = async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res
-      .status(403)
-      .json({ success: false, message: "Unauthorized: Admin only" });
+export const refreshToken = async (req, res) => {
+  try {
+    const result = await userService.refreshAccessToken(req.body.refreshToken);
+    res.json(result);
+  } catch (error) {
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
   }
+};
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const result = await userService.forgotPassword(req.body.email);
+    res.json(result);
+  } catch (error) {
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const result = await userService.resetPassword(req.body.token, req.body.password);
+    res.json(result);
+  } catch (error) {
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
+  }
+};
+
+export const getStats = async (req, res) => {
   try {
     const { period = "day" } = req.query;
     const result = await userService.getStats(period);

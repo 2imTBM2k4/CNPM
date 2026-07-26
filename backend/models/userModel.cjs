@@ -64,7 +64,10 @@ const userSchema = new mongoose.Schema(
       },
     ],
     locked: { type: Boolean, default: false },
-    balance: { type: Number, default: 0 }, // Số dư ví cho admin
+    balance: { type: Number, default: 0 },
+    resetPasswordToken: { type: String, default: null, select: false },
+    resetPasswordExpires: { type: Date, default: null, select: false },
+    refreshToken: { type: String, default: null, select: false },
   },
   {
     timestamps: true,

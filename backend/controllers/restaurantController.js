@@ -3,7 +3,9 @@ import fs from "fs";
 
 export const listRestaurants = async (req, res) => {
   try {
-    const result = await restaurantService.listRestaurants();
+    const { page, limit } = req.query;
+    const pagination = page && limit ? { page: parseInt(page), limit: parseInt(limit) } : {};
+    const result = await restaurantService.listRestaurants(pagination);
     res.json(result);
   } catch (error) {
     res
@@ -70,9 +72,6 @@ export const getRestaurantById = async (req, res) => {
 };
 
 export const lockRestaurant = async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ success: false, message: "Admin only" });
-  }
   try {
     const { id } = req.params;
     const { isLocked } = req.body;

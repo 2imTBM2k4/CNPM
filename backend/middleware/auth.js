@@ -30,6 +30,12 @@ const protect = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    if (decoded.type === "refresh") {
+      return res
+        .status(401)
+        .json({ success: false, message: "Cannot use refresh token for authentication" });
+    }
+
     const user = await userModel
       .findById(decoded.id)
       .select("name email role restaurantId phone address locked balance")

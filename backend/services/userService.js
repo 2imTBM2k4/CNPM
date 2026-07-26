@@ -1,12 +1,18 @@
+import crypto from "crypto";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import validator from "validator";
 import * as userRepo from "../repositories/userRepository.js";
 import * as restaurantRepo from "../repositories/restaurantRepository.js";
 import AppError from "../utils/AppError.js";
+import sendEmail from "../utils/sendEmail.js";
 
-const createToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+const createAccessToken = (id) => {
+  return jwt.sign({ id, type: "access" }, process.env.JWT_SECRET, { expiresIn: "30m" });
+};
+
+const createRefreshToken = (id) => {
+  return jwt.sign({ id, type: "refresh" }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
 export const loginUser = async ({ email, password }) => {
@@ -35,11 +41,17 @@ export const loginUser = async ({ email, password }) => {
     }
   }
 
-  const token = createToken(user._id);
+  const token = createAccessToken(user._id);
+  const refreshToken = createRefreshToken(user._id);
+
+  const hashedRefreshToken = crypto.createHash("sha256").update(refreshToken).digest("hex");
+  await userRepo.updateById(user._id, { refreshToken: hashedRefreshToken }, "+refreshToken");
+
   const userRole = user.role || "user";
   return {
     success: true,
     token,
+    refreshToken,
     role: userRole,
     user: {
       id: user._id,
@@ -79,7 +91,11 @@ export const registerUser = async (userData) => {
     },
   };
   let newUser = await userRepo.create(newUserData);
-  const token = createToken(newUser._id);
+  const token = createAccessToken(newUser._id);
+  const refreshToken = createRefreshToken(newUser._id);
+
+  const hashedRefreshToken = crypto.createHash("sha256").update(refreshToken).digest("hex");
+  await userRepo.updateById(newUser._id, { refreshToken: hashedRefreshToken }, "+refreshToken");
 
   if (role === "restaurant_owner") {
     const newRestaurant = await restaurantRepo.create({
@@ -96,7 +112,7 @@ export const registerUser = async (userData) => {
     );
   }
 
-  return { success: true, token };
+  return { success: true, token, refreshToken };
 };
 
 export const lockUser = async (userId, lock) => {
@@ -149,14 +165,14 @@ export const updateUserAddress = async (userId, addressData) => {
   return { success: true, data: updatedUser };
 };
 
-export const listUsers = async () => {
-  const users = await userRepo.findAll();
-  const usersData = users.map((u) => {
+export const listUsers = async ({ page, limit } = {}) => {
+  const result = await userRepo.findAll(undefined, { page, limit });
+  const usersData = result.data.map((u) => {
     const obj = u.toObject ? u.toObject() : { ...u };
     if (obj.restaurantId) obj.restaurantId = obj.restaurantId.toString();
     return obj;
   });
-  return { success: true, data: usersData };
+  return { success: true, data: usersData, ...(result.pagination && { pagination: result.pagination }) };
 };
 
 export const updateProfile = async (userId, currentEmail, updates) => {
@@ -197,6 +213,88 @@ export const logoutUser = () => ({
   success: true,
   message: "Logged out successfully",
 });
+
+export const refreshAccessToken = async (refreshToken) => {
+  if (!refreshToken) {
+    throw new AppError("Refresh token is required", 400);
+  }
+
+  let decoded;
+  try {
+    decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+  } catch (error) {
+    throw new AppError("Invalid or expired refresh token", 401);
+  }
+
+  if (decoded.type !== "refresh") {
+    throw new AppError("Invalid token type", 401);
+  }
+
+  const hashedToken = crypto.createHash("sha256").update(refreshToken).digest("hex");
+  const user = await userRepo.findByRefreshToken(decoded.id, hashedToken);
+
+  if (!user) {
+    throw new AppError("Invalid refresh token", 401);
+  }
+
+  const newAccessToken = createAccessToken(user._id);
+  return { success: true, token: newAccessToken };
+};
+
+export const forgotPassword = async (email) => {
+  const user = await userRepo.findByEmail(email);
+  if (!user) {
+    throw new AppError("No account with that email address", 404);
+  }
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+  await userRepo.updateById(user._id, {
+    resetPasswordToken: hashedToken,
+    resetPasswordExpires: Date.now() + 15 * 60 * 1000,
+  }, "+resetPasswordToken +resetPasswordExpires");
+
+  const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password/${resetToken}`;
+
+  await sendEmail({
+    to: email,
+    subject: "Password Reset - Drone Delivery",
+    html: `
+      <h2>Password Reset Request</h2>
+      <p>You requested a password reset. Click the link below to set a new password:</p>
+      <a href="${resetUrl}" style="display:inline-block;padding:12px 24px;background:#ff6b35;color:#fff;text-decoration:none;border-radius:6px;">Reset Password</a>
+      <p>This link expires in 15 minutes.</p>
+      <p>If you did not request this, please ignore this email.</p>
+    `,
+  });
+
+  return { success: true, message: "Password reset email sent" };
+};
+
+export const resetPassword = async (token, newPassword) => {
+  if (!newPassword || newPassword.length < 8) {
+    throw new AppError("Password must be at least 8 characters", 400);
+  }
+
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+  const user = await userRepo.findByResetToken(hashedToken);
+
+  if (!user) {
+    throw new AppError("Invalid or expired reset token", 400);
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  const hash = await bcrypt.hash(newPassword, salt);
+
+  await userRepo.updateById(user._id, {
+    password: hash,
+    resetPasswordToken: null,
+    resetPasswordExpires: null,
+  }, "+password");
+
+  return { success: true, message: "Password has been reset successfully" };
+};
 
 export const getStats = async (period = "day") => {
   const [userCount, restaurantCount, completedOrdersCount] = await Promise.all([

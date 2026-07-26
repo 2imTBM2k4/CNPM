@@ -7,7 +7,7 @@ import {
   getRestaurantById,
   lockRestaurant,
 } from "../controllers/restaurantController.js";
-import { protect, optionalAuth } from "../middleware/auth.js";
+import { protect, optionalAuth, authorize } from "../middleware/auth.js";
 import { uploadMiddleware } from "../config/multer.js";
 import validate from "../middleware/validate.js";
 import {
@@ -37,10 +37,10 @@ restaurantRouter.post(
   createRestaurant
 );
 
-restaurantRouter.delete("/", protect, validate(deleteRestaurantSchema), deleteRestaurant);
+restaurantRouter.delete("/", protect, authorize("admin"), validate(deleteRestaurantSchema), deleteRestaurant);
 
 restaurantRouter.get("/:id", protect, getRestaurantById);
 
-restaurantRouter.put("/:id/lock", protect, validate(lockRestaurantSchema), lockRestaurant);
+restaurantRouter.put("/:id/lock", protect, authorize("admin"), validate(lockRestaurantSchema), lockRestaurant);
 
 export default restaurantRouter;

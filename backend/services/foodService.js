@@ -37,27 +37,17 @@ export const addFood = async (user, foodData, file) => {
 };
 
 // SỬA: Cho phép user thường xem món ăn theo restaurantId
-export const listFood = async (user, restaurantId) => {
+export const listFood = async (user, restaurantId, { page, limit } = {}) => {
   let filter = {};
 
-  // Nếu có restaurantId trong query, filter theo đó (cho user thường xem trang nhà hàng)
   if (restaurantId) {
     filter.restaurantId = restaurantId;
-  }
-  // Nếu là restaurant owner, chỉ xem món của mình
-  else if (user && user.role === "restaurant_owner" && user.restaurantId) {
+  } else if (user && user.role === "restaurant_owner" && user.restaurantId) {
     filter.restaurantId = user.restaurantId;
   }
-  // Nếu là admin, xem tất cả
-  else if (user && user.role === "admin") {
-    filter = {};
-  }
-  else {
-    filter = {};
-  }
 
-  const foods = await foodRepo.findAll(filter);
-  return { success: true, data: foods };
+  const result = await foodRepo.findAll(filter, { page, limit });
+  return { success: true, data: result.data, ...(result.pagination && { pagination: result.pagination }) };
 };
 
 export const removeFood = async (user, id) => {

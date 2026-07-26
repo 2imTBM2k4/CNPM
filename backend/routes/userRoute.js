@@ -11,9 +11,12 @@ import {
   getStats,
   logoutUser,
   updateProfile,
+  forgotPassword,
+  resetPassword,
+  refreshToken,
 } from "../controllers/userController.js";
 
-import { protect } from "../middleware/auth.js";
+import { protect, authorize } from "../middleware/auth.js";
 import validate from "../middleware/validate.js";
 import {
   registerSchema,
@@ -39,6 +42,9 @@ const userRouter = express.Router();
 userRouter.post("/register", authLimiter, validate(registerSchema), registerUser);
 userRouter.post("/login", authLimiter, validate(loginSchema), loginUser);
 userRouter.post("/logout", logoutUser);
+userRouter.post("/forgot-password", authLimiter, forgotPassword);
+userRouter.post("/reset-password", resetPassword);
+userRouter.post("/refresh-token", refreshToken);
 
 // ============ PROTECTED ROUTES ============
 userRouter.get("/me", protect, getMe);
@@ -46,10 +52,10 @@ userRouter.put("/update-address", protect, validate(updateAddressSchema), update
 userRouter.put("/profile", protect, validate(updateProfileSchema), updateProfile);
 
 // ============ ADMIN ROUTES ============
-userRouter.get("/list", protect, listUsers);
-userRouter.get("/stats", protect, validate(statsQuerySchema, "query"), getStats);
-userRouter.post("/lock", protect, validate(lockUserSchema), lockUser);
-userRouter.put("/update-by-admin", protect, validate(updateByAdminSchema), updateUserByAdmin);
-userRouter.delete("/delete", protect, validate(deleteUserSchema), deleteUser);
+userRouter.get("/list", protect, authorize("admin"), listUsers);
+userRouter.get("/stats", protect, authorize("admin"), validate(statsQuerySchema, "query"), getStats);
+userRouter.post("/lock", protect, authorize("admin"), validate(lockUserSchema), lockUser);
+userRouter.put("/update-by-admin", protect, authorize("admin"), validate(updateByAdminSchema), updateUserByAdmin);
+userRouter.delete("/delete", protect, authorize("admin"), validate(deleteUserSchema), deleteUser);
 
 export default userRouter;

@@ -4,9 +4,9 @@ import * as restaurantRepo from "../repositories/restaurantRepository.js";
 import * as userRepo from "../repositories/userRepository.js";
 import AppError from "../utils/AppError.js";
 
-export const listRestaurants = async () => {
-  const restaurants = await restaurantRepo.findAll();
-  return { success: true, data: restaurants };
+export const listRestaurants = async ({ page, limit } = {}) => {
+  const result = await restaurantRepo.findAll({ page, limit });
+  return { success: true, data: result.data, ...(result.pagination && { pagination: result.pagination }) };
 };
 
 export const updateRestaurant = async (id, updates, file) => {

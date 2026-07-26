@@ -46,7 +46,9 @@ export const userOrders = async (req, res) => {
 
 export const listOrders = async (req, res) => {
   try {
-    const result = await orderService.listOrders(req.user);
+    const { page, limit } = req.query;
+    const pagination = page && limit ? { page: parseInt(page), limit: parseInt(limit) } : {};
+    const result = await orderService.listOrders(req.user, pagination);
     res.json(result);
   } catch (error) {
     res
@@ -67,11 +69,6 @@ export const updateStatus = async (req, res) => {
 };
 
 export const getStatusStats = async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res
-      .status(403)
-      .json({ success: false, message: "Unauthorized: Admin only" });
-  }
   try {
     const result = await orderService.getStatusStats();
     res.json(result);

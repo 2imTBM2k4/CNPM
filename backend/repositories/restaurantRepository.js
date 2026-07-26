@@ -1,8 +1,17 @@
 // backend/repositories/restaurantRepository.js
 import { Restaurant } from "../models/index.cjs";
 
-export const findAll = async () => {
-  return await Restaurant.find({}).populate("owner", "name email"); // Populate owner ref
+export const findAll = async ({ page, limit } = {}) => {
+  let query = Restaurant.find({}).populate("owner", "name email");
+
+  if (page && limit) {
+    const total = await Restaurant.countDocuments();
+    const data = await query.skip((page - 1) * limit).limit(limit);
+    return { data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  const data = await query;
+  return { data };
 };
 
 export const findById = async (id) => {

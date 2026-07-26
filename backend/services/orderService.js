@@ -148,7 +148,7 @@ export const userOrders = async (userId) => {
   return { success: true, data: orders };
 };
 
-export const listOrders = async (user) => {
+export const listOrders = async (user, { page, limit } = {}) => {
   let filter = {};
   if (user.role === "restaurant_owner") {
     let restId = user.restaurantId;
@@ -159,12 +159,11 @@ export const listOrders = async (user) => {
       }
     }
     filter.restaurantId = restId;
-  } // else all for admin
-  if (user.role !== "restaurant_owner" && user.role !== "admin") {
+  } else if (user.role !== "admin") {
     throw new AppError("Unauthorized", 403);
   }
-  const orders = await orderRepo.findAll(filter);
-  return { success: true, data: orders };
+  const result = await orderRepo.findAll(filter, { page, limit });
+  return { success: true, data: result.data, ...(result.pagination && { pagination: result.pagination }) };
 };
 
 export const updateStatus = async (user, updateData) => {

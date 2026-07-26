@@ -1,5 +1,7 @@
+import mongoose from "mongoose";
 import express from "express";
 import cors from "cors";
+import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import foodRouter from "./routes/foodRoute.js";
 import userRouter from "./routes/userRoute.js";
@@ -16,6 +18,10 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json({ limit: "2mb" }));
+
+if (process.env.NODE_ENV !== "test") {
+  app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
+}
 
 app.use("/images", express.static("uploads"));
 
@@ -42,7 +48,14 @@ app.use("/api/drone", droneRouter);
 app.use("/api/config", configRouter);
 
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok" });
+  const dbState = mongoose.connection.readyState;
+  const dbStatus = { 0: "disconnected", 1: "connected", 2: "connecting", 3: "disconnecting" };
+  const isHealthy = dbState === 1;
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? "ok" : "degraded",
+    database: dbStatus[dbState] || "unknown",
+    uptime: process.uptime(),
+  });
 });
 
 app.use((err, req, res, next) => {

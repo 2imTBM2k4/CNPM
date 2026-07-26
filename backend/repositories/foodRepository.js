@@ -17,13 +17,25 @@ export const create = async (foodData) => {
 };
 
 // ✅ FIX: Không populate cho user view, chỉ populate cho admin/owner nếu cần
-export const findAll = async (filter = {}) => {
-  const foods = await Food.find(filter).lean();
-  // Convert ObjectId sang string để tránh lỗi "[object Object]"
-  return foods.map(food => ({
+export const findAll = async (filter = {}, { page, limit } = {}) => {
+  let query = Food.find(filter);
+  let total;
+
+  if (page && limit) {
+    total = await Food.countDocuments(filter);
+    query = query.skip((page - 1) * limit).limit(limit);
+  }
+
+  const foods = await query.lean();
+  const data = foods.map(food => ({
     ...food,
     restaurantId: food.restaurantId?.toString() || food.restaurantId
   }));
+
+  if (page && limit) {
+    return { data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+  return { data };
 };
 
 export const findById = async (id) => {

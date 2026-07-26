@@ -7,7 +7,7 @@ import {
   updateStatus,
   getStatusStats,
 } from "../controllers/orderController.js";
-import { protect } from "../middleware/auth.js";
+import { protect, authorize } from "../middleware/auth.js";
 import validate from "../middleware/validate.js";
 import {
   placeOrderSchema,
@@ -22,6 +22,6 @@ router.post("/verify", protect, validate(verifyOrderSchema), verifyOrder);
 router.get("/userorders", protect, userOrders);
 router.get("/list", protect, listOrders);
 router.post("/status", protect, validate(updateStatusSchema), updateStatus);
-router.get("/status-stats", protect, getStatusStats);
+router.get("/status-stats", protect, authorize("admin"), getStatusStats);
 
 export default router;

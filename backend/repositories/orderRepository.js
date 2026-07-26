@@ -24,11 +24,21 @@ export const findByUser = async (userId) => {
     .sort({ createdAt: -1 }); // Recent first
 };
 
-export const findAll = async (filter = {}) => {
-  return await Order.find(filter)
+export const findAll = async (filter = {}, { page, limit } = {}) => {
+  let query = Order.find(filter)
     .populate("user", "name email")
     .populate("orderItems.product")
-    .populate("restaurantId");
+    .populate("restaurantId")
+    .sort({ createdAt: -1 });
+
+  if (page && limit) {
+    const total = await Order.countDocuments(filter);
+    const data = await query.skip((page - 1) * limit).limit(limit);
+    return { data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  const data = await query;
+  return { data };
 };
 
 export const updateById = async (id, updates) => {

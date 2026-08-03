@@ -154,15 +154,15 @@
 }
 
 .action-btn--edit:hover {
-  background: #ecfdf5;
-  border-color: #10b981;
-  color: #10b981;
+  background: var(--success-bg);
+  border-color: var(--success);
+  color: var(--success);
 }
 
 .action-btn--delete:hover {
-  background: #fef2f2;
-  border-color: #ef4444;
-  color: #ef4444;
+  background: var(--danger-bg);
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 .list-empty {

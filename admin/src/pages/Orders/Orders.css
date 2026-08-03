@@ -54,17 +54,6 @@
   border-color: var(--primary-color);
 }
 
-:root .order-item select {
-  background-color: var(--body-color);
-  color: var(--text-primary);
-  border: 1.5px solid var(--border-color);
-}
-
-.lightcolors .order-item select {
-  background-color: var(--card-bg);
-  color: var(--text-primary);
-  border: 1.5px solid var(--border-color);
-}
 
 .order-item-drone,
 .order-item-qr {

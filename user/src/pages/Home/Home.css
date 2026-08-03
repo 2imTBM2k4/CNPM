@@ -5,11 +5,3 @@
   font-weight: 600;
   color: var(--text-color);
 }
-
-:root .home-section h2 {
-  color: white;
-}
-
-.lightcolors .home-section h2 {
-  color: #333;
-}

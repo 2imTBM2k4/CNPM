@@ -38,6 +38,7 @@ import AppDownload from '../../components/AppDownload/AppDownload';
 import { useContext } from 'react';
 import { StoreContext } from '../../context/StoreContext';
 import RestaurantDisplay from '../../components/RestaurantDisplay/RestaurantDisplay';  // Giữ
+import Reveal from '../../components/Reveal/Reveal';
 
 const Home = () => {
   const { restaurant_list } = useContext(StoreContext);  // Remove token check
@@ -45,11 +46,13 @@ const Home = () => {
   return (
     <div>
       <Header />
-      <div className="home-section">
-        <h2>Best Choice Restaurants</h2>
+      <div className="home-section container">
+        <Reveal as="h2">Best Choice Restaurants</Reveal>
         <RestaurantDisplay />  {/* Hiển thị luôn, ngay cả chưa login */}
       </div>
-      <AppDownload />
+      <Reveal>
+        <AppDownload />
+      </Reveal>
     </div>
   );
 };

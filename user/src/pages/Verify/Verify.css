@@ -6,8 +6,8 @@
     width: 100px;
     height: 100px;
     place-self: center;
-    border: 5px solid #bdbdbd;
-    border-top-color: tomato;
+    border: 5px solid var(--border-color);
+    border-top-color: var(--accent-color);
     border-radius: 50%;
     animation: rotate 1s infinite;
 }

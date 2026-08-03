@@ -115,7 +115,7 @@
 }
 
 .cancel-reason {
-  color: #ef4444;
+  color: var(--danger);
   font-style: italic;
   margin-top: 5px;
   font-size: 13px;
@@ -149,9 +149,9 @@
 }
 
 .btn-reject:hover {
-  background: #ef4444;
+  background: var(--danger);
   color: white;
-  border-color: #ef4444;
+  border-color: var(--danger);
 }
 
 .btn-deliver:hover {

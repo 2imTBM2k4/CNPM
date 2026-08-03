@@ -1,8 +1,7 @@
 .food-page {
-  padding: 20px;
-  max-width: 1200px;
+  max-width: var(--container-max);
   margin: 0 auto;
-  margin-top: 100px;
+  padding: 24px var(--container-pad);
 }
 
 .food-catalog {
@@ -22,25 +21,25 @@
 
 .catalog-item {
   padding: 10px 20px;
-  border: 2px solid #ddd;
-  background: white;
+  border: 2px solid var(--border-color);
+  background: var(--card-bg);
   border-radius: 20px;
   cursor: pointer;
   font-size: 0.95rem;
   font-weight: 500;
   transition: all 0.3s ease;
-  color: #333;
+  color: var(--text-color);
 }
 
 .catalog-item:hover {
-  border-color: tomato;
-  color: tomato;
+  border-color: var(--accent-color);
+  color: var(--accent-color);
   transform: translateY(-2px);
 }
 
 .catalog-item.active {
-  background-color: tomato;
-  border-color: tomato;
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
   color: white;
   transform: translateY(-2px);
 }
@@ -49,29 +48,11 @@
   margin-top: 10px;
 }
 
-/* Dark theme support */
-:root .catalog-item {
-  background: #2a2a2a;
-  border-color: #444;
-  color: white;
-}
-
-:root .catalog-item:hover {
-  border-color: tomato;
-  color: tomato;
-}
-
-:root .catalog-item.active {
-  background-color: tomato;
-  border-color: tomato;
-  color: white;
-}
 
 /* Responsive */
 @media (max-width: 768px) {
   .food-page {
-    padding: 15px;
-    margin-top: 80px;
+    padding: 16px var(--container-pad);
   }
 
   .catalog-list {
@@ -85,11 +66,6 @@
 }
 
 @media (max-width: 480px) {
-  .food-page {
-    padding: 10px;
-    margin-top: 70px;
-  }
-
   .catalog-list {
     gap: 6px;
   }

@@ -11,7 +11,7 @@
 
 .login-popup-container {
   width: min(420px, 90vw);
-  background-color: #ffffff;
+  background-color: var(--card-bg);
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -28,7 +28,7 @@
 }
 
 .login-popup-title h2 {
-  color: #1a1a2e;
+  color: var(--text-color);
   font-size: 24px;
   font-weight: 700;
 }
@@ -40,7 +40,7 @@
   line-height: 1;
   padding: 4px 8px;
   cursor: pointer;
-  color: #1a1a2e;
+  color: var(--text-color);
   opacity: 0.5;
   transition: opacity 0.2s ease;
   border-radius: 6px;
@@ -51,7 +51,7 @@
 }
 
 .login-close-btn:focus-visible {
-  outline: 2px solid #ff6b35;
+  outline: 2px solid var(--accent-color);
   outline-offset: 2px;
   opacity: 1;
 }
@@ -64,23 +64,23 @@
 
 .login-popup-inputs input {
   outline: none;
-  border: 1.5px solid #e8e8ee;
+  border: 1.5px solid var(--border-color);
   padding: 12px 16px;
   border-radius: 10px;
   font-size: 15px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  color: #1a1a2e;
-  background: #f7f8fc;
+  color: var(--text-color);
+  background: var(--background-secondary);
 }
 
 .login-popup-inputs input:focus {
-  border-color: #ff6b35;
-  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
-  background: #ffffff;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-light);
+  background: var(--card-bg);
 }
 
 .login-popup-inputs input::placeholder {
-  color: #999;
+  color: var(--text-muted);
 }
 
 .login-popup-container button {
@@ -88,7 +88,7 @@
   padding: 13px;
   border-radius: 10px;
   color: white;
-  background: #ff6b35;
+  background: var(--accent-color);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -97,7 +97,7 @@
 }
 
 .login-popup-container button:hover {
-  background-color: #e55a2b;
+  background-color: var(--accent-hover);
   transform: translateY(-1px);
 }
 
@@ -114,24 +114,24 @@
 
 .login-popup-condition input {
   margin-top: 5px;
-  accent-color: #ff6b35;
+  accent-color: var(--accent-color);
 }
 
 .login-popup p {
-  color: #555770;
+  color: var(--text-secondary);
   font-size: 14px;
   text-align: center;
 }
 
 .login-popup p span {
-  color: #ff6b35;
+  color: var(--accent-color);
   font-weight: 600;
   cursor: pointer;
   transition: color 0.2s ease;
 }
 
 .login-popup p span:hover {
-  color: #e55a2b;
+  color: var(--accent-hover);
 }
 
 .continuee {

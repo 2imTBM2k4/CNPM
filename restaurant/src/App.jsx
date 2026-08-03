@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Navbar from './components/Navbar/Navbar';
 import Sidebar from './components/Sidebar/Sidebar';
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import Add from './pages/Add/Add';
 import List from './pages/List/List';
 import Orders from './pages/Orders/Orders';
@@ -12,17 +12,47 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const DashboardLayout = () => (
-  <>
-    <Navbar />
-    <div className="app-content">
-      <Sidebar />
-      <div className="page-content">
-        <Outlet />
-      </div>
+const PageTransition = ({ children }) => {
+  const location = useLocation();
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    setIsVisible(false);
+    const t = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setIsVisible(true));
+    });
+    return () => cancelAnimationFrame(t);
+  }, [location.pathname]);
+
+  return (
+    <div
+      className="page-transition"
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? 'translateY(0)' : 'translateY(12px)',
+        transition: 'opacity 0.2s ease-out, transform 0.2s ease-out',
+      }}
+    >
+      {children}
     </div>
-  </>
-);
+  );
+};
+
+const DashboardLayout = () => {
+  return (
+    <>
+      <Navbar />
+      <div className="app-content">
+        <Sidebar />
+        <div className="page-content">
+          <PageTransition>
+            <Outlet />
+          </PageTransition>
+        </div>
+      </div>
+    </>
+  );
+};
 
 const App = () => {
   const url = import.meta.env.VITE_API_URL || 'http://localhost:4000';

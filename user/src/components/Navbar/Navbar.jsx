@@ -3,16 +3,25 @@ import "./Navbar.css";
 import { assets } from "../../assets/assets";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useContext } from "react";
+import { ShoppingCart, ShoppingBag, LogOut, Sun, Moon } from "lucide-react";
 import { StoreContext } from "../../context/StoreContext";
 
 const Navbar = ({ setShowLogin }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const { getTotalCartAmount, token, setToken } = useContext(StoreContext);
+  const [isDark, setIsDark] = useState(() => localStorage.getItem("mode") === "dark");
+  const [scrolled, setScrolled] = useState(false);
+  const { cartItems, token, setToken } = useContext(StoreContext);
   const navigate = useNavigate();
   const location = useLocation();
   const menuRef = useRef(null);
   const profileRef = useRef(null);
+
+  // Total number of items in the cart (sum of quantities)
+  const cartCount = Object.values(cartItems || {}).reduce(
+    (sum, qty) => sum + (qty > 0 ? qty : 0),
+    0
+  );
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -21,9 +30,27 @@ const Navbar = ({ setShowLogin }) => {
   };
 
   useEffect(() => {
+    const root = document.documentElement;
+    if (isDark) {
+      root.classList.add("dark-mode");
+      localStorage.setItem("mode", "dark");
+    } else {
+      root.classList.remove("dark-mode");
+      localStorage.setItem("mode", "light");
+    }
+  }, [isDark]);
+
+  useEffect(() => {
     setMobileMenuOpen(false);
     setProfileOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -43,7 +70,7 @@ const Navbar = ({ setShowLogin }) => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar ${scrolled ? "scrolled" : ""}`}>
       <Link to="/" aria-label="Home">
         <img src={assets.logo} alt="Drone Delivery" className="logo" />
       </Link>
@@ -62,11 +89,20 @@ const Navbar = ({ setShowLogin }) => {
       </ul>
 
       <div className="navbar-right">
+        <button
+          className="theme-toggle"
+          onClick={() => setIsDark(!isDark)}
+          aria-label="Toggle theme"
+        >
+          {isDark ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
         <div className="navbar-search-icon">
-          <Link to="/cart" aria-label="Cart">
-            <img className="basketlogo" src={assets.basket_icon} alt="Cart" />
+          <Link to="/cart" aria-label={`Cart, ${cartCount} items`} className="basketlogo">
+            <ShoppingCart size={22} />
           </Link>
-          {getTotalCartAmount() > 0 && <div className="dot"></div>}
+          {cartCount > 0 && (
+            <span className="cart-count">{cartCount > 99 ? "99+" : cartCount}</span>
+          )}
         </div>
         {!token ? (
           <button className="signbutton" onClick={() => setShowLogin(true)}>
@@ -81,12 +117,12 @@ const Navbar = ({ setShowLogin }) => {
             <img src={assets.profile_icon} alt="Profile" />
             <ul className="nav-profile-dropdown">
               <li onClick={() => navigate("/myorders")}>
-                <img src={assets.bag_icon} alt="Orders" />
+                <ShoppingBag size={18} />
                 <p>Orders</p>
               </li>
               <hr />
               <li onClick={logout}>
-                <img src={assets.logout_icon} alt="Logout" />
+                <LogOut size={18} />
                 <p>Logout</p>
               </li>
             </ul>

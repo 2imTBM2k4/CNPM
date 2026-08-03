@@ -1,9 +1,11 @@
 @import "../../shared/tokens.css";
 
-.app {
-  width: 80%;
-  max-width: 1400px;
-  margin: auto;
+/* Reusable responsive container — centers content and adds fluid side padding */
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--container-pad);
 }
 
 @keyframes fadeIn {

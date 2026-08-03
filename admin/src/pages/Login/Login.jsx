@@ -44,8 +44,8 @@ const Login = ({ url }) => {
           required
           disabled={loading}
         />
-        <button type="submit" disabled={loading}>
-          {loading ? "LOGGING IN..." : "LOGIN"}
+        <button type="submit" className="login-btn" disabled={loading}>
+          {loading ? "Logging in..." : "Login"}
         </button>
       </form>
     </div>

@@ -1,12 +1,13 @@
 import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { Plus, Minus, Star } from 'lucide-react';
 import './FoodItem.css';
 import { assets } from '../../assets/assets';
 import { StoreContext } from '../../context/StoreContext';
 
 function FoodItem({ id, name, price, description, image }) {
-  const { cartItems, addToCart, url } = useContext(StoreContext);
+  const { addToCart, url } = useContext(StoreContext);
   const navigate = useNavigate();
   const [tempQuantity, setTempQuantity] = useState(0);
   const [showCounter, setShowCounter] = useState(false);
@@ -57,30 +58,35 @@ function FoodItem({ id, name, price, description, image }) {
   const imgSrc = getImgSrc(image);
 
   return (
-    <div className="food-item" onClick={handleItemClick} style={{ cursor: 'pointer' }}>
+    <div className="food-item" onClick={handleItemClick}>
       <div className="food-item-img-container">
-        <img 
-          className="food-item-image" 
-          src={imgSrc} 
+        <img
+          className="food-item-image"
+          src={imgSrc}
           alt={name}
           onError={(e) => {  // Fallback nếu load lỗi
             e.target.src = assets.sample_food || assets.logo;
           }}
         />
         {!showCounter && ( // Luôn render nút add trừ khi đang show counter
-          <img
-            className="add"
+          <button
+            className="food-add-btn"
             onClick={handleAddClick}
-            src={assets.add_icon_white}
-            alt="Add to cart"
-          />
+            aria-label="Add to cart"
+          >
+            <Plus size={20} strokeWidth={2.5} />
+          </button>
         )}
         {showCounter && (
-          <div className="temp-add-wrapper">
+          <div className="temp-add-wrapper" onClick={(e) => e.stopPropagation()}>
             <div className="temp-counter">
-              <img onClick={handleRemoveTemp} src={assets.remove_icon_red} alt="-" />
+              <button className="temp-counter-btn" onClick={handleRemoveTemp} aria-label="Decrease">
+                <Minus size={16} strokeWidth={2.5} />
+              </button>
               <p className="temp-quantity">{tempQuantity}</p>
-              <img onClick={handleAddClick} src={assets.add_icon_green} alt="+" />
+              <button className="temp-counter-btn" onClick={handleAddClick} aria-label="Increase">
+                <Plus size={16} strokeWidth={2.5} />
+              </button>
             </div>
             <button className="confirm-btn" onClick={handleConfirmAdd}>
               Add to cart
@@ -91,7 +97,10 @@ function FoodItem({ id, name, price, description, image }) {
       <div className="food-item-info">
         <div className="food-item-name-rating">
           <p className="namewe">{name}</p>
-          <img className="ratingstars" src={assets.rating_starts} alt="Rating" />
+          <span className="food-item-rating">
+            <Star size={13} fill="currentColor" strokeWidth={0} />
+            4.8
+          </span>
         </div>
         <p className="food-item-desc">{description}</p>
         <p className="food-item-price">${price}</p>

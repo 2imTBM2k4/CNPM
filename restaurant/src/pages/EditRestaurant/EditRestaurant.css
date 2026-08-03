@@ -41,7 +41,7 @@
 }
 
 .edit-restaurant .file-selected {
-  color: #10b981;
+  color: var(--success);
   font-size: 13px;
   margin-top: 5px;
   font-weight: 500;
@@ -112,5 +112,5 @@ label img[src*="assets/upload_area"] {
 }
 
 .error {
-  color: #ef4444;
+  color: var(--danger);
 }

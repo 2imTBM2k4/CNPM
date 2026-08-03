@@ -162,11 +162,11 @@
 }
 
 .dropdown-item--danger {
-  color: #ef4444;
+  color: var(--danger);
 }
 
 .dropdown-item--danger svg {
-  color: #ef4444;
+  color: var(--danger);
 }
 
 .dropdown-item--danger:hover {

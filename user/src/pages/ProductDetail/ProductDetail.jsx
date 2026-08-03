@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { Plus, Minus, Star, ArrowLeft } from "lucide-react";
 import "./ProductDetail.css";
 import { StoreContext } from "../../context/StoreContext";
 import { assets } from "../../assets/assets";
@@ -98,7 +99,7 @@ const ProductDetail = () => {
   return (
     <div className="product-detail">
       <button className="back-btn" onClick={() => navigate(-1)}>
-        ← Back
+        <ArrowLeft size={16} /> Back
       </button>
       <div className="product-detail-container">
         <div className="product-detail-image">
@@ -107,36 +108,31 @@ const ProductDetail = () => {
         <div className="product-detail-info">
           <div className="product-detail-name-rating">
             <h2>{item.name}</h2>
-            <img
-              src={assets.rating_starts}
-              alt="Rating"
-              className="ratingstars"
-            />
+            <span className="product-detail-rating">
+              <Star size={15} fill="currentColor" strokeWidth={0} />
+              4.8
+            </span>
           </div>
           <p className="product-detail-desc">{item.description}</p>
           <p className="product-detail-price">${item.price}</p>
           <div className="product-detail-cart">
             {!showCounter ? (
-              <img
+              <button
                 className="add-detail"
                 onClick={handleAddClick}
-                src={assets.add_icon_white}
-                alt="Add to cart"
-              />
+              >
+                <Plus size={18} strokeWidth={2.5} /> Add to cart
+              </button>
             ) : (
               <div className="product-detail-counter-section">
                 <div className="temp-counter">
-                  <img
-                    onClick={handleRemoveTemp}
-                    src={assets.remove_icon_red}
-                    alt="-"
-                  />
+                  <button className="temp-counter-btn" onClick={handleRemoveTemp} aria-label="Decrease">
+                    <Minus size={16} strokeWidth={2.5} />
+                  </button>
                   <p className="temp-quantity">{tempQuantity}</p>
-                  <img
-                    onClick={handleAddClick}
-                    src={assets.add_icon_green}
-                    alt="+"
-                  />
+                  <button className="temp-counter-btn" onClick={handleAddClick} aria-label="Increase">
+                    <Plus size={16} strokeWidth={2.5} />
+                  </button>
                 </div>
                 <button className="confirm-btn" onClick={handleConfirmAdd}>
                   Add to cart

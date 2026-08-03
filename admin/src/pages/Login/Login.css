@@ -3,11 +3,11 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #818cf8 100%);
+  background: linear-gradient(135deg, #c2410c 0%, var(--accent-color) 50%, #fb923c 100%);
 }
 
 .login-form {
-  background: white;
+  background: var(--card-bg);
   padding: 2.5rem;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
@@ -18,7 +18,7 @@
 .login-form h2 {
   text-align: center;
   margin-bottom: 2rem;
-  color: #1e293b;
+  color: var(--text-color);
   font-size: 1.6rem;
   font-weight: 700;
 }
@@ -30,30 +30,30 @@
 .login-form input {
   width: 100%;
   padding: 12px 16px;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid var(--border-color);
   border-radius: 10px;
   font-size: 15px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  background: #f8fafc;
-  color: #1e293b;
+  background: var(--body-color);
+  color: var(--text-color);
 }
 
 .login-form input:focus {
   outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
-  background: white;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-light);
+  background: var(--card-bg);
 }
 
 .login-form input:disabled {
-  background-color: #f1f5f9;
+  background-color: var(--border-light);
   cursor: not-allowed;
 }
 
 .login-btn {
   width: 100%;
   padding: 13px;
-  background: #6366f1;
+  background: var(--accent-color);
   color: white;
   border: none;
   border-radius: 10px;
@@ -65,9 +65,9 @@
 }
 
 .login-btn:hover:not(:disabled) {
-  background: #4f46e5;
+  background: var(--accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.35);
 }
 
 .login-btn:disabled {
@@ -78,11 +78,11 @@
 .login-hint {
   margin-top: 1.5rem;
   padding: 1rem;
-  background: #f8fafc;
+  background: var(--body-color);
   border-radius: 10px;
   font-size: 0.85rem;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
 }
 
 .login-hint p {
@@ -90,5 +90,5 @@
 }
 
 .login-hint strong {
-  color: #1e293b;
+  color: var(--text-color);
 }

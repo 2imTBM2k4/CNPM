@@ -122,41 +122,38 @@
   }
 }
 
-/* SỬA: Thêm layout chính cho main content - tránh sidebar overlap */
 .main-content-area {
-  margin-left: 260px; /* Bằng width của sidebar */
-  transition: margin-left 0.3s ease; /* Mượt mà khi responsive */
-  min-height: 100vh; /* Đảm bảo full height */
+  margin-left: 260px;
+  transition: margin-left 0.3s ease;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
 .page-content {
-  flex: 1; /* Chiếm hết không gian còn lại sau navbar */
-  padding: 1rem; /* Padding mặc định cho các page, có thể override ở từng page */
-  background: #f8f9fa; /* Nền nhẹ cho content area */
+  flex: 1;
+  padding: 1rem;
+  background: var(--body-color);
 }
 
-/* SỬA: Cập nhật responsive cho layout mới */
 @media (max-width: 1024px) {
   .main-content-area {
-    margin-left: 80px; /* Giảm margin theo width sidebar */
+    margin-left: 80px;
   }
 }
 
 @media (max-width: 768px) {
   .main-content-area {
-    margin-left: 0; /* Không margin trên mobile */
+    margin-left: 0;
   }
 
   .page-content {
-    padding: 0.5rem; /* Giảm padding mobile */
+    padding: 0.5rem;
   }
 }
 
-/* SỬA: Thêm style cho mobile close button (optional) */
 .mobile-close-btn {
-  display: none; /* Ẩn mặc định, chỉ hiện trên mobile */
+  display: none;
 }
 
 @media (max-width: 768px) {

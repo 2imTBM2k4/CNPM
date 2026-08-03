@@ -50,6 +50,11 @@ a {
   --radius: 12px;
   --radius-lg: 14px;
 
+  /* Layout / container system */
+  --container-max: 1200px;
+  --container-pad: clamp(16px, 4vw, 40px);
+  --navbar-offset: 90px;
+
   /* Aliases for backward compatibility across apps */
   --primary-color: var(--accent-color);
   --primary-hover: var(--accent-hover);

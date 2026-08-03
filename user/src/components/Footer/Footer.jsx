@@ -11,9 +11,9 @@ const Footer = () => {
           <img className="footer-logo" src={assets.logo} alt="Drone Delivery" />
           <p>Fast, reliable drone-powered food delivery straight to your door.</p>
           <div className="footer-social-icons">
-            <img src={assets.facebook_icon} alt="Facebook" />
-            <img src={assets.twitter_icon} alt="Twitter" />
-            <img src={assets.linkedin_icon} alt="LinkedIn" />
+            <a href="#" aria-label="Facebook"><img src={assets.facebook_icon} alt="Facebook" /></a>
+            <a href="#" aria-label="Twitter"><img src={assets.twitter_icon} alt="Twitter" /></a>
+            <a href="#" aria-label="LinkedIn"><img src={assets.linkedin_icon} alt="LinkedIn" /></a>
           </div>
         </div>
         <div className="footer-content-center">

@@ -42,7 +42,7 @@
 }
 
 .approve-btn:hover {
-  color: #059669;
+  color: var(--success);
 }
 
 .lock-btn {
@@ -51,7 +51,7 @@
 }
 
 .lock-btn:hover {
-  color: #dc2626;
+  color: var(--danger);
 }
 
 @media (max-width: 600px) {

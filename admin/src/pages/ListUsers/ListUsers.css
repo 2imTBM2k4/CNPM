@@ -35,7 +35,7 @@
 }
 
 .lock-btn:hover {
-  color: #dc2626;
+  color: var(--danger);
 }
 
 @media (max-width: 600px) {

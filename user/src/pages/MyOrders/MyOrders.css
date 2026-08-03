@@ -1,8 +1,8 @@
 .my-orders {
-  padding: 2rem;
+  padding: 24px var(--container-pad);
   max-width: 1100px;
-  margin: 80px auto 0;
-  min-height: 100vh;
+  margin: 0 auto;
+  min-height: 60vh;
 }
 
 .my-orders-header {
@@ -197,7 +197,7 @@
 }
 
 .view-delivery-btn {
-  background: #6366f1;
+  background: var(--accent-color);
   color: white;
   border: none;
   padding: 0.65rem 1.25rem;
@@ -209,12 +209,12 @@
 }
 
 .view-delivery-btn:hover {
-  background: #4f46e5;
+  background: var(--accent-hover);
   transform: translateY(-1px);
 }
 
 .confirm-received-btn {
-  background: #10b981;
+  background: var(--success);
   color: white;
   border: none;
   padding: 0.65rem 1.25rem;
@@ -226,7 +226,7 @@
 }
 
 .confirm-received-btn:hover:not(:disabled) {
-  background: #059669;
+  background: var(--success);
   transform: translateY(-1px);
 }
 
@@ -238,7 +238,7 @@
 }
 
 .confirm-received-btn.enabled {
-  background: #10b981;
+  background: var(--success);
   color: white;
   cursor: pointer;
   opacity: 1;
@@ -251,7 +251,7 @@
 }
 
 .cancel-order-btn {
-  background: #ef4444;
+  background: var(--danger);
   color: white;
   border: none;
   padding: 0.65rem 1.25rem;
@@ -263,7 +263,7 @@
 }
 
 .cancel-order-btn:hover {
-  background: #dc2626;
+  background: var(--danger);
   transform: translateY(-1px);
 }
 
@@ -329,7 +329,7 @@
 }
 
 .cancel-modal-confirm-btn {
-  background: #ef4444;
+  background: var(--danger);
   color: white;
   border: none;
   padding: 0.6rem 1.25rem;
@@ -340,7 +340,7 @@
 }
 
 .cancel-modal-confirm-btn:hover:not(:disabled) {
-  background: #dc2626;
+  background: var(--accent-hover);
 }
 
 .cancel-modal-confirm-btn:disabled {
@@ -352,10 +352,10 @@
 .cancel-reason {
   margin-top: 1rem;
   padding: 0.75rem 1rem;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger);
   border-radius: 8px;
-  color: #dc2626;
+  color: var(--danger-text);
   font-size: 0.9rem;
 }
 

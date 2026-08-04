@@ -70,9 +70,23 @@ const Navbar = ({ setShowLogin }) => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className={`navbar ${scrolled ? "scrolled" : ""}`}>
-      <Link to="/" aria-label="Home">
-        <img src={assets.logo} alt="Drone Delivery" className="logo" />
+    <header className={`site-header ${scrolled ? "scrolled" : ""}`}>
+      <div className="live-bar">
+        <div className="live-bar-msg">
+          <span className="dot" />
+          <span>
+            Ho Chi Minh City · <b>24 kitchens in range</b> — hot food at your
+            window in fifteen minutes
+          </span>
+        </div>
+        <Link to="/food" className="ds-label gold live-bar-cta">
+          SEE MENU ▾
+        </Link>
+      </div>
+
+      <nav className="navbar">
+      <Link to="/" aria-label="Home" className="brand">
+        <span className="brand-mark ds-serif">Drone Delivery</span>
       </Link>
 
       <ul className={`navbar-menu ${mobileMenuOpen ? "open" : ""}`} ref={menuRef}>
@@ -139,7 +153,8 @@ const Navbar = ({ setShowLogin }) => {
           <span></span>
         </button>
       </div>
-    </nav>
+      </nav>
+    </header>
   );
 };
 

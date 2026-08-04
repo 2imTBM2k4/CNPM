@@ -10,10 +10,11 @@
 }
 
 .dashboard-header h1 {
-  font-size: 2rem;
+  font-family: var(--font-serif);
+  font-size: 2.2rem;
   color: var(--text-primary);
   margin-bottom: 0.4rem;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .dashboard-header p {
@@ -54,59 +55,39 @@
 
 .stat-card {
   background: var(--card-bg);
-  border-radius: 12px;
+  border-radius: var(--radius);
   padding: 1.5rem;
   display: flex;
   align-items: center;
   gap: 1.25rem;
   border: 1px solid var(--border-color);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-  border-left: 4px solid;
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  border-top: 2px solid var(--accent-color);
 }
 
 .stat-card:hover {
   transform: translateY(-3px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--card-shadow-hover);
+  border-color: var(--accent-border);
+  border-top-color: var(--accent-color);
 }
 
-.stat-card.total-users { border-left-color: #6366f1; }
-.stat-card.total-restaurants { border-left-color: #10b981; }
-.stat-card.completed-orders { border-left-color: #f59e0b; }
-.stat-card.admin-revenue { border-left-color: #8b5cf6; }
-
 .stat-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-}
-
-.stat-card.total-users .stat-icon {
-  background: linear-gradient(135deg, #6366f1, #818cf8);
-  color: white;
-}
-
-.stat-card.total-restaurants .stat-icon {
-  background: linear-gradient(135deg, #10b981, #34d399);
-  color: white;
-}
-
-.stat-card.completed-orders .stat-icon {
-  background: linear-gradient(135deg, #f59e0b, #fbbf24);
-  color: white;
-}
-
-.stat-card.admin-revenue .stat-icon {
-  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
-  color: white;
+  background: var(--accent-light);
+  border: 1px solid var(--accent-border);
+  color: var(--accent-color);
 }
 
 .stat-icon svg {
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
 }
 
 .stat-content {
@@ -114,23 +95,29 @@
 }
 
 .stat-content h3 {
-  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
   color: var(--text-secondary);
-  margin-bottom: 0.4rem;
-  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.11em;
 }
 
 .stat-number {
-  font-size: 1.8rem;
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 1.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
   color: var(--text-primary);
   margin-bottom: 0.15rem;
 }
 
 .stat-label {
-  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--text-muted);
 }
 
@@ -143,7 +130,7 @@
 
 .chart-card {
   background: var(--card-bg);
-  border-radius: 12px;
+  border-radius: var(--radius);
   padding: 1.5rem;
   border: 1px solid var(--border-color);
 }
@@ -160,9 +147,10 @@
 }
 
 .chart-header h3 {
-  font-size: 1.1rem;
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .chart-header select {

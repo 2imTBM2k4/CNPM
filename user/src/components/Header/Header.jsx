@@ -6,12 +6,16 @@ import "./Header.css";
 const Header = () => {
   return (
     <div className="header">
+      <div className="header-photo" aria-hidden="true">
+        <span className="header-note">Matted, not full-bleed</span>
+      </div>
       <div className="header-contents">
-        <h2>Drone-Delivered Food in 15 Minutes</h2>
+        <span className="header-eyebrow">Ho Chi Minh City · 24 kitchens in range</span>
+        <h2>Hot food at your window in fifteen minutes</h2>
         <p>
-          Skip the wait. Our drone fleet delivers delectable meals from the
-          best local restaurants straight to your door — fast, fresh, and
-          contactless every time.
+          Skip the wait. Our drone fleet delivers meals from the best local
+          restaurants straight to your door — fast, fresh, and contactless
+          every time.
         </p>
 
         <div className="header-search">

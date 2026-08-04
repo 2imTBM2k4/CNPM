@@ -27,7 +27,10 @@ const Navbar = () => {
 
   return (
     <div className="navbar">
-      <img className="logo" src={assets.logo} alt="Logo" />
+      <div className="brand">
+        <span className="brand-mark">Drone Delivery</span>
+        <span className="brand-role">Admin</span>
+      </div>
       <div className="navbar-right">
         <button
           className="theme-toggle"

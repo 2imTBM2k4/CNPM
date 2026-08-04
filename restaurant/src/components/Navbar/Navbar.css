@@ -14,12 +14,25 @@
 
 .navbar-left {
   display: flex;
-  align-items: center;
+  align-items: baseline;
+  gap: 10px;
 }
 
-.navbar .logo {
-  height: 32px;
-  width: auto;
+.navbar-left .brand-mark {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-color);
+}
+
+.navbar-left .brand-role {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--accent-color);
 }
 
 .navbar-right {
@@ -35,16 +48,16 @@
   align-items: center;
   justify-content: center;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 50%;
   cursor: pointer;
-  background: var(--body-color);
+  background: transparent;
   color: var(--text-secondary);
   transition: all 0.2s ease;
 }
 
 .theme-toggle:hover {
-  border-color: var(--text-secondary);
-  color: var(--text-color);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
 }
 
 .wallet-badge {
@@ -52,11 +65,13 @@
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  background: var(--body-color);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 13px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 12px;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   color: var(--text-color);
   transition: all 0.2s ease;
 }
@@ -180,19 +195,23 @@
 }
 
 .login-btn {
-  padding: 8px 20px;
-  background: var(--accent-color);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
+  padding: 9px 20px;
+  background: transparent;
+  color: var(--accent-color);
+  border: 1px solid var(--accent-color);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .login-btn:hover {
-  background: var(--accent-hover);
+  background: var(--accent-color);
+  color: #fff;
 }
 
 .add-product-name input:focus,

@@ -7,9 +7,10 @@
 
 .explore-menu h1,
 .h1e {
+  font-family: var(--font-serif);
   color: var(--text-color);
-  font-weight: 700;
-  font-size: 28px;
+  font-weight: 500;
+  font-size: 34px;
 }
 
 .explore-menu-text,
@@ -53,15 +54,23 @@
 
 .explore-menu-list-item .active {
   border-color: var(--accent-color);
-  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.25);
+  box-shadow: 0 4px 16px rgba(182, 130, 53, 0.25);
 }
 
 .explore-menu-list-item p {
   margin-top: 10px;
   color: var(--text-secondary);
-  font-size: max(1.2vw, 14px);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   cursor: pointer;
   font-weight: 500;
+}
+
+.explore-menu-list-item .active + p,
+.explore-menu-list-item p.active {
+  color: var(--accent-color);
 }
 
 .explore-menu hr {

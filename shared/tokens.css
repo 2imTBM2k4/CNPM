@@ -1,10 +1,18 @@
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap");
+/* ============================================================
+   Drone Delivery — editorial design system
+   Serif headings (Cormorant Garamond) · mono micro-labels
+   (IBM Plex Mono) · handwritten notes (Caveat) · gold used
+   only as a stroke · warm cream ground · hairline rules.
+   Variable names are preserved so every app inherits the new
+   look automatically.
+   ============================================================ */
+
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Caveat:wght@500;600&family=Outfit:wght@100..900&display=swap");
 
 * {
   padding: 0;
   margin: 0;
   box-sizing: border-box;
-  font-family: "Outfit", sans-serif;
 }
 
 a {
@@ -12,48 +20,67 @@ a {
   color: inherit;
 }
 
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
 :root {
-  --accent-color: #ff6b35;
-  --accent-hover: #e55a2b;
-  --accent-light: rgba(255, 107, 53, 0.08);
+  /* Type families */
+  --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
+  --font-serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-hand: "Caveat", cursive;
 
-  --success: #16a34a;
-  --success-bg: #dcfce7;
-  --success-text: #166534;
-  --warning: #f59e0b;
-  --warning-bg: #fef3c7;
-  --warning-text: #92400e;
-  --danger: #ef4444;
-  --danger-bg: #fef2f2;
-  --danger-text: #991b1b;
-  --info-bg: #dbeafe;
-  --info-text: #1e40af;
+  /* Gold — the single accent, used as stroke, not fill */
+  --accent-color: #b68235;
+  --accent-hover: #9a6c27;
+  --accent-light: rgba(182, 130, 53, 0.1);
+  --accent-bg: #f8f3e9; /* pale gold wash — live bar, active tabs */
+  --accent-border: rgba(182, 130, 53, 0.35);
 
-  --body-color: #f8fafc;
-  --text-color: #1a1a2e;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
+  /* Functional states */
+  --success: #4b7a3f;
+  --success-bg: #eaf0e5;
+  --success-text: #3a5f30;
+  --warning: #b68235;
+  --warning-bg: #f8f3e9;
+  --warning-text: #8a6228;
+  --danger: #b0402f;
+  --danger-bg: #f6ece9;
+  --danger-text: #8a2f21;
+  --info-bg: #e7eef0;
+  --info-text: #3a5560;
+
+  /* Ground & ink */
+  --body-color: #f0eee9; /* warm cream page */
+  --text-color: #2b2b2b;
+  --text-secondary: #6e6a64;
+  --text-muted: #9a958c;
   --background-secondary: #ffffff;
-  --border-color: #e2e8f0;
-  --border-light: #f1f5f9;
+  --border-color: rgba(43, 43, 43, 0.13);
+  --border-light: rgba(43, 43, 43, 0.07);
 
   --card-bg: #ffffff;
-  --sidebar-bg: #1e1b4b;
-  --sidebar-active: rgba(255, 255, 255, 0.08);
-  --navbar-bg: #ffffff;
+  --sidebar-bg: #f4f2ed; /* warm grey rail, light not dark */
+  --sidebar-active: rgba(182, 130, 53, 0.12);
+  --navbar-bg: rgba(240, 238, 233, 0.82);
 
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
-  --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  --card-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+  --shadow: 0 1px 3px rgba(43, 30, 10, 0.06);
+  --shadow-lg: 0 10px 30px rgba(43, 30, 10, 0.12);
+  --card-shadow: 0 1px 3px rgba(43, 30, 10, 0.06);
+  --card-shadow-hover: 0 10px 30px rgba(43, 30, 10, 0.13);
 
-  --radius: 12px;
-  --radius-lg: 14px;
+  /* Crisp, editorial corners */
+  --radius: 5px;
+  --radius-lg: 8px;
 
   /* Layout / container system */
   --container-max: 1200px;
   --container-pad: clamp(16px, 4vw, 40px);
-  --navbar-offset: 90px;
+  --navbar-offset: 100px;
 
   /* Aliases for backward compatibility across apps */
   --primary-color: var(--accent-color);
@@ -63,35 +90,38 @@ a {
 }
 
 .dark-mode {
-  --body-color: #0f0f1a;
-  --text-color: #e2e8f0;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --background-secondary: #1e293b;
-  --border-color: #334155;
-  --border-light: #1e293b;
+  --accent-color: #c79a4e;
+  --accent-hover: #d8ac60;
+  --accent-light: rgba(199, 154, 78, 0.16);
+  --accent-bg: #241f17;
+  --accent-border: rgba(199, 154, 78, 0.4);
 
-  --card-bg: #1e293b;
-  --sidebar-bg: #020617;
-  --sidebar-active: rgba(255, 255, 255, 0.1);
-  --navbar-bg: #1e293b;
+  --success-bg: #21311c;
+  --success-text: #9bc088;
+  --warning-bg: #2a2114;
+  --warning-text: #d8ac60;
+  --danger-bg: #2e1815;
+  --danger-text: #d99183;
+  --info-bg: #17262b;
+  --info-text: #8fb3bf;
 
-  --accent-hover: #ff8555;
-  --accent-light: rgba(255, 107, 53, 0.15);
+  --body-color: #191713;
+  --text-color: #dfd8ca;
+  --text-secondary: #a49a88;
+  --text-muted: #7d7466;
+  --background-secondary: #221f1a;
+  --border-color: rgba(223, 216, 202, 0.14);
+  --border-light: rgba(223, 216, 202, 0.07);
 
-  --success-bg: #065f46;
-  --success-text: #34d399;
-  --warning-bg: #92400e;
-  --warning-text: #fbbf24;
-  --danger-bg: #450a0a;
-  --danger-text: #fca5a5;
-  --info-bg: #1e40af;
-  --info-text: #60a5fa;
+  --card-bg: #221f1a;
+  --sidebar-bg: #1f1c17;
+  --sidebar-active: rgba(199, 154, 78, 0.16);
+  --navbar-bg: rgba(25, 23, 19, 0.82);
 
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.3);
-  --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-  --card-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.35);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --card-shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.5);
 
   --primary-color: var(--accent-color);
   --primary-hover: var(--accent-hover);
@@ -100,6 +130,7 @@ a {
 }
 
 body {
+  font-family: var(--font-sans);
   background-color: var(--body-color);
   color: var(--text-color);
   min-height: 100vh;
@@ -107,9 +138,18 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Serif headings everywhere — the editorial voice */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--text-color);
+  line-height: 1.15;
+}
+
 ::selection {
   background-color: var(--accent-color);
-  color: white;
+  color: #fff;
 }
 
 ::-webkit-scrollbar {
@@ -133,4 +173,124 @@ hr {
   border: none;
   height: 1px;
   background-color: var(--border-color);
+}
+
+/* ============================================================
+   Shared editorial primitives — usable directly in JSX
+   ============================================================ */
+
+/* Serif run */
+.ds-serif {
+  font-family: var(--font-serif);
+}
+
+/* Mono micro-label — uppercase, tracked, quiet */
+.ds-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.ds-label.gold {
+  color: var(--accent-color);
+}
+
+/* Tabular figures */
+.ds-num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Outlined tag / chip */
+.ds-tag {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: 3px;
+  padding: 4px 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.ds-tag:hover {
+  border-color: var(--accent-border);
+  color: var(--accent-color);
+}
+.ds-tag.active {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  background: var(--accent-light);
+}
+
+/* Outlined button — gold stroke, no fill */
+.ds-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+  background: transparent;
+  border-radius: var(--radius);
+  padding: 9px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+}
+.ds-btn:hover {
+  background: var(--accent-color);
+  color: #fff;
+}
+/* Quiet variant — grey stroke */
+.ds-btn.quiet {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+.ds-btn.quiet:hover {
+  border-color: var(--text-secondary);
+  background: transparent;
+  color: var(--text-color);
+}
+
+/* Handwritten margin note */
+.ds-note {
+  font-family: var(--font-hand);
+  font-size: 20px;
+  color: var(--accent-color);
+  line-height: 1.1;
+}
+
+/* Live status bar — the slim strip carrying what's happening now */
+.live-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px var(--container-pad);
+  background: var(--accent-bg);
+  border-bottom: 1px solid var(--accent-color);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-color);
+}
+.live-bar .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  flex: none;
 }

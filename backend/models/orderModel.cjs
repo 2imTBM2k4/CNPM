@@ -1,5 +1,13 @@
 const mongoose = require("mongoose");
 
+// Snapshot of a pick at order time — the menu may change afterwards, so the
+// surcharge is frozen here rather than looked up again later.
+const orderItemOptionSchema = new mongoose.Schema({
+  groupName: { type: String, required: true },
+  optionName: { type: String, required: true },
+  priceDelta: { type: Number, default: 0 },
+}, { _id: false });
+
 const orderSchema = new mongoose.Schema(
   {
     user: {
@@ -25,8 +33,8 @@ const orderSchema = new mongoose.Schema(
           required: true,
         },
         image: String,
-        size: String,
-        color: String,
+        selectedOptions: { type: [orderItemOptionSchema], default: [] },
+        note: { type: String, default: "" },
       },
     ],
     shippingAddress: {

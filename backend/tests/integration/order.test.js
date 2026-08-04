@@ -11,40 +11,33 @@ import {
   generateToken,
 } from "../helpers.js";
 
+const ADDRESS = {
+  fullName: "Test User",
+  address: "123 Test St",
+  city: "HCM",
+  state: "HCM",
+  country: "VN",
+  zipCode: "70000",
+  phone: "0123456789",
+};
+
 describe("Order API", () => {
   describe("POST /api/order/place", () => {
-    it("should place a COD order", async () => {
-      const { owner, restaurant } = await createRestaurantOwner();
+    it("should place a COD order from the server-side cart", async () => {
+      const { restaurant } = await createRestaurantOwner();
       const user = await createUser({ email: "orderer@test.com" });
       const token = generateToken(user._id);
       const food = await createFood(restaurant._id);
 
+      await request(app)
+        .post("/api/cart/add")
+        .set("Authorization", `Bearer ${token}`)
+        .send({ itemId: food._id.toString(), quantity: 2 });
+
       const res = await request(app)
         .post("/api/order/place")
         .set("Authorization", `Bearer ${token}`)
-        .send({
-          items: [
-            {
-              _id: food._id,
-              name: food.name,
-              quantity: 2,
-              price: food.price,
-              image: food.image,
-            },
-          ],
-          address: {
-            fullName: "Test User",
-            address: "123 Test St",
-            city: "HCM",
-            state: "HCM",
-            country: "VN",
-            zipCode: "70000",
-            phone: "0123456789",
-          },
-          amount: 22,
-          paymentMethod: "COD",
-          restaurantId: restaurant._id.toString(),
-        });
+        .send({ address: ADDRESS, paymentMethod: "COD" });
 
       expect(res.body.success).toBe(true);
       expect(res.body.orderId).toBeDefined();
@@ -52,22 +45,90 @@ describe("Order API", () => {
       const order = await Order.findById(res.body.orderId);
       expect(order.paymentMethod).toBe("COD");
       expect(order.orderStatus).toBe("pending");
+      expect(order.restaurantId.toString()).toBe(restaurant._id.toString());
+      // Priced from the database: 2 x food.price, plus the $2 delivery fee.
+      expect(order.totalPrice).toBe(food.price * 2 + 2);
     });
 
-    it("should reject order without items", async () => {
+    it("should ignore a client-supplied amount and price from the cart", async () => {
+      const { restaurant } = await createRestaurantOwner();
+      const user = await createUser({ email: "cheapskate@test.com" });
+      const token = generateToken(user._id);
+      const food = await createFood(restaurant._id);
+
+      await request(app)
+        .post("/api/cart/add")
+        .set("Authorization", `Bearer ${token}`)
+        .send({ itemId: food._id.toString(), quantity: 1 });
+
+      const res = await request(app)
+        .post("/api/order/place")
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+          address: ADDRESS,
+          paymentMethod: "COD",
+          amount: 0.01,
+          items: [{ _id: food._id, name: "Free lunch", quantity: 1, price: 0 }],
+        });
+
+      const order = await Order.findById(res.body.orderId);
+      expect(order.totalPrice).toBe(food.price + 2);
+      expect(order.orderItems[0].name).toBe(food.name);
+    });
+
+    it("should carry the selected options and note onto the order", async () => {
+      const { restaurant } = await createRestaurantOwner();
+      const user = await createUser({ email: "optionorder@test.com" });
+      const token = generateToken(user._id);
+      const food = await createFood(restaurant._id);
+
+      food.optionGroups = [
+        {
+          name: "Size",
+          type: "single",
+          required: true,
+          min: 1,
+          max: 1,
+          options: [
+            { name: "Regular", priceDelta: 0 },
+            { name: "Large", priceDelta: 4 },
+          ],
+        },
+      ];
+      await food.save();
+
+      await request(app)
+        .post("/api/cart/add")
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+          itemId: food._id.toString(),
+          quantity: 1,
+          selectedOptions: [{ groupName: "Size", optionName: "Large" }],
+          note: "Extra napkins",
+        });
+
+      const res = await request(app)
+        .post("/api/order/place")
+        .set("Authorization", `Bearer ${token}`)
+        .send({ address: ADDRESS, paymentMethod: "COD" });
+
+      const order = await Order.findById(res.body.orderId);
+      expect(order.orderItems[0].selectedOptions).toHaveLength(1);
+      expect(order.orderItems[0].selectedOptions[0].optionName).toBe("Large");
+      expect(order.orderItems[0].selectedOptions[0].priceDelta).toBe(4);
+      expect(order.orderItems[0].note).toBe("Extra napkins");
+      expect(order.orderItems[0].price).toBe(food.price + 4);
+      expect(order.totalPrice).toBe(food.price + 4 + 2);
+    });
+
+    it("should reject order with an empty cart", async () => {
       const user = await createUser({ email: "noitems@test.com" });
       const token = generateToken(user._id);
 
       const res = await request(app)
         .post("/api/order/place")
         .set("Authorization", `Bearer ${token}`)
-        .send({
-          items: [],
-          address: { fullName: "Test", address: "123", city: "HCM" },
-          amount: 0,
-          paymentMethod: "COD",
-          restaurantId: "507f1f77bcf86cd799439011",
-        });
+        .send({ address: ADDRESS, paymentMethod: "COD" });
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
@@ -80,12 +141,7 @@ describe("Order API", () => {
       const res = await request(app)
         .post("/api/order/place")
         .set("Authorization", `Bearer ${token}`)
-        .send({
-          items: [{ _id: "someid", name: "Food", quantity: 1, price: 10 }],
-          amount: 12,
-          paymentMethod: "COD",
-          restaurantId: "507f1f77bcf86cd799439011",
-        });
+        .send({ paymentMethod: "COD" });
 
       expect(res.status).toBe(400);
     });

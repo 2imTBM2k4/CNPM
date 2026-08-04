@@ -3,19 +3,27 @@ import { protect } from "../middleware/auth.js";
 import {
   getCart,
   addToCart,
-  removeFromCart,
+  updateCartLine,
+  removeCartLine,
   clearCart,
 } from "../controllers/cartController.js";
 import validate from "../middleware/validate.js";
-import { cartItemSchema } from "../validations/cartValidation.js";
+import {
+  addToCartSchema,
+  updateLineSchema,
+  lineKeySchema,
+} from "../validations/cartValidation.js";
 
 const router = express.Router();
 
 router.use(protect);
 
 router.get("/get", getCart);
-router.post("/add", validate(cartItemSchema), addToCart);
-router.post("/remove", validate(cartItemSchema), removeFromCart);
+router.post("/add", validate(addToCartSchema), addToCart);
+// Lines, not dishes: quantity is set outright and 0 drops the line. This
+// replaces the old /remove endpoint, which decremented by one per request.
+router.post("/update-line", validate(updateLineSchema), updateCartLine);
+router.post("/remove-line", validate(lineKeySchema), removeCartLine);
 router.post("/clear", clearCart);
 
 export default router;

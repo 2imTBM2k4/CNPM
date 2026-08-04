@@ -168,6 +168,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  background: var(--background-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  align-self: start;
 }
 
 .summary-row {
@@ -185,6 +190,22 @@
 .summary-row strong {
   color: var(--text-color);
   font-size: 1.05rem;
+}
+
+/* A long delivery address can't share a line with its label without the two
+   colliding, so stack it: label on top, address wrapping freely below. */
+.summary-row-stacked {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.summary-address {
+  color: var(--text-color);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  text-align: left;
+  word-break: break-word;
 }
 
 .order-actions {
@@ -437,4 +458,19 @@
   .my-orders-header h2 {
     font-size: 1.8rem;
   }
+}
+
+/* Option picks and kitchen note, stacked under the dish name. */
+.item-options,
+.item-note {
+  display: block;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.item-note {
+  font-family: var(--font-hand);
+  font-size: 15px;
+  color: var(--accent-color);
 }

@@ -1,28 +1,14 @@
 import Joi from "joi";
 
+// NOTE: items, amount and restaurantId are accepted for backward compatibility
+// with older clients but are IGNORED. The order is built from the user's
+// server-side cart and priced from the database — see orderService.placeOrder.
 export const placeOrderSchema = Joi.object({
-  items: Joi.array()
-    .items(
-      Joi.object({
-        _id: Joi.string().required(),
-        name: Joi.string(),
-        price: Joi.number(),
-        quantity: Joi.number().integer().positive(),
-      }).unknown(true)
-    )
-    .min(1)
-    .required()
-    .messages({
-      "array.min": "Đơn hàng phải có ít nhất 1 món",
-      "any.required": "Danh sách món là bắt buộc",
-    }),
+  items: Joi.array().items(Joi.object().unknown(true)).optional(),
   address: Joi.object().required().messages({
     "any.required": "Địa chỉ giao hàng là bắt buộc",
   }),
-  amount: Joi.number().positive().required().messages({
-    "number.positive": "Tổng tiền phải là số dương",
-    "any.required": "Tổng tiền là bắt buộc",
-  }),
+  amount: Joi.number().optional(),
   paymentMethod: Joi.string()
     .valid("COD", "Card", "PayPal")
     .required()
@@ -32,10 +18,7 @@ export const placeOrderSchema = Joi.object({
     }),
   restaurantId: Joi.alternatives()
     .try(Joi.string().trim(), Joi.object())
-    .required()
-    .messages({
-      "any.required": "restaurantId là bắt buộc",
-    }),
+    .optional(),
   paymentDetails: Joi.object().allow(null),
 });
 

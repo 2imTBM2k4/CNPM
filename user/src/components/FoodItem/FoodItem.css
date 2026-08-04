@@ -113,54 +113,19 @@
   background-color: var(--accent-hover);
 }
 
-.temp-add-wrapper {
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
-  left: 12px;
+/* The inline quantity counter is gone — quantity now lives in
+   ItemOptionsSheet, which every add-to-cart goes through. */
+
+.food-item-footer {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  animation: fadeIn 0.2s ease;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
 }
 
-.temp-counter {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 50px;
-  padding: 5px 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.temp-counter-btn {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  cursor: pointer;
-  border-radius: 50%;
-  background: var(--background-secondary);
-  color: var(--accent-color);
-  transition: transform 0.15s ease, background-color 0.15s ease;
-}
-
-.temp-counter-btn:hover {
-  transform: scale(1.12);
-  background: var(--accent-light);
-}
-
-.temp-quantity {
-  font-weight: 700;
-  font-size: 15px;
-  min-width: 20px;
-  text-align: center;
-  color: var(--text-color);
+.food-item:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
 }
 
 .confirm-btn {

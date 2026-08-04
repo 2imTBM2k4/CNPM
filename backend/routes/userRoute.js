@@ -11,6 +11,8 @@ import {
   getStats,
   logoutUser,
   updateProfile,
+  changePassword,
+  updateAvatar,
   forgotPassword,
   resetPassword,
   refreshToken,
@@ -18,11 +20,13 @@ import {
 
 import { protect, authorize } from "../middleware/auth.js";
 import validate from "../middleware/validate.js";
+import { uploadMiddleware } from "../config/multer.js";
 import {
   registerSchema,
   loginSchema,
   updateAddressSchema,
   updateProfileSchema,
+  changePasswordSchema,
   lockUserSchema,
   updateByAdminSchema,
   deleteUserSchema,
@@ -50,6 +54,8 @@ userRouter.post("/refresh-token", refreshToken);
 userRouter.get("/me", protect, getMe);
 userRouter.put("/update-address", protect, validate(updateAddressSchema), updateUserAddress);
 userRouter.put("/profile", protect, validate(updateProfileSchema), updateProfile);
+userRouter.put("/change-password", protect, validate(changePasswordSchema), changePassword);
+userRouter.put("/avatar", protect, uploadMiddleware.single("avatar"), updateAvatar);
 
 // ============ ADMIN ROUTES ============
 userRouter.get("/list", protect, authorize("admin"), listUsers);

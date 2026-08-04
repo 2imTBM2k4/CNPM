@@ -10,7 +10,7 @@ export const addFood = async (user, foodData, file) => {
       403
     );
   }
-  const { name, description, price, category } = foodData;
+  const { name, description, price, category, optionGroups } = foodData;
   let imageUrl = null;
 
   if (!file) {
@@ -31,6 +31,7 @@ export const addFood = async (user, foodData, file) => {
     category,
     image: imageUrl,
     restaurantId: user.restaurantId,
+    optionGroups: optionGroups || [],
   };
   const newFood = await foodRepo.create(newFoodData);
   return { success: true, message: "Food added successfully", food: newFood };
@@ -85,7 +86,7 @@ export const removeFood = async (user, id) => {
 };
 
 export const updateFood = async (user, updates, file) => {
-  const { id, name, description, price, category } = updates;
+  const { id, name, description, price, category, optionGroups } = updates;
   const food = await foodRepo.findById(id);
 
   if (!food) {
@@ -112,6 +113,12 @@ export const updateFood = async (user, updates, file) => {
   }
 
   const updateData = { name, description, price, category };
+
+  // Only touch option groups when the caller sent them, so a partial update
+  // can't silently wipe a dish's options.
+  if (optionGroups !== undefined) {
+    updateData.optionGroups = optionGroups;
+  }
 
   if (file) {
     if (food.image) {

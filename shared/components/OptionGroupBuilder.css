@@ -1,0 +1,177 @@
+.ogb {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.ogb-head {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ogb-title {
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.ogb-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ogb-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  padding: 14px;
+  margin: 0;
+}
+
+.ogb-group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.ogb-input {
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--background-secondary);
+  color: var(--text-color);
+  font-size: 14px;
+  min-width: 0;
+}
+
+.ogb-input:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 1px;
+}
+
+.ogb-group-name {
+  flex: 1 1 180px;
+}
+
+.ogb-select {
+  flex: 0 0 auto;
+}
+
+.ogb-number {
+  width: 84px;
+}
+
+.ogb-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.ogb-limits {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.ogb-limit {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.ogb-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 12px;
+  border-left: 2px solid var(--border-light);
+}
+
+.ogb-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ogb-option .ogb-input:first-child {
+  flex: 1 1 auto;
+}
+
+.ogb-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.ogb-price-sign {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ogb-remove,
+.ogb-add-option,
+.ogb-add-group {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease;
+  white-space: nowrap;
+}
+
+.ogb-remove:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.ogb-add-option:hover,
+.ogb-add-group:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.ogb-remove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ogb-remove-option {
+  flex: none;
+  width: 30px;
+  padding: 6px 0;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.ogb-add-group {
+  align-self: flex-start;
+  border-color: var(--accent-border);
+  color: var(--accent-color);
+}
+
+@media (max-width: 600px) {
+  .ogb-option {
+    flex-wrap: wrap;
+  }
+
+  .ogb-option .ogb-input:first-child {
+    flex: 1 1 100%;
+  }
+}

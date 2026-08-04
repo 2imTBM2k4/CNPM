@@ -92,6 +92,24 @@
   color: var(--text-muted);
 }
 
+.header-search-btn {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 40px;
+  padding: 8px 18px;
+  background: var(--accent-color);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.header-search-btn:hover {
+  background: var(--accent-hover);
+}
+
 /* ── CTA — outlined, gold stroke ─────────────────────── */
 
 .header-contents button,

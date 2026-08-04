@@ -3,25 +3,30 @@ import "leaflet/dist/leaflet.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Navbar from "./components/Navbar/Navbar";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Home from "./pages/Home/Home";
 import Cart from "./pages/Cart/Cart";
-import PlaceOrder from "./pages/PlaceOrder/PlaceOrder";
+import Checkout from "./pages/Checkout/Checkout";
 import Footer from "./components/Footer/Footer";
 import LoginPopup from "./components/LoginPopup/LoginPopup";
 import Verify from "./pages/Verify/Verify";
 import MyOrders from "./pages/MyOrders/MyOrders";
+import Profile from "./pages/Profile/Profile";
 import ProductDetail from "./pages/ProductDetail/ProductDetail";
 import { StoreContext } from "./context/StoreContext";
 import FoodPage from "./pages/Food/FoodPage";
 import RestaurantPage from "./pages/Restaurant/RestaurantPage";
-import Payment from "./pages/Payment/Payment";
+import FloatingCartBar from "./components/FloatingCartBar/FloatingCartBar";
 
 const PageTransition = ({ children }) => {
   const location = useLocation();
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
+    // Without this a route change keeps the previous page's scroll offset,
+    // which can land the new page on empty space below its content.
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+
     setIsVisible(false);
     const t = requestAnimationFrame(() => {
       requestAnimationFrame(() => setIsVisible(true));
@@ -34,7 +39,10 @@ const PageTransition = ({ children }) => {
       className="page-transition"
       style={{
         opacity: isVisible ? 1 : 0,
-        transform: isVisible ? "translateY(0)" : "translateY(12px)",
+        // MUST be `none` at rest, not translateY(0): any transform other than
+        // none makes this element the containing block for position:fixed
+        // descendants, which breaks every modal rendered inside a page.
+        transform: isVisible ? "none" : "translateY(12px)",
         transition: "opacity 0.2s ease-out, transform 0.2s ease-out",
       }}
     >
@@ -57,16 +65,27 @@ const App = () => {
             <Route path="/food" element={<FoodPage />} />
             <Route path="/restaurant/:id" element={<RestaurantPage />} />
             <Route path="/cart" element={<Cart />} />
-            <Route path="/order" element={<PlaceOrder />} />
+            <Route path="/checkout" element={<Checkout />} />
             <Route path="/verify" element={<Verify />} />
             <Route path="/myorders" element={<MyOrders />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/placeorder" element={<PlaceOrder />} />
-            <Route path="/payment" element={<Payment />} />
+            {/* The old three-route flow (Cart → PlaceOrder → Payment) is now
+                one page; keep the old paths working for saved links. */}
+            <Route path="/order" element={<Navigate to="/checkout" replace />} />
+            <Route
+              path="/placeorder"
+              element={<Navigate to="/checkout" replace />}
+            />
+            <Route
+              path="/payment"
+              element={<Navigate to="/checkout" replace />}
+            />
           </Routes>
         </PageTransition>
       </div>
       <Footer />
+      <FloatingCartBar />
       <ToastContainer />
     </>
   );

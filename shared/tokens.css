@@ -274,6 +274,53 @@ hr {
   line-height: 1.1;
 }
 
+/* ------------------------------------------------------------
+   Skeleton placeholders — hold the layout while data loads so
+   nothing shifts when it arrives.
+   ------------------------------------------------------------ */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--border-light);
+  border-radius: var(--radius);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border-color),
+    transparent
+  );
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* A line of fake text. Width is set per-instance. */
+.skeleton-text {
+  height: 12px;
+  border-radius: 3px;
+}
+
+.skeleton-circle {
+  border-radius: 50%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}
+
 /* Live status bar — the slim strip carrying what's happening now */
 .live-bar {
   display: flex;

@@ -4,16 +4,19 @@ import { toast } from "react-toastify";
 import "./Orders.css";
 import { assets } from "../../assets/assets";
 import io from "socket.io-client";
+import { EmptyState, ErrorState } from "../../../../shared/components/StateBlock";
+import { ClipboardList } from "lucide-react";
 
 const Orders = ({ url }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
 
   const fetchAllOrders = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const token = localStorage.getItem("token");
-      const restaurantId = localStorage.getItem("restaurantId");
       const headers = token ? { token } : {};
       const response = await axios.get(url + "/api/order/list", { headers });
       if (response.data.success) {
@@ -31,12 +34,15 @@ const Orders = ({ url }) => {
 
         setOrders(normalizedOrders);
       } else {
-        toast.error(response.data.message || "Error fetching orders");
-        setOrders([]);
+        throw new Error(response.data.message || "Error fetching orders");
       }
     } catch (error) {
       console.error("Fetch orders error:", error.response?.data || error);
-      toast.error(error.response?.data?.message || "Error fetching orders");
+      // Shown inline with a retry button instead of only as a toast the
+      // owner may have missed.
+      setLoadError(
+        error.response?.data?.message || error.message || "Error fetching orders"
+      );
       setOrders([]);
     } finally {
       setLoading(false);
@@ -118,19 +124,31 @@ const Orders = ({ url }) => {
     };
   }, [url]);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
+  // The kitchen reads this, so each line spells out its options and note
+  // rather than collapsing to a comma-separated string.
   const renderItems = (orderItems) => {
     if (!orderItems || orderItems.length === 0) return "No items";
-    return orderItems
-      .map((item, idx) =>
-        idx === orderItems.length - 1
-          ? `${item.name} x ${item.quantity}`
-          : `${item.name} x ${item.quantity}, `
-      )
-      .join("");
+    return (
+      <ul className="order-line-list">
+        {orderItems.map((item, idx) => (
+          <li key={idx} className="order-line">
+            <span className="order-line-main">
+              {item.name} <span className="order-line-qty">x{item.quantity}</span>
+            </span>
+            {item.selectedOptions?.length > 0 && (
+              <span className="order-line-options">
+                {item.selectedOptions
+                  .map((option) => `${option.groupName}: ${option.optionName}`)
+                  .join(" · ")}
+              </span>
+            )}
+            {item.note && (
+              <span className="order-line-note">Note: {item.note}</span>
+            )}
+          </li>
+        ))}
+      </ul>
+    );
   };
 
   const getStatusColor = (status) => {
@@ -161,6 +179,48 @@ const Orders = ({ url }) => {
     });
   };
 
+  if (loading) {
+    return (
+      <div className="order-page">
+        <h1 className="page-title">Orders</h1>
+        <div className="order-skeleton-list" aria-hidden="true">
+          {Array.from({ length: 3 }, (_, i) => (
+            <div key={i} className="order-skeleton-card">
+              <div className="order-skeleton-head">
+                <div className="skeleton skeleton-circle order-skeleton-icon" />
+                <div className="order-skeleton-meta">
+                  <div className="skeleton skeleton-text" style={{ width: 150 }} />
+                  <div className="skeleton skeleton-text" style={{ width: 110 }} />
+                </div>
+                <div className="skeleton order-skeleton-badge" />
+              </div>
+              <div className="skeleton skeleton-text" style={{ width: "70%" }} />
+              <div className="skeleton skeleton-text" style={{ width: "45%" }} />
+              <div className="skeleton skeleton-text" style={{ width: "58%" }} />
+              <div className="order-skeleton-actions">
+                <div className="skeleton order-skeleton-btn" />
+                <div className="skeleton order-skeleton-btn" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="order-page">
+        <h1 className="page-title">Orders</h1>
+        <ErrorState
+          title="Could not load orders"
+          description={loadError}
+          onRetry={fetchAllOrders}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="order-page">
       <h1 className="page-title">Orders</h1>
@@ -172,7 +232,11 @@ const Orders = ({ url }) => {
       </div>
       <div className="order-list">
         {orders.length === 0 ? (
-          <p>No orders (Check console for debug info)</p>
+          <EmptyState
+            icon={ClipboardList}
+            title="No orders yet"
+            description="New orders land here the moment a customer places one — this page updates live."
+          />
         ) : (
           orders.map((order, index) => (
             <div key={order._id || index} className="order-item">
@@ -196,9 +260,10 @@ const Orders = ({ url }) => {
 
               <div className="order-item-content">
                 <div className="order-item-details">
-                  <p className="order-item-food">
+                  {/* div, not p — renderItems returns a list. */}
+                  <div className="order-item-food">
                     <strong>Items:</strong> {renderItems(order.orderItems)}
-                  </p>
+                  </div>
                   <p className="order-item-name">
                     <strong>Customer:</strong>{" "}
                     {order.shippingAddress?.fullName || "N/A"}

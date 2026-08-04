@@ -22,6 +22,17 @@
   font-size: 12.5px;
 }
 
+.live-bar-pin {
+  color: var(--accent-color);
+  flex: none;
+}
+
+/* No live bar → the fixed header is one strip shorter; drop the top offset
+   to the nav row height so content doesn't sit under a phantom gap. */
+:root.no-live-bar {
+  --navbar-offset: 62px;
+}
+
 .live-bar-msg {
   display: flex;
   align-items: center;
@@ -194,17 +205,13 @@
   cursor: pointer;
 }
 
-.navbar-profile img {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  object-fit: cover;
+.navbar-profile .avatar {
   border: 1px solid var(--border-color);
   transition: border-color 0.2s ease;
 }
 
-.navbar-profile:hover img,
-.navbar-profile.open img {
+.navbar-profile:hover .avatar,
+.navbar-profile.open .avatar {
   border-color: var(--accent-color);
 }
 

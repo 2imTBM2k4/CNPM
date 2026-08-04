@@ -11,6 +11,8 @@ const storage = multer.diskStorage({
       uploadPath = "uploads/restaurants";
     } else if (req.originalUrl.includes("/food")) {
       uploadPath = "uploads/foods";
+    } else if (req.originalUrl.includes("/user")) {
+      uploadPath = "uploads/avatars";
     }
 
     // Tạo thư mục nếu chưa tồn tại

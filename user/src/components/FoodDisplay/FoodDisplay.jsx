@@ -1,14 +1,28 @@
 import React, { useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { UtensilsCrossed } from "lucide-react";
 import "./FoodDisplay.css";
 import { StoreContext } from "../../context/StoreContext";
 import FoodItem from "../FoodItem/FoodItem";
 import Reveal from "../Reveal/Reveal";
+import { SkeletonGrid } from "../Skeleton/Skeleton";
+import { EmptyState } from "../../../../shared/components/StateBlock";
 
-const FoodDisplay = ({ category = "All", restaurantId, foods = [] }) => {
-  const { food_list } = useContext(StoreContext);
+const FoodDisplay = ({
+  category = "All",
+  restaurantId,
+  foods = [],
+  searchQuery = "",
+}) => {
+  const { food_list, isLoadingFoods } = useContext(StoreContext);
+  const navigate = useNavigate();
+
+  // When a parent passes `foods` it owns the loading state; only the
+  // context-driven case has to wait on the global fetch.
+  const usesOwnData = foods.length > 0;
 
   let displayItems = [];
-  if (foods.length > 0) {
+  if (usesOwnData) {
     displayItems = foods.filter(
       (item) => category === "All" || item.category === category
     );
@@ -23,6 +37,25 @@ const FoodDisplay = ({ category = "All", restaurantId, foods = [] }) => {
         (item) => category === item.category
       );
     }
+  }
+
+  // Free-text search over dish name and description, applied on top of the
+  // category filter.
+  const query = searchQuery.trim().toLowerCase();
+  if (query) {
+    displayItems = displayItems.filter(
+      (item) =>
+        item.name?.toLowerCase().includes(query) ||
+        item.description?.toLowerCase().includes(query)
+    );
+  }
+
+  if (!usesOwnData && isLoadingFoods) {
+    return (
+      <div className="food-display" id="food-display">
+        <SkeletonGrid count={8} />
+      </div>
+    );
   }
 
   return (
@@ -40,10 +73,19 @@ const FoodDisplay = ({ category = "All", restaurantId, foods = [] }) => {
           </Reveal>
         ))}
         {displayItems.length === 0 && (
-          <div className="no-items-message">
-            <p>No items found in this category.</p>
-            {restaurantId && <p>(Showing items from this restaurant only)</p>}
-          </div>
+          <EmptyState
+            icon={UtensilsCrossed}
+            title={query ? "No matches" : "No dishes here"}
+            description={
+              query
+                ? `Nothing matches "${searchQuery.trim()}". Try another search.`
+                : category === "All"
+                ? "Nothing is available right now. Try another restaurant."
+                : `Nothing in "${category}". Try a different category.`
+            }
+            actionLabel="Browse restaurants"
+            onAction={() => navigate("/")}
+          />
         )}
       </div>
     </div>

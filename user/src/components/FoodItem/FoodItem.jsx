@@ -1,53 +1,29 @@
 import React, { useContext, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import { Plus, Minus, Star } from 'lucide-react';
+import { Plus, Star, Settings2 } from 'lucide-react';
 import './FoodItem.css';
 import { assets } from '../../assets/assets';
 import { StoreContext } from '../../context/StoreContext';
+import ItemOptionsSheet from '../ItemOptionsSheet/ItemOptionsSheet';
 
-function FoodItem({ id, name, price, description, image }) {
-  const { addToCart, url } = useContext(StoreContext);
-  const navigate = useNavigate();
-  const [tempQuantity, setTempQuantity] = useState(0);
-  const [showCounter, setShowCounter] = useState(false);
+function FoodItem({ id, name, price, description, image, optionGroups = [] }) {
+  const { url, food_list } = useContext(StoreContext);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
-  const handleItemClick = () => {
-    navigate(`/product/${id}`);
+  // The sheet needs the whole dish. Props cover the common case; fall back to
+  // the global list when a caller passed only the summary fields.
+  const item = {
+    _id: id,
+    name,
+    price,
+    description,
+    image,
+    optionGroups:
+      optionGroups.length > 0
+        ? optionGroups
+        : food_list.find((f) => f._id === id)?.optionGroups || [],
   };
 
-  const handleAddClick = (e) => {
-    e.stopPropagation();
-    if (!showCounter) {
-      setTempQuantity(1);
-      setShowCounter(true); // Luôn show counter khi click add, bất kể đã có trong cart
-    } else {
-      setTempQuantity(tempQuantity + 1);
-    }
-  };
-
-  const handleRemoveTemp = (e) => {
-    e.stopPropagation();
-    if (tempQuantity > 1) {
-      setTempQuantity(tempQuantity - 1);
-    } else {
-      setTempQuantity(0);
-      setShowCounter(false); // Ẩn counter
-    }
-  };
-
-  // SỬA: Chỉ toast nếu addToCart return true (thành công)
-  const handleConfirmAdd = async (e) => {
-    e.stopPropagation();
-    if (tempQuantity > 0) {
-      const success = await addToCart(id, tempQuantity); // Luôn cộng dồn quantity
-      if (success) {
-        toast.success("Added to cart!");
-      }  // Không toast nếu false (chưa login, lỗi, etc.)
-      setTempQuantity(0);
-      setShowCounter(false); // Ẩn counter sau confirm, hiện lại nút add
-    }
-  };
+  const hasOptions = item.optionGroups.length > 0;
 
   // Sửa: Xử lý src img - nếu full URL (Cloudinary), dùng trực tiếp; else prefix local
   const getImgSrc = (img) => {
@@ -58,54 +34,65 @@ function FoodItem({ id, name, price, description, image }) {
   const imgSrc = getImgSrc(image);
 
   return (
-    <div className="food-item" onClick={handleItemClick}>
-      <div className="food-item-img-container">
-        <img
-          className="food-item-image"
-          src={imgSrc}
-          alt={name}
-          onError={(e) => {  // Fallback nếu load lỗi
-            e.target.src = assets.sample_food || assets.logo;
-          }}
-        />
-        {!showCounter && ( // Luôn render nút add trừ khi đang show counter
+    <>
+      <div
+        className="food-item"
+        onClick={() => setSheetOpen(true)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setSheetOpen(true);
+          }
+        }}
+      >
+        <div className="food-item-img-container">
+          <img
+            className="food-item-image"
+            src={imgSrc}
+            alt={name}
+            onError={(e) => {  // Fallback nếu load lỗi
+              e.target.src = assets.sample_food || assets.logo;
+            }}
+          />
           <button
             className="food-add-btn"
-            onClick={handleAddClick}
-            aria-label="Add to cart"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSheetOpen(true);
+            }}
+            aria-label={
+              hasOptions ? `Choose options for ${name}` : `Add ${name} to cart`
+            }
           >
-            <Plus size={20} strokeWidth={2.5} />
+            {hasOptions ? (
+              <Settings2 size={18} strokeWidth={2.2} />
+            ) : (
+              <Plus size={20} strokeWidth={2.5} />
+            )}
           </button>
-        )}
-        {showCounter && (
-          <div className="temp-add-wrapper" onClick={(e) => e.stopPropagation()}>
-            <div className="temp-counter">
-              <button className="temp-counter-btn" onClick={handleRemoveTemp} aria-label="Decrease">
-                <Minus size={16} strokeWidth={2.5} />
-              </button>
-              <p className="temp-quantity">{tempQuantity}</p>
-              <button className="temp-counter-btn" onClick={handleAddClick} aria-label="Increase">
-                <Plus size={16} strokeWidth={2.5} />
-              </button>
-            </div>
-            <button className="confirm-btn" onClick={handleConfirmAdd}>
-              Add to cart
-            </button>
-          </div>
-        )}
-      </div>
-      <div className="food-item-info">
-        <div className="food-item-name-rating">
-          <p className="namewe">{name}</p>
-          <span className="food-item-rating">
-            <Star size={13} fill="currentColor" strokeWidth={0} />
-            4.8
-          </span>
         </div>
-        <p className="food-item-desc">{description}</p>
-        <p className="food-item-price">${price}</p>
+        <div className="food-item-info">
+          <div className="food-item-name-rating">
+            <p className="namewe">{name}</p>
+            <span className="food-item-rating">
+              <Star size={13} fill="currentColor" strokeWidth={0} />
+              4.8
+            </span>
+          </div>
+          <p className="food-item-desc">{description}</p>
+          <div className="food-item-footer">
+            <p className="food-item-price">${price}</p>
+            {hasOptions && <span className="ds-label">Customisable</span>}
+          </div>
+        </div>
       </div>
-    </div>
+
+      {sheetOpen && (
+        <ItemOptionsSheet item={item} onClose={() => setSheetOpen(false)} />
+      )}
+    </>
   );
 }
 

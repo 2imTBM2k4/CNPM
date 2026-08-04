@@ -1,0 +1,118 @@
+.floating-cart-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--container-pad) 20px;
+  pointer-events: none;
+  transform: translateY(140%);
+  opacity: 0;
+  transition: transform 0.28s ease, opacity 0.28s ease;
+}
+
+.floating-cart-bar.visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.floating-cart-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 520px;
+  padding: 13px 16px 13px 18px;
+  border: 1px solid var(--accent-color);
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+  box-shadow: var(--shadow-lg);
+  color: var(--text-color);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.floating-cart-inner:hover {
+  background: var(--accent-bg);
+}
+
+.floating-cart-inner:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 3px;
+}
+
+.floating-cart-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent-color);
+  flex: none;
+}
+
+.floating-cart-count {
+  position: absolute;
+  top: -7px;
+  right: -9px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--accent-color);
+  color: #fff;
+  font-size: 10px;
+  line-height: 17px;
+  text-align: center;
+}
+
+.floating-cart-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.floating-cart-sep {
+  color: var(--text-muted);
+}
+
+.floating-cart-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-color);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-cart-bar {
+    transition: opacity 0.2s ease;
+    transform: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .floating-cart-inner {
+    gap: 12px;
+    padding: 12px 14px;
+  }
+
+  .floating-cart-text {
+    font-size: 13px;
+  }
+
+  /* Tight screens keep just the arrow. */
+  .floating-cart-cta-label {
+    display: none;
+  }
+}

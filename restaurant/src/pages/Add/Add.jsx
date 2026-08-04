@@ -1,13 +1,21 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./Add.css";
 import { assets } from "../../assets/assets";
 import axios from "axios";
 import { toast } from "react-toastify";
+import OptionGroupBuilder, {
+  validateOptionGroups,
+  normaliseOptionGroups,
+} from "../../../../shared/components/OptionGroupBuilder";
 
 const Add = ({ url }) => {
   // Prop url từ App
 
-  const [image, setImage] = useState(false);
+  const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState("");
+  const [optionGroups, setOptionGroups] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
   const [data, setData] = useState({
     name: "",
     description: "",
@@ -15,17 +23,54 @@ const Add = ({ url }) => {
     category: "", // Đổi default từ "Salad" sang "" để khuyến khích nhập thủ công
   });
 
+  // createObjectURL in the render body would mint a new blob URL on every
+  // render and never free any of them. Make one per file and revoke it.
+  useEffect(() => {
+    if (!image) {
+      setPreview("");
+      return;
+    }
+    const objectUrl = URL.createObjectURL(image);
+    setPreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [image]);
+
   const onChangeHandler = (event) => {
     const name = event.target.name;
     const value = event.target.value;
     setData((data) => ({ ...data, [name]: value })); // Giữ nguyên, sẽ áp dụng cho input text
   };
 
+  const resetForm = () => {
+    setData({ name: "", description: "", price: "", category: "" });
+    setImage(null);
+    setOptionGroups([]);
+    // Clearing state alone leaves the input's value set, so re-picking the
+    // same file would fire no change event.
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const onSubmitHandler = async (event) => {
     event.preventDefault();
+    if (submitting) return;
+
+    // Validated here rather than with `required` on the input: that input is
+    // hidden, and Chrome refuses to submit a form whose invalid control can't
+    // be focused — the click would silently do nothing.
+    if (!image) {
+      toast.error("Please choose a product image");
+      return;
+    }
+
     // Thêm validation đơn giản cho category (tùy chọn, để tránh string rỗng)
     if (!data.category.trim()) {
       toast.error("Category không được để trống!");
+      return;
+    }
+
+    const problems = validateOptionGroups(optionGroups);
+    if (problems.length > 0) {
+      toast.error(problems[0]);
       return;
     }
 
@@ -35,25 +80,32 @@ const Add = ({ url }) => {
     formData.append("price", Number(data.price));
     formData.append("category", data.category.trim()); // Trim space để sạch sẽ
     formData.append("image", image);
+    // multipart can't carry structured data, so the server parses this string.
+    formData.append(
+      "optionGroups",
+      JSON.stringify(normaliseOptionGroups(optionGroups))
+    );
 
-    const response = await axios.post(`${url}/api/food/add`, formData, {
-      // Sử dụng prop url
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
-    if (response.data.success) {
-      setData({
-        name: "",
-        description: "",
-        price: "",
-        category: "", // Reset về ""
+    try {
+      setSubmitting(true);
+      const response = await axios.post(`${url}/api/food/add`, formData, {
+        // Sử dụng prop url
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
-      setImage(false);
-      toast.success(response.data.message);
-    } else {
-      toast.error(response.data.message);
+
+      if (response.data.success) {
+        resetForm();
+        toast.success(response.data.message);
+      } else {
+        // Keep what they typed so they can fix it and resubmit.
+        toast.error(response.data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to add product");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -65,16 +117,17 @@ const Add = ({ url }) => {
           <label htmlFor="image">
             <img
               className="image"
-              src={image ? URL.createObjectURL(image) : assets.upload_area}
-              alt="Product image preview"
+              src={preview || assets.upload_area}
+              alt={preview ? "Selected product image" : "Upload a product image"}
             />
           </label>
           <input
-            onChange={(e) => setImage(e.target.files[0])}
+            ref={fileInputRef}
+            onChange={(e) => setImage(e.target.files[0] || null)}
             type="file"
+            accept="image/*"
             id="image"
             hidden
-            required
           />
         </div>
         <div className="add-product-name flex-col">
@@ -125,8 +178,9 @@ const Add = ({ url }) => {
             />
           </div>
         </div>
-        <button type="submit" className="add-btn">
-          ADD
+        <OptionGroupBuilder value={optionGroups} onChange={setOptionGroups} />
+        <button type="submit" className="add-btn" disabled={submitting}>
+          {submitting ? "ADDING…" : "ADD"}
         </button>
       </form>
     </div>

@@ -1,47 +1,211 @@
 .restaurant-page {
   max-width: var(--container-max);
   margin: 0 auto;
-  padding: 24px var(--container-pad);
+  padding: 24px var(--container-pad) 80px;
 }
 
-.restaurant-info {
-  /* text-align: center; */
-  margin-bottom: 40px;
+/* ---------- Hero: banner with the info card overlapping it ---------- */
+
+.restaurant-hero {
+  margin-bottom: 28px;
 }
 
-.restaurant-info h1 {
-  font-size: 2.5rem;
-  margin-bottom: 10px;
+.restaurant-hero-image {
+  width: 100%;
+  height: 260px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--border-light);
 }
 
-.restaurant-info p {
-  font-size: 1.2rem;
-  margin-bottom: 5px;
+.restaurant-hero-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
+
+.restaurant-banner-skeleton {
+  width: 100%;
+  height: 260px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 28px;
+}
+
+.restaurant-hero-card {
+  position: relative;
+  z-index: 1;
+  margin: -56px 24px 0;
+  padding: 22px 26px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--card-shadow);
+}
+
+.restaurant-hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.restaurant-hero-top h1 {
+  font-size: 2.4rem;
+  margin: 0;
+}
+
+.restaurant-hero-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-color);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius);
+  padding: 4px 9px;
+  flex: none;
+}
+
+.restaurant-hero-desc {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-width: 68ch;
+}
+
+.restaurant-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
+}
+
+.restaurant-hero-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.restaurant-hero-meta-item svg {
+  color: var(--accent-color);
+  flex: none;
+}
+
+.restaurant-hero-closed {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  font-size: 13px;
+}
+
+/* ---------- Sticky category bar ---------- */
 
 .restaurant-catalog {
-  margin-bottom: 30px;
+  position: sticky;
+  top: var(--navbar-offset);
+  z-index: 20;
+  margin-bottom: 8px;
+  padding: 12px 0;
+  background: var(--body-color);
+  border-bottom: 1px solid var(--border-color);
 }
 
-.catalog-list {
+/* Scoped under .restaurant-catalog — FoodPage.css defines its own
+   .catalog-list/.catalog-item and these stylesheets share a global scope. */
+.restaurant-catalog .catalog-list {
   display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
   gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
 }
 
-.catalog-item {
-  padding: 10px 20px;
-  border: 2px solid var(--border-color);
-  border-radius: 20px;
+.restaurant-catalog .catalog-list::-webkit-scrollbar {
+  display: none;
+}
+
+.restaurant-catalog .catalog-item {
+  flex: none;
+  padding: 9px 18px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
   cursor: pointer;
   background: var(--card-bg);
-  color: var(--text-color);
-  transition: all 0.3s ease;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+}
+
+.catalog-item:hover {
+  border-color: var(--accent-border);
+  color: var(--accent-color);
 }
 
 .catalog-item.active {
-  background-color: var(--accent-color);
   border-color: var(--accent-color);
-  color: white;
+  color: var(--accent-color);
+  background: var(--accent-light);
+}
+
+.catalog-item:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+/* ---------- Menu sections ---------- */
+
+.menu-section {
+  /* Anchor offset so scrolling to a section clears the sticky headers. */
+  scroll-margin-top: calc(var(--navbar-offset) + 58px);
+  padding-top: 30px;
+}
+
+.menu-section-title {
+  font-size: 1.9rem;
+  margin-bottom: 18px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+@media (max-width: 750px) {
+  .restaurant-hero-image {
+    height: 180px;
+  }
+
+  .restaurant-hero-card {
+    margin: -40px 8px 0;
+    padding: 18px;
+  }
+
+  .restaurant-hero-top h1 {
+    font-size: 1.8rem;
+  }
+
+  .restaurant-catalog {
+    /* Bleed the scroller to the screen edges so chips don't look clipped. */
+    margin-inline: calc(var(--container-pad) * -1);
+    padding-inline: var(--container-pad);
+  }
+
+  .menu-section-title {
+    font-size: 1.5rem;
+  }
 }

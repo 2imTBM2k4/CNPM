@@ -33,6 +33,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    avatar: {
+      type: String,
+      default: "",
+    },
     address: {
       fullName: { type: String, default: "" },
       address: { type: String, default: "" },

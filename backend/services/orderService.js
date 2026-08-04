@@ -5,6 +5,8 @@ import * as restaurantRepo from "../repositories/restaurantRepository.js";
 import * as userRepo from "../repositories/userRepository.js";
 import * as cartRepo from "../repositories/cartRepository.js";
 import AppError from "../utils/AppError.js";
+import { computeUnitPrice } from "../utils/foodOptions.js";
+import { computeOrderTotals } from "../config/fees.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -21,17 +23,48 @@ const getRandomCoordinates = () => {
 };
 
 export const placeOrder = async (user, orderData) => {
-  const { items, address, amount, paymentMethod, restaurantId, paymentDetails } = orderData;
+  const { address, paymentMethod, paymentDetails } = orderData;
 
-  if (!items || !Array.isArray(items) || items.length === 0) {
-    throw new AppError("Cart is empty. Please add items to your cart.", 400);
-  }
   if (!address) {
     throw new AppError("Shipping address is required.", 400);
   }
-  if (typeof amount !== "number" || isNaN(amount)) {
-    throw new AppError("Invalid total amount.", 400);
+
+  // The server's cart is the only source of truth for what is being bought
+  // and what it costs. Whatever `items`, `amount` or `restaurantId` the client
+  // sent is ignored — otherwise a customer could set their own prices.
+  const cart = await cartRepo.findByUserId(user._id);
+  const cartLines = (cart?.items || []).filter((line) => line.foodId);
+
+  if (cartLines.length === 0) {
+    throw new AppError("Cart is empty. Please add items to your cart.", 400);
   }
+
+  const orderItems = cartLines.map((line) => {
+    const food = line.foodId;
+    const selectedOptions = (line.selectedOptions || []).map((option) => ({
+      groupName: option.groupName,
+      optionName: option.optionName,
+      priceDelta: option.priceDelta || 0,
+    }));
+
+    return {
+      product: food._id,
+      name: food.name,
+      quantity: line.quantity,
+      price: computeUnitPrice(food, selectedOptions),
+      image: food.image,
+      selectedOptions,
+      note: line.note || "",
+    };
+  });
+
+  const subtotal = orderItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+  const totals = computeOrderTotals(subtotal);
+
+  const restaurantId = cartLines[0].foodId.restaurantId;
   if (!restaurantId) {
     throw new AppError("Restaurant ID is required.", 400);
   }
@@ -41,13 +74,7 @@ export const placeOrder = async (user, orderData) => {
 
   const newOrderData = {
     user: user._id,
-    orderItems: items.map((item) => ({
-      product: item._id,
-      name: item.name,
-      quantity: item.quantity,
-      price: item.price,
-      image: item.image,
-    })),
+    orderItems,
     shippingAddress: {
       fullName: address.fullName,
       address: address.address,
@@ -58,7 +85,8 @@ export const placeOrder = async (user, orderData) => {
       phone: address.phone,
     },
     paymentMethod,
-    totalPrice: amount,
+    totalPrice: totals.total,
+    shippingPrice: totals.deliveryFee,
     restaurantId: restaurantId,
     isPaid: paymentMethod === "PayPal" && paymentDetails ? true : false,
     paidAt: paymentMethod === "PayPal" && paymentDetails ? Date.now() : null,
@@ -84,11 +112,11 @@ export const placeOrder = async (user, orderData) => {
   let sessionUrl = null;
   
   if (paymentMethod === "Card") {
-    const line_items = items.map((item) => ({
+    const line_items = orderItems.map((item) => ({
       price_data: {
         currency: "usd",
         product_data: { name: item.name },
-        unit_amount: item.price * 100,
+        unit_amount: Math.round(item.price * 100),
       },
       quantity: item.quantity,
     }));
@@ -96,7 +124,7 @@ export const placeOrder = async (user, orderData) => {
       price_data: {
         currency: "usd",
         product_data: { name: "Delivery" },
-        unit_amount: 200,
+        unit_amount: Math.round(totals.deliveryFee * 100),
       },
       quantity: 1,
     });

@@ -1,140 +1,68 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext } from "react";
 import "./Cart.css";
 import { StoreContext } from "../../context/StoreContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import axios from "axios"; // Import để fetch single nếu cần
+import { ShoppingCart } from "lucide-react";
+import { EmptyState } from "../../../../shared/components/StateBlock";
+import ItemOptionsSheet from "../../components/ItemOptionsSheet/ItemOptionsSheet";
 
 const Cart = () => {
   const {
-    cartItems,
+    cartLines,
     food_list,
-    removeFromCart,
-    removeItemFromCart,
+    updateLine,
+    removeLine,
     getTotalCartAmount,
+    fees,
     url,
-    addToCart,
     token,
     setShowLogin,
   } = useContext(StoreContext);
   const navigate = useNavigate();
-  const [showConfirm, setShowConfirm] = useState(null);
-  const [confirmAction, setConfirmAction] = useState("");
-  const [cartFoodItems, setCartFoodItems] = useState({}); // NEW: Local cache cho items trong cart (id → item object)
-  const [loadingItems, setLoadingItems] = useState(new Set()); // NEW: Track loading per itemId
+  const [pendingRemoval, setPendingRemoval] = useState(null);
+  const [editingLine, setEditingLine] = useState(null);
 
-  // Helper: Fetch single food nếu !found trong food_list
-  const fetchCartItem = async (itemId) => {
-    if (loadingItems.has(itemId) || cartFoodItems[itemId]) return; // Skip nếu đang load hoặc đã có
-    try {
-      setLoadingItems((prev) => new Set([...prev, itemId]));
-      const res = await axios.get(`${url}/api/food/${itemId}`);
-      if (res.data.success) {
-        setCartFoodItems((prev) => ({ ...prev, [itemId]: res.data.data }));
-      } else {
-        throw new Error(res.data.message || "Item not found");
-      }
-    } catch (err) {
-      toast.error(`Failed to load item: ${err.message}`);
-      // Optional: Remove từ cartItems nếu invalid
-    } finally {
-      setLoadingItems((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(itemId);
-        return newSet;
-      });
-    }
+  const subtotal = getTotalCartAmount();
+  const deliveryFee = subtotal > 0 ? fees.deliveryFee : 0;
+  const serviceFee = subtotal > 0 ? fees.serviceFee : 0;
+  const total = subtotal + deliveryFee + serviceFee;
+
+  const getImageUrl = (line) => {
+    if (!line?.image) return "/placeholder.png";
+    return line.image.startsWith("http")
+      ? line.image
+      : `${url}/images/${line.image}`;
   };
 
-  // Effect: Khi cartItems thay đổi, fetch missing items
-  useEffect(() => {
-    const missingIds = Object.keys(cartItems)
-      .filter((id) => cartItems[id] > 0)
-      .filter(
-        (id) => !food_list.find((f) => f._id === id) && !cartFoodItems[id]
-      );
-    if (missingIds.length > 0) {
-      missingIds.forEach(fetchCartItem);
-    }
-  }, [cartItems]); // Trigger khi add/remove
-
-  // Hàm xử lý tăng số lượng
-  const handleIncreaseQuantity = async (itemId) => {
-    await addToCart(itemId, 1);
-  };
-
-  // Hàm xử lý giảm số lượng
-  const handleDecreaseQuantity = async (itemId) => {
-    const currentQuantity = cartItems[itemId];
-    if (currentQuantity > 1) {
-      await removeFromCart(itemId);
+  const handleDecrease = (line) => {
+    if (line.quantity > 1) {
+      updateLine(line.lineKey, line.quantity - 1);
     } else {
-      setShowConfirm(itemId);
-      setConfirmAction("remove");
+      setPendingRemoval(line);
     }
   };
 
-  // Hàm xử lý click nút "x" - xóa hoàn toàn
-  const handleDeleteClick = (itemId) => {
-    setShowConfirm(itemId);
-    setConfirmAction("delete");
+  const handleConfirmRemove = async () => {
+    const removed = await removeLine(pendingRemoval.lineKey);
+    if (removed) toast.success("Item removed from cart");
+    setPendingRemoval(null);
   };
 
-  // Hàm xác nhận xóa sản phẩm
-  const handleConfirmRemove = async (itemId) => {
-    if (confirmAction === "delete") {
-      await removeItemFromCart(itemId);
-      toast.success("Item removed from cart");
-    } else {
-      await removeFromCart(itemId);
-      toast.success("Item removed from cart");
-    }
-    setShowConfirm(null);
-    setConfirmAction("");
+  const openEditor = (line) => {
+    const dish = food_list.find((food) => food._id === line.foodId);
+    setEditingLine({
+      line,
+      item: {
+        _id: line.foodId,
+        name: line.name,
+        price: line.basePrice,
+        image: line.image,
+        description: dish?.description || "",
+        optionGroups: dish?.optionGroups || [],
+      },
+    });
   };
-
-  // Hàm hủy xóa sản phẩm
-  const handleCancelRemove = () => {
-    setShowConfirm(null);
-    setConfirmAction("");
-  };
-
-  // Lấy thông báo confirm dựa trên action
-  const getConfirmMessage = () => {
-    if (confirmAction === "delete") {
-      return "Are you sure you want to completely remove this item from the cart?";
-    } else {
-      return "Are you sure you want to remove this item from the cart?";
-    }
-  };
-
-  // Kiểm tra nếu giỏ hàng rỗng
-  const isCartEmpty =
-    Object.keys(cartItems).filter((itemId) => cartItems[itemId] > 0).length ===
-    0;
-
-  // Helper: Lấy item object cho một id (từ food_list hoặc cartFoodItems)
-  const getItemForCart = (itemId) => {
-    return food_list.find((f) => f._id === itemId) || cartFoodItems[itemId];
-  };
-
-  // Helper: Lấy image URL
-  const getImageUrl = (item) => {
-    if (!item?.image) return "/placeholder.png";
-    return item.image.startsWith("http")
-      ? item.image
-      : `${url}/images/${item.image}`;
-  };
-
-  // Items để render: Chỉ những có qty > 0
-  const cartItemIds = Object.keys(cartItems).filter((id) => cartItems[id] > 0);
-
-  // Tính tổng dựa trên cùng nguồn dữ liệu hiển thị (food_list + cartFoodItems)
-  const cartTotalAmount = cartItemIds.reduce((sum, id) => {
-    const item = getItemForCart(id);
-    const price = item?.price || 0;
-    return sum + price * (cartItems[id] || 0);
-  }, 0);
 
   const handleProceedCheckout = () => {
     if (!token) {
@@ -142,29 +70,28 @@ const Cart = () => {
       setShowLogin(true);
       return;
     }
-    if (cartTotalAmount === 0) {
+    if (cartLines.length === 0) {
       toast.error("Your cart is empty");
       return;
     }
-    navigate("/placeorder");
+    navigate("/checkout");
   };
 
   return (
     <div className="cart">
-      {/* Confirm Dialog */}
-      {showConfirm && (
+      {pendingRemoval && (
         <div className="confirm-dialog-overlay">
           <div className="confirm-dialog">
             <h3>Confirm removal</h3>
-            <p>{getConfirmMessage()}</p>
+            <p>Remove “{pendingRemoval.name}” from your cart?</p>
             <div className="confirm-dialog-buttons">
-              <button
-                className="confirm-btn"
-                onClick={() => handleConfirmRemove(showConfirm)}
-              >
+              <button className="confirm-btn" onClick={handleConfirmRemove}>
                 Yes, remove it
               </button>
-              <button className="cancel-btn" onClick={handleCancelRemove}>
+              <button
+                className="cancel-btn"
+                onClick={() => setPendingRemoval(null)}
+              >
                 No, keep it
               </button>
             </div>
@@ -173,142 +100,176 @@ const Cart = () => {
       )}
 
       <div className="cart-items">
-        <div className="cart-items-title">
-          <p>Image</p>
-          <p>Name</p>
-          <p>Price</p>
-          <p>Quantity</p>
-          <p>Total</p>
-          <p>Remove</p>
-        </div>
-        <br />
-        <hr />
-        {cartItemIds.length === 0 ? (
-          <div className="empty-cart-message">
-            <p>Your cart is empty</p>
-          </div>
+        {cartLines.length > 0 && (
+          <>
+            <div className="cart-items-title">
+              <p>Image</p>
+              <p>Name</p>
+              <p>Price</p>
+              <p>Quantity</p>
+              <p>Total</p>
+              <p>Remove</p>
+            </div>
+            <br />
+            <hr />
+          </>
+        )}
+
+        {cartLines.length === 0 ? (
+          <EmptyState
+            icon={ShoppingCart}
+            title="Your cart is empty"
+            description="Add a few dishes and they'll show up here, ready for the drone."
+            actionLabel="Browse restaurants"
+            onAction={() => navigate("/")}
+          />
         ) : (
-          cartItemIds.map((itemId) => {
-            const item = getItemForCart(itemId);
-            const isLoading = loadingItems.has(itemId);
-
-            if (isLoading) {
-              // Skeleton loading cho item
-              return (
-                <div key={itemId} className="cart-items-item loading-skeleton">
-                  <div className="cart-item-image">
-                    <div className="skeleton"></div>
-                  </div>
-                  <p className="skeleton"></p>
-                  <p className="skeleton"></p>
-                  <div className="quantity-controls">
-                    <span className="skeleton"></span>
-                  </div>
-                  <p className="skeleton"></p>
-                  <p className="skeleton"></p>
-                  <hr />
+          cartLines.map((line) => (
+            <div key={line.lineKey}>
+              <div className="cart-items-title cart-items-item">
+                <div className="cart-item-image">
+                  <img
+                    src={getImageUrl(line)}
+                    alt={line.name}
+                    onError={(e) => {
+                      e.target.src = "/placeholder.png";
+                    }}
+                    loading="lazy"
+                  />
                 </div>
-              );
-            }
-
-            if (!item) {
-              // Fallback nếu fetch fail (hiếm)
-              return (
-                <div key={itemId} className="cart-items-item error-item">
-                  <p>Failed to load item ID: {itemId}</p>
-                  <button onClick={() => handleDeleteClick(itemId)}>Remove</button>
-                  <hr />
-                </div>
-              );
-            }
-
-            const imageUrl = getImageUrl(item);
-
-            return (
-              <div key={itemId}>
-                <div className="cart-items-title cart-items-item">
-                  <div className="cart-item-image">
-                    <img
-                      src={imageUrl}
-                      alt={item.name}
-                      onError={(e) => {
-                        e.target.src = "/placeholder.png";
-                      }}
-                      loading="lazy"
-                    />
-                  </div>
-                  <p className="cart-item-name">{item.name}</p>
-                  <p className="cart-item-price">${item.price}</p>
-                  <div className="quantity-controls">
-                    <button
-                      className="quantity-btn decrease"
-                      onClick={() => handleDecreaseQuantity(itemId)}
-                    >
-                      -
-                    </button>
-                    <span className="quantity-display">
-                      {cartItems[itemId]}
-                    </span>
-                    <button
-                      className="quantity-btn increase"
-                      onClick={() => handleIncreaseQuantity(itemId)}
-                    >
-                      +
-                    </button>
-                  </div>
-                  <p className="cart-item-total">
-                    ${item.price * cartItems[itemId]}
-                  </p>
-                  <p
-                    onClick={() => handleDeleteClick(itemId)}
-                    className="cross"
-                    title="Remove item"
+                <div className="cart-item-name">
+                  <p>{line.name}</p>
+                  {line.selectedOptions.length > 0 && (
+                    <p className="cart-item-options">
+                      {line.selectedOptions
+                        .map((option) => option.optionName)
+                        .join(" · ")}
+                    </p>
+                  )}
+                  {line.note && (
+                    <p className="cart-item-note">“{line.note}”</p>
+                  )}
+                  <button
+                    type="button"
+                    className="cart-item-edit"
+                    onClick={() => openEditor(line)}
                   >
-                    x
-                  </p>
+                    Edit
+                  </button>
                 </div>
-                <hr />
+                <p className="cart-item-price">${line.unitPrice.toFixed(2)}</p>
+                <div className="quantity-controls">
+                  <button
+                    className="quantity-btn decrease"
+                    onClick={() => handleDecrease(line)}
+                    aria-label={`Decrease quantity of ${line.name}`}
+                  >
+                    -
+                  </button>
+                  <span className="quantity-display">{line.quantity}</span>
+                  <button
+                    className="quantity-btn increase"
+                    onClick={() => updateLine(line.lineKey, line.quantity + 1)}
+                    aria-label={`Increase quantity of ${line.name}`}
+                  >
+                    +
+                  </button>
+                </div>
+                <p className="cart-item-total">
+                  ${(line.unitPrice * line.quantity).toFixed(2)}
+                </p>
+                <p
+                  onClick={() => setPendingRemoval(line)}
+                  className="cross"
+                  title="Remove item"
+                >
+                  x
+                </p>
               </div>
-            );
-          })
+              <hr />
+            </div>
+          ))
         )}
       </div>
 
-      {/* Cart Bottom - Chỉ hiển thị nếu không rỗng */}
-      {!isCartEmpty && (
+      {cartLines.length > 0 && (
         <div className="cart-bottom">
           <div className="cart-total">
             <h2>Cart Totals</h2>
             <div>
               <div className="cart-total-details">
                 <p>Subtotal</p>
-                <p>${cartTotalAmount}</p>
+                <p className="ds-num">${subtotal.toFixed(2)}</p>
               </div>
               <hr />
               <div className="cart-total-details">
                 <p>Delivery Fee</p>
-                <p>${cartTotalAmount === 0 ? 0 : 2}</p>
+                <p className="ds-num">${deliveryFee.toFixed(2)}</p>
               </div>
+              {serviceFee > 0 && (
+                <>
+                  <hr />
+                  <div className="cart-total-details">
+                    <p>Service Fee</p>
+                    <p className="ds-num">${serviceFee.toFixed(2)}</p>
+                  </div>
+                </>
+              )}
               <hr />
               <div className="cart-total-details">
                 <b>Total</b>
-                <b>${cartTotalAmount === 0 ? 0 : cartTotalAmount + 2}</b>
+                <b className="ds-num">${total.toFixed(2)}</b>
               </div>
             </div>
             <button onClick={handleProceedCheckout}>PROCEED TO CHECKOUT</button>
           </div>
-          <div className="cart-promocode">
-            <div>
-              <p>If you have a promo code, Enter it here</p>
-              <div className="cart-promocode-input">
-                <input type="text" placeholder="promo code" />
-                <button>Submit</button>
-              </div>
-            </div>
-          </div>
         </div>
       )}
+
+      {editingLine && (
+        <CartLineEditor
+          editing={editingLine}
+          onClose={() => setEditingLine(null)}
+        />
+      )}
     </div>
+  );
+};
+
+/**
+ * Wraps ItemOptionsSheet for editing an existing line. Because a line's
+ * identity includes its options, "editing" means removing the old line and
+ * adding the new one.
+ */
+const CartLineEditor = ({ editing, onClose }) => {
+  const { addToCart, removeLine } = useContext(StoreContext);
+
+  const handleSubmit = async ({ quantity, selectedOptions, note }) => {
+    const removed = await removeLine(editing.line.lineKey);
+    if (!removed) return false;
+
+    const added = await addToCart(
+      editing.line.foodId,
+      quantity,
+      selectedOptions,
+      note
+    );
+    if (added) toast.success("Item updated");
+    return added;
+  };
+
+  return (
+    <ItemOptionsSheet
+      item={editing.item}
+      onClose={onClose}
+      onSubmit={handleSubmit}
+      submitLabel="Save changes"
+      initial={{
+        quantity: editing.line.quantity,
+        selectedOptions: editing.line.selectedOptions,
+        note: editing.line.note,
+      }}
+    />
   );
 };
 

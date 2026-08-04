@@ -1,27 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./Navbar.css";
-import { assets } from "../../assets/assets";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useContext } from "react";
-import { ShoppingCart, ShoppingBag, LogOut, Sun, Moon } from "lucide-react";
+import { ShoppingCart, ShoppingBag, LogOut, Sun, Moon, MapPin, UserRound } from "lucide-react";
 import { StoreContext } from "../../context/StoreContext";
+import Avatar from "../Avatar/Avatar";
 
 const Navbar = ({ setShowLogin }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [isDark, setIsDark] = useState(() => localStorage.getItem("mode") === "dark");
   const [scrolled, setScrolled] = useState(false);
-  const { cartItems, token, setToken } = useContext(StoreContext);
+  const { getCartItemCount, token, setToken, user } = useContext(StoreContext);
   const navigate = useNavigate();
   const location = useLocation();
   const menuRef = useRef(null);
   const profileRef = useRef(null);
 
-  // Total number of items in the cart (sum of quantities)
-  const cartCount = Object.values(cartItems || {}).reduce(
-    (sum, qty) => sum + (qty > 0 ? qty : 0),
-    0
-  );
+  // Total number of items in the cart (sum of quantities across lines)
+  const cartCount = getCartItemCount();
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -44,6 +41,18 @@ const Navbar = ({ setShowLogin }) => {
     setMobileMenuOpen(false);
     setProfileOpen(false);
   }, [location.pathname]);
+
+  // When the live bar is hidden the fixed header is one strip shorter, so the
+  // static top offset would leave a gap. Flag it on <html> to shrink the offset.
+  const addr = user?.address;
+  const deliveryAddress = addr
+    ? [addr.address, addr.city].filter(Boolean).join(", ")
+    : "";
+  const showLiveBar = Boolean(token && deliveryAddress);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("no-live-bar", !showLiveBar);
+  }, [showLiveBar]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -69,20 +78,24 @@ const Navbar = ({ setShowLogin }) => {
 
   const isActive = (path) => location.pathname === path;
 
+  // The live bar greets a signed-in user with where their food will land.
+  // Signed out (or no saved address), the bar has nothing personal to say,
+  // so we hide it entirely rather than show a generic marketing line.
   return (
     <header className={`site-header ${scrolled ? "scrolled" : ""}`}>
-      <div className="live-bar">
-        <div className="live-bar-msg">
-          <span className="dot" />
-          <span>
-            Ho Chi Minh City · <b>24 kitchens in range</b> — hot food at your
-            window in fifteen minutes
-          </span>
+      {showLiveBar && (
+        <div className="live-bar">
+          <div className="live-bar-msg">
+            <MapPin size={14} className="live-bar-pin" />
+            <span>
+              Delivering to <b>{deliveryAddress}</b>
+            </span>
+          </div>
+          <Link to="/food" className="ds-label gold live-bar-cta">
+            SEE MENU ▾
+          </Link>
         </div>
-        <Link to="/food" className="ds-label gold live-bar-cta">
-          SEE MENU ▾
-        </Link>
-      </div>
+      )}
 
       <nav className="navbar">
       <Link to="/" aria-label="Home" className="brand">
@@ -128,8 +141,12 @@ const Navbar = ({ setShowLogin }) => {
             ref={profileRef}
             onClick={() => setProfileOpen((prev) => !prev)}
           >
-            <img src={assets.profile_icon} alt="Profile" />
+            <Avatar src={user?.avatar} name={user?.name} size={34} />
             <ul className="nav-profile-dropdown">
+              <li onClick={() => navigate("/profile")}>
+                <UserRound size={18} />
+                <p>Profile</p>
+              </li>
               <li onClick={() => navigate("/myorders")}>
                 <ShoppingBag size={18} />
                 <p>Orders</p>

@@ -2,9 +2,28 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "./EditProduct.css";
+import OptionGroupBuilder, {
+  validateOptionGroups,
+  normaliseOptionGroups,
+} from "../../../../shared/components/OptionGroupBuilder";
 
 const EditProduct = ({ url, product, onClose, onUpdate }) => {
   const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState("");
+  const [optionGroups, setOptionGroups] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  // One blob URL per chosen file, revoked when it changes — calling
+  // createObjectURL in the render body leaks one per render.
+  useEffect(() => {
+    if (!image) {
+      setPreview("");
+      return;
+    }
+    const objectUrl = URL.createObjectURL(image);
+    setPreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [image]);
   const [data, setData] = useState({
     name: "",
     description: "",
@@ -20,6 +39,13 @@ const EditProduct = ({ url, product, onClose, onUpdate }) => {
         price: product.price,
         category: product.category, // Load category từ product (string tự do)
       });
+      // Clone so editing doesn't mutate the list's copy of the product.
+      setOptionGroups(
+        (product.optionGroups || []).map((group) => ({
+          ...group,
+          options: (group.options || []).map((option) => ({ ...option })),
+        }))
+      );
     }
   }, [product]);
 
@@ -31,10 +57,17 @@ const EditProduct = ({ url, product, onClose, onUpdate }) => {
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
+    if (submitting) return;
 
     // Thêm validation đơn giản cho category (tùy chọn)
     if (!data.category.trim()) {
       toast.error("Category không được để trống!");
+      return;
+    }
+
+    const problems = validateOptionGroups(optionGroups);
+    if (problems.length > 0) {
+      toast.error(problems[0]);
       return;
     }
 
@@ -44,11 +77,16 @@ const EditProduct = ({ url, product, onClose, onUpdate }) => {
     formData.append("description", data.description);
     formData.append("price", Number(data.price));
     formData.append("category", data.category.trim()); // Trim space để sạch sẽ
+    formData.append(
+      "optionGroups",
+      JSON.stringify(normaliseOptionGroups(optionGroups))
+    );
     if (image) {
       formData.append("image", image);
     }
 
     try {
+      setSubmitting(true);
       const response = await axios.post(`${url}/api/food/update`, formData);
       if (response.data.success) {
         toast.success(response.data.message);
@@ -58,9 +96,18 @@ const EditProduct = ({ url, product, onClose, onUpdate }) => {
         toast.error(response.data.message);
       }
     } catch (error) {
-      toast.error("Error updating product");
+      toast.error(
+        error.response?.data?.message || "Error updating product"
+      );
+    } finally {
+      setSubmitting(false);
     }
   };
+
+  // Images are Cloudinary URLs now; only legacy local paths need the prefix.
+  const currentImageSrc = product?.image?.startsWith("http")
+    ? product.image
+    : `${url}/images/${product?.image}`;
 
   return (
     <div className="edit-modal">
@@ -77,17 +124,14 @@ const EditProduct = ({ url, product, onClose, onUpdate }) => {
             <label htmlFor="edit-image">
               <img
                 className="image"
-                src={
-                  image
-                    ? URL.createObjectURL(image)
-                    : `${url}/images/${product?.image}`
-                }
-                alt="Product image preview"
+                src={preview || currentImageSrc}
+                alt={preview ? "New product image" : "Current product image"}
               />
             </label>
             <input
-              onChange={(e) => setImage(e.target.files[0])}
+              onChange={(e) => setImage(e.target.files[0] || null)}
               type="file"
+              accept="image/*"
               id="edit-image"
               hidden
             />
@@ -141,12 +185,13 @@ const EditProduct = ({ url, product, onClose, onUpdate }) => {
               />
             </div>
           </div>
+          <OptionGroupBuilder value={optionGroups} onChange={setOptionGroups} />
           <div className="modal-buttons">
             <button type="button" className="cancel-btn" onClick={onClose}>
               CANCEL
             </button>
-            <button type="submit" className="update-btn">
-              UPDATE
+            <button type="submit" className="update-btn" disabled={submitting}>
+              {submitting ? "UPDATING…" : "UPDATE"}
             </button>
           </div>
         </form>

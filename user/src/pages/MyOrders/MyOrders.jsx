@@ -2,12 +2,19 @@ import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { StoreContext } from "../../context/StoreContext";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import { Package, LogIn } from "lucide-react";
 import DroneDelivery from "../../components/DroneDelivery/DroneDelivery";
+import { SkeletonList } from "../../components/Skeleton/Skeleton";
+import { EmptyState, ErrorState } from "../../../../shared/components/StateBlock";
 import "./MyOrders.css"; // Giả sử bạn có file CSS này cho style nhất quán với light mode
 
 const MyOrders = () => {
-  const { url, token } = useContext(StoreContext);
+  const { url, token, setShowLogin } = useContext(StoreContext);
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showDroneModal, setShowDroneModal] = useState(false);
   const [canReceiveOrder, setCanReceiveOrder] = useState({});
@@ -15,17 +22,28 @@ const MyOrders = () => {
   const [cancelReason, setCancelReason] = useState("");
 
   const fetchOrders = async () => {
-    if (!token) return;
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
     try {
+      setIsLoading(true);
+      setLoadError(null);
       const response = await axios.get(`${url}/api/order/userorders`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.data.success) {
         setOrders(response.data.data);
+      } else {
+        throw new Error(response.data.message || "Failed to load orders");
       }
     } catch (error) {
       console.error("Fetch orders error:", error);
-      toast.error("Failed to load orders");
+      setLoadError(
+        error.response?.data?.message || error.message || "Failed to load orders"
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -138,12 +156,34 @@ const MyOrders = () => {
   return (
     <div className="my-orders">
       <h2>My Orders</h2>
-      {orders.length === 0 ? (
-        <p className="no-orders">No orders yet</p>
+      {isLoading ? (
+        <SkeletonList count={3} height={190} />
+      ) : !token ? (
+        <EmptyState
+          icon={LogIn}
+          title="Sign in to see your orders"
+          description="Your order history and live drone tracking live behind your account."
+          actionLabel="Sign in"
+          onAction={() => setShowLogin(true)}
+        />
+      ) : loadError ? (
+        <ErrorState
+          title="Could not load your orders"
+          description={loadError}
+          onRetry={fetchOrders}
+        />
+      ) : orders.length === 0 ? (
+        <EmptyState
+          icon={Package}
+          title="No orders yet"
+          description="When you place an order it'll appear here, with live drone tracking."
+          actionLabel="Order something"
+          onAction={() => navigate("/")}
+        />
       ) : (
-        <div className="orders-list">
+        <div className="my-orders-list">
           {orders.map((order) => (
-            <div key={order._id} className="order-card">
+            <div key={order._id} className="my-orders-card">
               <div className="order-header">
                 <div className="order-info">
                   <h4>Order #{order._id.slice(-8).toUpperCase()}</h4>
@@ -165,7 +205,19 @@ const MyOrders = () => {
                   <div className="items-list">
                     {order.orderItems?.map((item, index) => (
                       <div key={index} className="order-item">
-                        <span className="item-name">{item.name}</span>
+                        <span className="item-name">
+                          {item.name}
+                          {item.selectedOptions?.length > 0 && (
+                            <span className="item-options">
+                              {item.selectedOptions
+                                .map((option) => option.optionName)
+                                .join(" · ")}
+                            </span>
+                          )}
+                          {item.note && (
+                            <span className="item-note">“{item.note}”</span>
+                          )}
+                        </span>
                         <span className="item-quantity">x{item.quantity}</span>
                         <span className="item-price">${item.price}</span>
                       </div>
@@ -186,11 +238,12 @@ const MyOrders = () => {
                         : "Credit card"}
                     </span>
                   </div>
-                  <div className="summary-row">
+                  <div className="summary-row summary-row-stacked">
                     <span>Delivery address:</span>
-                    <span>
-                      {order.shippingAddress?.address},{" "}
-                      {order.shippingAddress?.city}
+                    <span className="summary-address">
+                      {[order.shippingAddress?.address, order.shippingAddress?.city]
+                        .filter(Boolean)
+                        .join(", ")}
                     </span>
                   </div>
                 </div>

@@ -1,230 +1,291 @@
-// import React, { useState, useEffect, useContext } from 'react';
-// import { useParams } from 'react-router-dom';
-// import './RestaurantPage.css';
-// import { StoreContext } from '../../context/StoreContext';
-// import FoodDisplay from '../../components/FoodDisplay/FoodDisplay';
-// import { assets } from '../../assets/assets';  // Import để fallback
-
-// const RestaurantPage = () => {
-//   const { id } = useParams();
-//   const { restaurant_list, food_list, url } = useContext(StoreContext);  // Thêm url
-//   const [category, setCategory] = useState("All");
-//   const [restaurant, setRestaurant] = useState(null);
-
-//   // Tìm restaurant từ list
-//   useEffect(() => {
-//     const found = restaurant_list.find((r) => r._id === id);
-//     setRestaurant(found);
-//   }, [id, restaurant_list]);
-
-//   if (!restaurant) {
-//     return <div>Restaurant not found.</div>;
-//   }
-
-//   // SỬA: Xử lý URL ảnh động - kiểm tra full URL hay path local (với prefix /images/ đã có trong DB)
-//   const buildImgSrc = (image) => {
-//     if (!image) return assets.logo;
-//     if (image.startsWith('http')) {
-//       return image;  // Full URL từ Cloudinary, dùng trực tiếp
-//     }
-//     return `${url}${image}`;  // Path local đã có /images/... , chỉ prepend url
-//   };
-//   const imgSrc = buildImgSrc(restaurant.image);
-
-//   // Lấy categories duy nhất từ food_list filter by restaurantId
-//   const filteredFoods = food_list.filter((item) => item.restaurantId === id);
-//   const categories = ["All", ...new Set(filteredFoods.map((item) => item.category).filter(Boolean))];
-
-//   return (
-//     <div className="restaurant-page">
-//       {/* Info restaurant - Thêm layout flex với ảnh bên trái */}
-//       <div className="restaurant-info" style={{ display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
-//         {/* Ảnh quán */}
-//         <div className="restaurant-image-container" style={{ flexShrink: 0 }}>
-//           <img
-//             src={imgSrc}
-//             alt={restaurant.name}
-//             style={{
-//               width: '200px',
-//               height: '150px',
-//               objectFit: 'cover',
-//               borderRadius: '8px'
-//             }}
-//             onError={(e) => {  // Fallback nếu lỗi
-//               e.target.src = assets.logo;
-//             }}
-//           />
-//         </div>
-
-//         {/* Text info bên phải */}
-//         <div className="restaurant-text-info" style={{ flex: 1 }}>
-//           <h1>{restaurant.name}</h1>
-//           <p>Địa chỉ: {restaurant.address}</p>
-//           <p>Số điện thoại: {restaurant.phone || 'Không có'}</p>
-//           <p>Mô tả: {restaurant.description || 'Không có mô tả'}</p>
-//         </div>
-//       </div>
-
-//       {/* Catalog/Filter Section */}
-//       <div className="restaurant-catalog">
-//         <div className="catalog-list">
-//           {categories.map((cat, index) => (
-//             <button
-//               key={index}
-//               className={`catalog-item ${category === cat ? 'active' : ''}`}
-//               onClick={() => setCategory(cat)}
-//             >
-//               {cat}
-//             </button>
-//           ))}
-//         </div>
-//       </div>
-
-//       {/* Food Display Section */}
-//       <div className="restaurant-page-content">
-//         <FoodDisplay category={category} restaurantId={id} />  {/* Truyền restaurantId */}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default RestaurantPage;
-
-import React, { useState, useEffect, useMemo, useContext } from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useEffect, useMemo, useRef, useCallback, useContext } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { MapPin, Phone, Star, Clock, Bike, UtensilsCrossed, Store } from "lucide-react";
 import "./RestaurantPage.css";
 import { StoreContext } from "../../context/StoreContext";
 import FoodDisplay from "../../components/FoodDisplay/FoodDisplay";
+import { SkeletonGrid } from "../../components/Skeleton/Skeleton";
+import { EmptyState, ErrorState } from "../../../../shared/components/StateBlock";
 import { assets } from "../../assets/assets";
+
+/** Turn a category name into a DOM id we can scroll to. */
+const sectionId = (category) =>
+  `menu-${category.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 
 const RestaurantPage = () => {
   const { id } = useParams();
-  const { restaurant_list, url } = useContext(StoreContext); // Hook 1: useContext
-  const [category, setCategory] = useState("All"); // Hook 2: useState
-  const [restaurant, setRestaurant] = useState(null); // Hook 3: useState
-  const [restaurantFoods, setRestaurantFoods] = useState([]); // Hook 4: useState
-  const [loading, setLoading] = useState(true); // Hook 5: useState
-  const [error, setError] = useState(null); // Hook 6: useState
+  const navigate = useNavigate();
+  const { restaurant_list, url } = useContext(StoreContext);
 
-  // Hook 7: useEffect - Tìm restaurant
+  const [restaurant, setRestaurant] = useState(null);
+  const [restaurantFoods, setRestaurantFoods] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeCategory, setActiveCategory] = useState(null);
+
+  const navRef = useRef(null);
+  // While a click-triggered smooth scroll is in flight the observer would
+  // fight the user's intent, so we freeze the spy until it settles.
+  const isProgrammaticScroll = useRef(false);
+
   useEffect(() => {
     const found = restaurant_list.find((r) => r._id === id);
-    setRestaurant(found);
+    setRestaurant(found || null);
   }, [id, restaurant_list]);
 
-  // Hook 8: useEffect - Fetch foods
-  useEffect(() => {
-    if (id && restaurant) {
-      setLoading(true);
-      setError(null);
-      fetch(`${url}/api/food/list?restaurantId=${id}`)
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-          return response.json();
-        })
-        .then((data) => {
-          if (data.success && data.data) {
-            setRestaurantFoods(data.data);
-          } else {
-            setError("No foods found");
-          }
-        })
-        .catch((err) => {
-          console.error("Fetch restaurant foods error:", err);
-          setError(err.message);
-        })
-        .finally(() => setLoading(false));
+  const fetchFoods = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${url}/api/food/list?restaurantId=${id}`);
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
+      }
+      const data = await response.json();
+      if (data.success) {
+        setRestaurantFoods(data.data || []);
+      } else {
+        throw new Error(data.message || "Could not load this menu");
+      }
+    } catch (err) {
+      setError(err.message);
+      setRestaurantFoods([]);
+    } finally {
+      setLoading(false);
     }
-  }, [id, restaurant, url]);
+  }, [id, url]);
 
-  // Hook 9: useMemo - Categories (top level, dependency restaurantFoods)
-  const categories = useMemo(() => {
-    const cats = [
-      "All",
-      ...new Set(restaurantFoods.map((item) => item.category).filter(Boolean)),
-    ];
-    return cats;
-  }, [restaurantFoods]);
+  useEffect(() => {
+    fetchFoods();
+  }, [fetchFoods]);
 
-  // Hook 10: useMemo - Filtered foods (top level, dependency restaurantFoods + category)
-  const filteredFoods = useMemo(() => {
-    const filtered = restaurantFoods.filter(
-      (item) => category === "All" || item.category === category
+  // Categories in the order the kitchen listed them, deduplicated.
+  const categories = useMemo(
+    () => [...new Set(restaurantFoods.map((item) => item.category).filter(Boolean))],
+    [restaurantFoods]
+  );
+
+  // One bucket of dishes per category — the page renders every section at
+  // once and lets the nav scroll between them, rather than filtering.
+  const sections = useMemo(
+    () =>
+      categories.map((category) => ({
+        category,
+        id: sectionId(category),
+        foods: restaurantFoods.filter((item) => item.category === category),
+      })),
+    [categories, restaurantFoods]
+  );
+
+  useEffect(() => {
+    setActiveCategory((current) =>
+      current && categories.includes(current) ? current : categories[0] || null
     );
-    return filtered;
-  }, [restaurantFoods, category]);
+  }, [categories]);
 
-  // Conditional renders sau tất cả hooks
-  if (!restaurant) {
-    return <div>Restaurant not found.</div>;
-  }
+  // Scroll-spy: highlight whichever section is under the sticky nav.
+  useEffect(() => {
+    if (sections.length === 0) return;
 
-  if (loading) {
-    return <div>Loading menu...</div>;
-  }
+    const visible = new Set();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const category = entry.target.dataset.category;
+          if (entry.isIntersecting) visible.add(category);
+          else visible.delete(category);
+        });
 
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
+        if (isProgrammaticScroll.current) return;
+
+        // Of everything on screen, the topmost section wins.
+        const topmost = sections.find((s) => visible.has(s.category));
+        if (topmost) setActiveCategory(topmost.category);
+      },
+      {
+        // Detection line sits just below navbar + sticky category bar.
+        rootMargin: "-170px 0px -65% 0px",
+        threshold: 0,
+      }
+    );
+
+    const nodes = sections
+      .map((s) => document.getElementById(s.id))
+      .filter(Boolean);
+    nodes.forEach((node) => observer.observe(node));
+
+    return () => observer.disconnect();
+  }, [sections]);
+
+  // Keep the active chip in view on the horizontally scrolling mobile bar.
+  useEffect(() => {
+    if (!activeCategory || !navRef.current) return;
+    const chip = navRef.current.querySelector(`[data-chip="${activeCategory}"]`);
+    if (chip?.scrollIntoView) {
+      chip.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+    }
+  }, [activeCategory]);
+
+  const handleCategoryClick = (category) => {
+    const target = document.getElementById(sectionId(category));
+    if (!target) return;
+
+    setActiveCategory(category);
+    isProgrammaticScroll.current = true;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Offset by the navbar plus the sticky bar so the heading isn't hidden.
+    const offset = 158;
+    const top = target.getBoundingClientRect().top + window.scrollY - offset;
+
+    window.scrollTo({ top, behavior: reduceMotion ? "auto" : "smooth" });
+    window.setTimeout(() => {
+      isProgrammaticScroll.current = false;
+    }, reduceMotion ? 100 : 700);
+  };
 
   const buildImgSrc = (image) => {
     if (!image) return assets.logo;
     if (image.startsWith("http")) return image;
     return `${url}${image}`;
   };
-  const imgSrc = buildImgSrc(restaurant.image);
+
+  // The restaurant list may still be loading — don't call it missing yet.
+  if (!restaurant && restaurant_list.length === 0) {
+    return (
+      <div className="restaurant-page">
+        <div className="skeleton restaurant-banner-skeleton" />
+        <SkeletonGrid count={6} />
+      </div>
+    );
+  }
+
+  if (!restaurant) {
+    return (
+      <div className="restaurant-page">
+        <EmptyState
+          icon={Store}
+          title="Restaurant not found"
+          description="This restaurant may have closed or the link is out of date."
+          actionLabel="Browse restaurants"
+          onAction={() => navigate("/")}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="restaurant-page">
-      <div
-        className="restaurant-info"
-        style={{ display: "flex", alignItems: "flex-start", gap: "20px" }}
-      >
-        <div className="restaurant-image-container" style={{ flexShrink: 0 }}>
+      <header className="restaurant-hero">
+        <div className="restaurant-hero-image">
           <img
-            src={imgSrc}
+            src={buildImgSrc(restaurant.image)}
             alt={restaurant.name}
-            style={{
-              width: "200px",
-              height: "150px",
-              objectFit: "cover",
-              borderRadius: "8px",
-            }}
             onError={(e) => {
               e.target.src = assets.logo;
             }}
           />
         </div>
-        <div className="restaurant-text-info" style={{ flex: 1 }}>
-          <h1>{restaurant.name}</h1>
-          <p>Address: {restaurant.address}</p>
-          <p>Phone: {restaurant.phone || "N/A"}</p>
-          <p>Description: {restaurant.description || "No description"}</p>
-        </div>
-      </div>
 
-      <div className="restaurant-catalog">
-        <div className="catalog-list">
-          {categories.map((cat, index) => (
-            <button
-              key={index}
-              className={`catalog-item ${category === cat ? "active" : ""}`}
-              onClick={() => setCategory(cat)}
-            >
-              {cat}
-            </button>
-          ))}
+        <div className="restaurant-hero-card">
+          <div className="restaurant-hero-top">
+            <h1>{restaurant.name}</h1>
+            <span className="restaurant-hero-rating">
+              <Star size={14} fill="currentColor" strokeWidth={0} />
+              4.8
+            </span>
+          </div>
+
+          {restaurant.description && (
+            <p className="restaurant-hero-desc">{restaurant.description}</p>
+          )}
+
+          <div className="restaurant-hero-meta">
+            <span className="restaurant-hero-meta-item">
+              <MapPin size={14} />
+              {restaurant.address}
+            </span>
+            {restaurant.phone && (
+              <span className="restaurant-hero-meta-item">
+                <Phone size={14} />
+                {restaurant.phone}
+              </span>
+            )}
+            <span className="restaurant-hero-meta-item">
+              <Clock size={14} />
+              15–25 min
+            </span>
+            <span className="restaurant-hero-meta-item">
+              <Bike size={14} />
+              $2.00 delivery
+            </span>
+          </div>
+
+          {restaurant.isLocked && (
+            <p className="restaurant-hero-closed">
+              Temporarily unavailable — this restaurant is not accepting orders
+              right now.
+            </p>
+          )}
         </div>
-      </div>
+      </header>
+
+      {sections.length > 0 && (
+        <nav className="restaurant-catalog" ref={navRef} aria-label="Menu categories">
+          <div className="catalog-list">
+            {sections.map(({ category }) => (
+              <button
+                key={category}
+                type="button"
+                data-chip={category}
+                className={`catalog-item ${activeCategory === category ? "active" : ""}`}
+                aria-current={activeCategory === category ? "true" : undefined}
+                onClick={() => handleCategoryClick(category)}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </nav>
+      )}
 
       <div className="restaurant-page-content">
-        <FoodDisplay
-          foods={filteredFoods}
-          category={category}
-          restaurantId={id}
-        />
+        {loading && <SkeletonGrid count={6} />}
+
+        {!loading && error && (
+          <ErrorState
+            title="Could not load this menu"
+            description={error}
+            onRetry={fetchFoods}
+            actionLabel="Back to restaurants"
+            onAction={() => navigate("/")}
+          />
+        )}
+
+        {!loading &&
+          !error &&
+          sections.map(({ category, id: anchor, foods }) => (
+            <section
+              key={category}
+              id={anchor}
+              data-category={category}
+              className="menu-section"
+            >
+              <h2 className="menu-section-title">{category}</h2>
+              <FoodDisplay foods={foods} category="All" restaurantId={id} />
+            </section>
+          ))}
+
+        {!loading && !error && sections.length === 0 && (
+          <EmptyState
+            icon={UtensilsCrossed}
+            title="No dishes yet"
+            description="This restaurant hasn't published its menu. Check back soon."
+            actionLabel="Browse restaurants"
+            onAction={() => navigate("/")}
+          />
+        )}
       </div>
     </div>
   );

@@ -64,6 +64,17 @@ export const updateAddressSchema = Joi.object({
   zipCode: Joi.string().trim().max(20).allow("", null),
 });
 
+export const changePasswordSchema = Joi.object({
+  currentPassword: Joi.string().required().messages({
+    "any.required": "Vui lòng nhập mật khẩu hiện tại",
+    "string.empty": "Vui lòng nhập mật khẩu hiện tại",
+  }),
+  newPassword: Joi.string().min(8).max(128).required().messages({
+    "string.min": "Mật khẩu mới phải có ít nhất 8 ký tự",
+    "any.required": "Vui lòng nhập mật khẩu mới",
+  }),
+});
+
 export const updateProfileSchema = Joi.object({
   name: Joi.string().trim().min(2).max(50).messages({
     "string.min": "Tên phải có ít nhất 2 ký tự",

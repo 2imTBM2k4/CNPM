@@ -5,7 +5,13 @@ import { Food, Restaurant } from "../../models/index.cjs";
 import { createUser, generateToken } from "../helpers.js";
 
 describe("Cart API", () => {
-  let user, token, food1, food2, foodOtherRestaurant;
+  let user, token, food1, food2, foodOtherRestaurant, foodWithOptions;
+
+  const addItem = (body) =>
+    request(app)
+      .post("/api/cart/add")
+      .set("Authorization", `Bearer ${token}`)
+      .send(body);
 
   beforeEach(async () => {
     user = await createUser({ email: "cartapi@test.com" });
@@ -55,6 +61,28 @@ describe("Cart API", () => {
       category: "cat2",
       restaurantId: restaurant2._id,
     });
+
+    foodWithOptions = await Food.create({
+      name: "Food 4",
+      description: "Desc 4",
+      price: 10,
+      image: "f4.jpg",
+      category: "cat1",
+      restaurantId: restaurant1._id,
+      optionGroups: [
+        {
+          name: "Size",
+          type: "single",
+          required: true,
+          min: 1,
+          max: 1,
+          options: [
+            { name: "Regular", priceDelta: 0 },
+            { name: "Large", priceDelta: 5 },
+          ],
+        },
+      ],
+    });
   });
 
   describe("GET /api/cart/get", () => {
@@ -65,7 +93,8 @@ describe("Cart API", () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.cartData).toEqual({});
+      expect(res.body.items).toEqual([]);
+      expect(res.body.subtotal).toBe(0);
     });
 
     it("should require authentication", async () => {
@@ -76,110 +105,126 @@ describe("Cart API", () => {
 
   describe("POST /api/cart/add", () => {
     it("should add item to cart", async () => {
-      const res = await request(app)
-        .post("/api/cart/add")
-        .set("Authorization", `Bearer ${token}`)
-        .send({ itemId: food1._id.toString() });
+      const res = await addItem({ itemId: food1._id.toString() });
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.cartData[food1._id.toString()]).toBe(1);
+      expect(res.body.items).toHaveLength(1);
+      expect(res.body.items[0].quantity).toBe(1);
+      expect(res.body.subtotal).toBe(10);
     });
 
     it("should increment quantity for same item", async () => {
-      await request(app)
-        .post("/api/cart/add")
-        .set("Authorization", `Bearer ${token}`)
-        .send({ itemId: food1._id.toString() });
+      await addItem({ itemId: food1._id.toString() });
+      const res = await addItem({ itemId: food1._id.toString() });
 
-      const res = await request(app)
-        .post("/api/cart/add")
-        .set("Authorization", `Bearer ${token}`)
-        .send({ itemId: food1._id.toString() });
-
-      expect(res.body.cartData[food1._id.toString()]).toBe(2);
+      expect(res.body.items).toHaveLength(1);
+      expect(res.body.items[0].quantity).toBe(2);
     });
 
     it("should allow multiple items from same restaurant", async () => {
-      await request(app)
-        .post("/api/cart/add")
-        .set("Authorization", `Bearer ${token}`)
-        .send({ itemId: food1._id.toString() });
-
-      const res = await request(app)
-        .post("/api/cart/add")
-        .set("Authorization", `Bearer ${token}`)
-        .send({ itemId: food2._id.toString() });
+      await addItem({ itemId: food1._id.toString() });
+      const res = await addItem({ itemId: food2._id.toString() });
 
       expect(res.body.success).toBe(true);
-      expect(Object.keys(res.body.cartData)).toHaveLength(2);
+      expect(res.body.items).toHaveLength(2);
     });
 
     it("should reject items from different restaurant", async () => {
-      await request(app)
-        .post("/api/cart/add")
-        .set("Authorization", `Bearer ${token}`)
-        .send({ itemId: food1._id.toString() });
-
-      const res = await request(app)
-        .post("/api/cart/add")
-        .set("Authorization", `Bearer ${token}`)
-        .send({ itemId: foodOtherRestaurant._id.toString() });
+      await addItem({ itemId: food1._id.toString() });
+      const res = await addItem({ itemId: foodOtherRestaurant._id.toString() });
 
       expect(res.body.success).toBe(false);
     });
 
     it("should return 400 when itemId is missing", async () => {
-      const res = await request(app)
-        .post("/api/cart/add")
-        .set("Authorization", `Bearer ${token}`)
-        .send({});
+      const res = await addItem({});
+      expect(res.status).toBe(400);
+    });
+
+    it("should keep different option picks as separate lines", async () => {
+      await addItem({
+        itemId: foodWithOptions._id.toString(),
+        selectedOptions: [{ groupName: "Size", optionName: "Regular" }],
+      });
+      const res = await addItem({
+        itemId: foodWithOptions._id.toString(),
+        selectedOptions: [{ groupName: "Size", optionName: "Large" }],
+      });
+
+      expect(res.body.items).toHaveLength(2);
+      expect(res.body.subtotal).toBe(25);
+    });
+
+    it("should reject a missing required option group", async () => {
+      const res = await addItem({ itemId: foodWithOptions._id.toString() });
 
       expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it("should ignore a client-supplied priceDelta and use the menu's", async () => {
+      // validate() runs with stripUnknown, so the field never reaches the
+      // service; the surcharge always comes from the dish in the database.
+      const res = await addItem({
+        itemId: foodWithOptions._id.toString(),
+        selectedOptions: [
+          { groupName: "Size", optionName: "Large", priceDelta: -100 },
+        ],
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body.items[0].unitPrice).toBe(15);
+      expect(res.body.items[0].selectedOptions[0].priceDelta).toBe(5);
     });
   });
 
-  describe("POST /api/cart/remove", () => {
-    it("should decrement quantity", async () => {
-      await request(app)
-        .post("/api/cart/add")
-        .set("Authorization", `Bearer ${token}`)
-        .send({ itemId: food1._id.toString() });
-      await request(app)
-        .post("/api/cart/add")
-        .set("Authorization", `Bearer ${token}`)
-        .send({ itemId: food1._id.toString() });
+  describe("POST /api/cart/update-line", () => {
+    it("should set the quantity outright", async () => {
+      const added = await addItem({ itemId: food1._id.toString() });
+      const { lineKey } = added.body.items[0];
 
       const res = await request(app)
-        .post("/api/cart/remove")
+        .post("/api/cart/update-line")
         .set("Authorization", `Bearer ${token}`)
-        .send({ itemId: food1._id.toString() });
+        .send({ lineKey, quantity: 4 });
 
       expect(res.body.success).toBe(true);
-      expect(res.body.cartData[food1._id.toString()]).toBe(1);
+      expect(res.body.items[0].quantity).toBe(4);
+      expect(res.body.subtotal).toBe(40);
     });
 
-    it("should remove item when quantity reaches 0", async () => {
-      await request(app)
-        .post("/api/cart/add")
-        .set("Authorization", `Bearer ${token}`)
-        .send({ itemId: food1._id.toString() });
+    it("should drop the line at quantity 0", async () => {
+      const added = await addItem({ itemId: food1._id.toString() });
+      const { lineKey } = added.body.items[0];
 
       const res = await request(app)
-        .post("/api/cart/remove")
+        .post("/api/cart/update-line")
         .set("Authorization", `Bearer ${token}`)
-        .send({ itemId: food1._id.toString() });
+        .send({ lineKey, quantity: 0 });
 
-      expect(res.body.cartData[food1._id.toString()]).toBeUndefined();
+      expect(res.body.items).toHaveLength(0);
+    });
+  });
+
+  describe("POST /api/cart/remove-line", () => {
+    it("should remove the whole line in one request", async () => {
+      const added = await addItem({ itemId: food1._id.toString(), quantity: 5 });
+      const { lineKey } = added.body.items[0];
+
+      const res = await request(app)
+        .post("/api/cart/remove-line")
+        .set("Authorization", `Bearer ${token}`)
+        .send({ lineKey });
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.items).toHaveLength(0);
     });
   });
 
   describe("POST /api/cart/clear", () => {
     it("should clear all items", async () => {
-      await request(app)
-        .post("/api/cart/add")
-        .set("Authorization", `Bearer ${token}`)
-        .send({ itemId: food1._id.toString() });
+      await addItem({ itemId: food1._id.toString() });
 
       const res = await request(app)
         .post("/api/cart/clear")
@@ -191,7 +236,7 @@ describe("Cart API", () => {
         .get("/api/cart/get")
         .set("Authorization", `Bearer ${token}`);
 
-      expect(getRes.body.cartData).toEqual({});
+      expect(getRes.body.items).toEqual([]);
     });
   });
 });

@@ -73,6 +73,32 @@ export const updateProfile = async (req, res) => {
   }
 };
 
+export const changePassword = async (req, res) => {
+  try {
+    const result = await userService.changePassword(
+      req.user._id,
+      req.body.currentPassword,
+      req.body.newPassword
+    );
+    res.json(result);
+  } catch (error) {
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
+  }
+};
+
+export const updateAvatar = async (req, res) => {
+  try {
+    const result = await userService.updateAvatar(req.user._id, req.file);
+    res.json(result);
+  } catch (error) {
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
+  }
+};
+
 export const lockUser = async (req, res) => {
   try {
     const userId = req.body.id || req.body.userId;

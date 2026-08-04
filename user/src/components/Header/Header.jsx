@@ -1,16 +1,24 @@
 // Header.jsx
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Header.css";
 
 const Header = () => {
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const q = query.trim();
+    navigate(q ? `/food?q=${encodeURIComponent(q)}` : "/food");
+  };
+
   return (
     <div className="header">
       <div className="header-photo" aria-hidden="true">
         <span className="header-note">Matted, not full-bleed</span>
       </div>
       <div className="header-contents">
-        <span className="header-eyebrow">Ho Chi Minh City · 24 kitchens in range</span>
         <h2>Hot food at your window in fifteen minutes</h2>
         <p>
           Skip the wait. Our drone fleet delivers meals from the best local
@@ -18,7 +26,7 @@ const Header = () => {
           every time.
         </p>
 
-        <div className="header-search">
+        <form className="header-search" onSubmit={handleSearch}>
           <svg
             className="header-search-icon"
             width="20"
@@ -36,14 +44,15 @@ const Header = () => {
           <input
             type="text"
             className="header-search-input"
-            placeholder="Search for restaurants or dishes..."
-            readOnly
+            placeholder="Search for dishes..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search dishes"
           />
-        </div>
-
-        <Link to="/food">
-          <button className="buttonwl">Explore Menu</button>
-        </Link>
+          <button type="submit" className="header-search-btn">
+            Search
+          </button>
+        </form>
 
         <div className="header-badges">
           <span className="header-badge">

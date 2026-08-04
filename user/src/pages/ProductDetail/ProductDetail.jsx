@@ -1,25 +1,27 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import { Plus, Minus, Star, ArrowLeft } from "lucide-react";
+import { Plus, Star, ArrowLeft } from "lucide-react";
 import "./ProductDetail.css";
 import { StoreContext } from "../../context/StoreContext";
+import { ErrorState } from "../../../../shared/components/StateBlock";
+import ItemOptionsSheet from "../../components/ItemOptionsSheet/ItemOptionsSheet";
 import { assets } from "../../assets/assets";
 
+/**
+ * Deep-link page for a single dish. Adding to the cart goes through the same
+ * ItemOptionsSheet the menu cards open, so options behave identically here.
+ */
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { food_list, cartItems, addToCart, url, isLoadingFoods } =
-    useContext(StoreContext);
-  const [tempQuantity, setTempQuantity] = useState(1);
-  const [showCounter, setShowCounter] = useState(false);
-  const [loading, setLoading] = useState(true); // NEW: Track detail loading
-  const [error, setError] = useState(null); // NEW: Error state
-  const [item, setItem] = useState(null); // NEW: Local state cho item (từ list hoặc fetch)
+  const { food_list, url, isLoadingFoods } = useContext(StoreContext);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [item, setItem] = useState(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
-  // NEW: Fetch single nếu !item từ list
-  const fetchSingleProduct = async () => {
-    if (!id || item) return; // Đã có thì skip
+  const fetchSingleProduct = useCallback(async () => {
+    if (!id) return;
     try {
       setLoading(true);
       setError(null);
@@ -35,7 +37,7 @@ const ProductDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, url]);
 
   useEffect(() => {
     if (isLoadingFoods) return;
@@ -46,55 +48,48 @@ const ProductDetail = () => {
     } else {
       fetchSingleProduct();
     }
-  }, [food_list, id, isLoadingFoods]);
+  }, [food_list, id, isLoadingFoods, fetchSingleProduct]);
 
   if (loading || isLoadingFoods) {
     return (
       <div className="product-detail">
-        <div className="loading">Loading product...</div>
+        <div className="product-detail-container">
+          <div className="product-detail-image">
+            <div className="skeleton product-detail-image-skeleton" />
+          </div>
+          <div className="product-detail-info">
+            {/* .product-detail-info is a flex column with a gap, so these
+                need no margins of their own. */}
+            <div className="skeleton skeleton-text" style={{ width: "60%", height: 30 }} />
+            <div className="skeleton skeleton-text" style={{ width: "100%" }} />
+            <div className="skeleton skeleton-text" style={{ width: "88%" }} />
+            <div className="skeleton skeleton-text" style={{ width: "30%", height: 22 }} />
+            <div className="skeleton" style={{ width: 160, height: 42 }} />
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (error || (!item && !loading)) {
+  if (error || !item) {
     return (
       <div className="product-detail">
-        <h2>{error || "Product not found!"}</h2>
-        <button onClick={() => navigate("/")}>Back to home</button>
+        <ErrorState
+          title={error ? "Could not load this dish" : "Dish not found"}
+          description={error || "This dish may have been removed from the menu."}
+          onRetry={error ? fetchSingleProduct : undefined}
+          actionLabel="Back to home"
+          onAction={() => navigate("/")}
+        />
       </div>
     );
   }
 
-  // ... (giữ nguyên handleAddClick, handleRemoveTemp, handleConfirmAdd)
+  const imageSrc = item.image?.startsWith("http")
+    ? item.image
+    : `${url}/images/${item.image}`;
 
-  const handleAddClick = () => {
-    if (!showCounter) {
-      setTempQuantity(1);
-      setShowCounter(true);
-    } else {
-      setTempQuantity(tempQuantity + 1);
-    }
-  };
-
-  const handleRemoveTemp = () => {
-    if (tempQuantity > 1) {
-      setTempQuantity(tempQuantity - 1);
-    } else {
-      setTempQuantity(1);
-      setShowCounter(false);
-    }
-  };
-
-  const handleConfirmAdd = async () => {
-    if (tempQuantity > 0) {
-      const success = await addToCart(id, tempQuantity);
-      if (success) {
-        toast.success("Added to cart!");
-      }
-      setShowCounter(false);
-      setTempQuantity(1);
-    }
-  };
+  const optionGroups = item.optionGroups || [];
 
   return (
     <div className="product-detail">
@@ -103,7 +98,13 @@ const ProductDetail = () => {
       </button>
       <div className="product-detail-container">
         <div className="product-detail-image">
-          <img src={item.image} alt={item.name} />
+          <img
+            src={imageSrc}
+            alt={item.name}
+            onError={(e) => {
+              e.target.src = assets.sample_food || assets.logo;
+            }}
+          />
         </div>
         <div className="product-detail-info">
           <div className="product-detail-name-rating">
@@ -115,33 +116,32 @@ const ProductDetail = () => {
           </div>
           <p className="product-detail-desc">{item.description}</p>
           <p className="product-detail-price">${item.price}</p>
+
+          {optionGroups.length > 0 && (
+            <ul className="product-detail-options">
+              {optionGroups.map((group) => (
+                <li key={group.name}>
+                  <span className="ds-label">{group.name}</span>
+                  <span className="product-detail-option-names">
+                    {group.options.map((option) => option.name).join(" · ")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
           <div className="product-detail-cart">
-            {!showCounter ? (
-              <button
-                className="add-detail"
-                onClick={handleAddClick}
-              >
-                <Plus size={18} strokeWidth={2.5} /> Add to cart
-              </button>
-            ) : (
-              <div className="product-detail-counter-section">
-                <div className="temp-counter">
-                  <button className="temp-counter-btn" onClick={handleRemoveTemp} aria-label="Decrease">
-                    <Minus size={16} strokeWidth={2.5} />
-                  </button>
-                  <p className="temp-quantity">{tempQuantity}</p>
-                  <button className="temp-counter-btn" onClick={handleAddClick} aria-label="Increase">
-                    <Plus size={16} strokeWidth={2.5} />
-                  </button>
-                </div>
-                <button className="confirm-btn" onClick={handleConfirmAdd}>
-                  Add to cart
-                </button>
-              </div>
-            )}
+            <button className="add-detail" onClick={() => setSheetOpen(true)}>
+              <Plus size={18} strokeWidth={2.5} />
+              {optionGroups.length > 0 ? "Choose options" : "Add to cart"}
+            </button>
           </div>
         </div>
       </div>
+
+      {sheetOpen && (
+        <ItemOptionsSheet item={item} onClose={() => setSheetOpen(false)} />
+      )}
     </div>
   );
 };

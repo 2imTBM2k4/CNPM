@@ -1,0 +1,435 @@
+import React, { useContext, useEffect, useRef, useState } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { User, MapPin, Shield, Camera, LogIn, Loader2 } from "lucide-react";
+import { StoreContext } from "../../context/StoreContext";
+import Avatar from "../../components/Avatar/Avatar";
+import { EmptyState } from "../../../../shared/components/StateBlock";
+import "./Profile.css";
+
+const TABS = [
+  { id: "info", label: "Profile", icon: User },
+  { id: "address", label: "Delivery address", icon: MapPin },
+  { id: "security", label: "Security", icon: Shield },
+];
+
+const Profile = () => {
+  const { url, token, user, setUser, setShowLogin } = useContext(StoreContext);
+  const [activeTab, setActiveTab] = useState("info");
+  const fileInputRef = useRef(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  // Each section owns its own form state and saving flag.
+  const [info, setInfo] = useState({ name: "", email: "", phone: "" });
+  const [savingInfo, setSavingInfo] = useState(false);
+
+  const [address, setAddress] = useState({
+    fullName: "",
+    phone: "",
+    address: "",
+    city: "",
+    state: "",
+    country: "",
+    zipCode: "",
+  });
+  const [savingAddress, setSavingAddress] = useState(false);
+
+  const [password, setPassword] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [savingPassword, setSavingPassword] = useState(false);
+
+  // Hydrate the forms whenever the user in context changes (initial load, or
+  // after a successful save that returns the fresh record).
+  useEffect(() => {
+    if (!user) return;
+    setInfo({
+      name: user.name || "",
+      email: user.email || "",
+      phone: user.phone || "",
+    });
+    setAddress({
+      fullName: user.address?.fullName || "",
+      phone: user.address?.phone || "",
+      address: user.address?.address || "",
+      city: user.address?.city || "",
+      state: user.address?.state || "",
+      country: user.address?.country || "",
+      zipCode: user.address?.zipCode || "",
+    });
+  }, [user]);
+
+  const authConfig = { headers: { token } };
+
+  const handleAvatarPick = () => fileInputRef.current?.click();
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-picking the same file later
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("avatar", file);
+    try {
+      setUploadingAvatar(true);
+      const res = await axios.put(`${url}/api/user/avatar`, formData, authConfig);
+      if (res.data.success) {
+        setUser(res.data.data);
+        toast.success("Avatar updated");
+      } else {
+        toast.error(res.data.message || "Upload failed");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Upload failed");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleSaveInfo = async (e) => {
+    e.preventDefault();
+    try {
+      setSavingInfo(true);
+      const res = await axios.put(`${url}/api/user/profile`, info, authConfig);
+      if (res.data.success) {
+        setUser(res.data.data);
+        toast.success("Profile updated");
+      } else {
+        toast.error(res.data.message || "Update failed");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Update failed");
+    } finally {
+      setSavingInfo(false);
+    }
+  };
+
+  const handleSaveAddress = async (e) => {
+    e.preventDefault();
+    try {
+      setSavingAddress(true);
+      const res = await axios.put(
+        `${url}/api/user/update-address`,
+        address,
+        authConfig
+      );
+      if (res.data.success) {
+        setUser(res.data.data);
+        toast.success("Address saved");
+      } else {
+        toast.error(res.data.message || "Update failed");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Update failed");
+    } finally {
+      setSavingAddress(false);
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (password.newPassword !== password.confirmPassword) {
+      toast.error("New passwords do not match");
+      return;
+    }
+    if (password.newPassword.length < 8) {
+      toast.error("New password must be at least 8 characters");
+      return;
+    }
+    try {
+      setSavingPassword(true);
+      const res = await axios.put(
+        `${url}/api/user/change-password`,
+        {
+          currentPassword: password.currentPassword,
+          newPassword: password.newPassword,
+        },
+        authConfig
+      );
+      if (res.data.success) {
+        toast.success(res.data.message || "Password changed");
+        setPassword({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+      } else {
+        toast.error(res.data.message || "Change failed");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Change failed");
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  if (!token) {
+    return (
+      <div className="profile-page">
+        <EmptyState
+          icon={LogIn}
+          title="Sign in to manage your profile"
+          description="Your account details, delivery address and security settings live behind your account."
+          actionLabel="Sign in"
+          onAction={() => setShowLogin(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="profile-page">
+      <header className="profile-hero">
+        <div className="profile-avatar-wrap">
+          <Avatar src={user?.avatar} name={user?.name} size={96} />
+          <button
+            type="button"
+            className="profile-avatar-edit"
+            onClick={handleAvatarPick}
+            disabled={uploadingAvatar}
+            aria-label="Change avatar"
+          >
+            {uploadingAvatar ? (
+              <Loader2 size={16} className="spin" />
+            ) : (
+              <Camera size={16} />
+            )}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={handleAvatarChange}
+          />
+        </div>
+        <div className="profile-hero-text">
+          <h2>{user?.name || "Your account"}</h2>
+          <p>{user?.email}</p>
+        </div>
+      </header>
+
+      <div className="profile-tabs" role="tablist">
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              className={`profile-tab ${activeTab === tab.id ? "active" : ""}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <Icon size={17} />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="profile-panel">
+        {activeTab === "info" && (
+          <form className="profile-form" onSubmit={handleSaveInfo}>
+            <div className="profile-field">
+              <label htmlFor="pf-name">Full name</label>
+              <input
+                id="pf-name"
+                type="text"
+                value={info.name}
+                onChange={(e) => setInfo({ ...info, name: e.target.value })}
+                placeholder="Your name"
+              />
+            </div>
+            <div className="profile-field">
+              <label htmlFor="pf-email">Email</label>
+              <input
+                id="pf-email"
+                type="email"
+                value={info.email}
+                onChange={(e) => setInfo({ ...info, email: e.target.value })}
+                placeholder="you@example.com"
+              />
+            </div>
+            <div className="profile-field">
+              <label htmlFor="pf-phone">Phone</label>
+              <input
+                id="pf-phone"
+                type="tel"
+                value={info.phone}
+                onChange={(e) => setInfo({ ...info, phone: e.target.value })}
+                placeholder="Phone number"
+              />
+            </div>
+            <button type="submit" className="profile-save" disabled={savingInfo}>
+              {savingInfo ? "Saving..." : "Save changes"}
+            </button>
+          </form>
+        )}
+
+        {activeTab === "address" && (
+          <form className="profile-form" onSubmit={handleSaveAddress}>
+            <div className="profile-field-row">
+              <div className="profile-field">
+                <label htmlFor="pf-fullname">Recipient name</label>
+                <input
+                  id="pf-fullname"
+                  type="text"
+                  value={address.fullName}
+                  onChange={(e) =>
+                    setAddress({ ...address, fullName: e.target.value })
+                  }
+                  placeholder="Recipient"
+                />
+              </div>
+              <div className="profile-field">
+                <label htmlFor="pf-addr-phone">Phone</label>
+                <input
+                  id="pf-addr-phone"
+                  type="tel"
+                  value={address.phone}
+                  onChange={(e) =>
+                    setAddress({ ...address, phone: e.target.value })
+                  }
+                  placeholder="Contact phone"
+                />
+              </div>
+            </div>
+            <div className="profile-field">
+              <label htmlFor="pf-address">Street address</label>
+              <input
+                id="pf-address"
+                type="text"
+                value={address.address}
+                onChange={(e) =>
+                  setAddress({ ...address, address: e.target.value })
+                }
+                placeholder="House number, street, ward..."
+              />
+            </div>
+            <div className="profile-field-row">
+              <div className="profile-field">
+                <label htmlFor="pf-city">City</label>
+                <input
+                  id="pf-city"
+                  type="text"
+                  value={address.city}
+                  onChange={(e) =>
+                    setAddress({ ...address, city: e.target.value })
+                  }
+                  placeholder="City"
+                />
+              </div>
+              <div className="profile-field">
+                <label htmlFor="pf-state">State / Province</label>
+                <input
+                  id="pf-state"
+                  type="text"
+                  value={address.state}
+                  onChange={(e) =>
+                    setAddress({ ...address, state: e.target.value })
+                  }
+                  placeholder="State or province"
+                />
+              </div>
+            </div>
+            <div className="profile-field-row">
+              <div className="profile-field">
+                <label htmlFor="pf-country">Country</label>
+                <input
+                  id="pf-country"
+                  type="text"
+                  value={address.country}
+                  onChange={(e) =>
+                    setAddress({ ...address, country: e.target.value })
+                  }
+                  placeholder="Country"
+                />
+              </div>
+              <div className="profile-field">
+                <label htmlFor="pf-zip">Zip code</label>
+                <input
+                  id="pf-zip"
+                  type="text"
+                  value={address.zipCode}
+                  onChange={(e) =>
+                    setAddress({ ...address, zipCode: e.target.value })
+                  }
+                  placeholder="Postal code"
+                />
+              </div>
+            </div>
+            <button
+              type="submit"
+              className="profile-save"
+              disabled={savingAddress}
+            >
+              {savingAddress ? "Saving..." : "Save address"}
+            </button>
+          </form>
+        )}
+
+        {activeTab === "security" && (
+          <form className="profile-form" onSubmit={handleChangePassword}>
+            <div className="profile-field">
+              <label htmlFor="pf-cur-pass">Current password</label>
+              <input
+                id="pf-cur-pass"
+                type="password"
+                value={password.currentPassword}
+                onChange={(e) =>
+                  setPassword({ ...password, currentPassword: e.target.value })
+                }
+                placeholder="Current password"
+                autoComplete="current-password"
+              />
+            </div>
+            <div className="profile-field">
+              <label htmlFor="pf-new-pass">New password</label>
+              <input
+                id="pf-new-pass"
+                type="password"
+                value={password.newPassword}
+                onChange={(e) =>
+                  setPassword({ ...password, newPassword: e.target.value })
+                }
+                placeholder="At least 8 characters"
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="profile-field">
+              <label htmlFor="pf-confirm-pass">Confirm new password</label>
+              <input
+                id="pf-confirm-pass"
+                type="password"
+                value={password.confirmPassword}
+                onChange={(e) =>
+                  setPassword({ ...password, confirmPassword: e.target.value })
+                }
+                placeholder="Re-enter new password"
+                autoComplete="new-password"
+              />
+            </div>
+            <button
+              type="submit"
+              className="profile-save"
+              disabled={savingPassword}
+            >
+              {savingPassword ? "Saving..." : "Change password"}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Profile;

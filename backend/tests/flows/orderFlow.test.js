@@ -79,26 +79,51 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
     userToken = generateToken(user._id);
   });
 
+  /**
+   * Orders are built from the server-side cart, so a test that wants an order
+   * must fill the cart first. Returns the /api/order/place response.
+   */
+  const placeCodOrder = async (quantity = 1) => {
+    await request(app)
+      .post("/api/cart/add")
+      .set("Authorization", `Bearer ${userToken}`)
+      .send({ itemId: food1._id.toString(), quantity });
+
+    return request(app)
+      .post("/api/order/place")
+      .set("Authorization", `Bearer ${userToken}`)
+      .send({
+        address: {
+          fullName: "Test", address: "123 St", city: "HCM",
+          state: "HCM", country: "VN", zipCode: "70000", phone: "0123456789",
+        },
+        paymentMethod: "COD",
+      });
+  };
+
   it("Luồng hoàn chỉnh: thêm giỏ → đặt COD → restaurant xác nhận → giao → user nhận → balance cập nhật", async () => {
     // === Bước 1: User thêm món vào giỏ hàng ===
     let res = await request(app)
       .post("/api/cart/add")
       .set("Authorization", `Bearer ${userToken}`)
       .send({ itemId: food1._id.toString() });
+    const lineFor = (body, food) =>
+      body.items.find((item) => item.foodId === food._id.toString());
+
     expect(res.body.success).toBe(true);
-    expect(res.body.cartData[food1._id.toString()]).toBe(1);
+    expect(lineFor(res.body, food1).quantity).toBe(1);
 
     res = await request(app)
       .post("/api/cart/add")
       .set("Authorization", `Bearer ${userToken}`)
       .send({ itemId: food1._id.toString() });
-    expect(res.body.cartData[food1._id.toString()]).toBe(2);
+    expect(lineFor(res.body, food1).quantity).toBe(2);
 
     res = await request(app)
       .post("/api/cart/add")
       .set("Authorization", `Bearer ${userToken}`)
       .send({ itemId: food2._id.toString() });
-    expect(res.body.cartData[food2._id.toString()]).toBe(1);
+    expect(lineFor(res.body, food2).quantity).toBe(1);
 
     // === Bước 2: User đặt hàng COD ===
     const totalPrice = food1.price * 2 + food2.price + 2; // 8*2 + 7 + 2 shipping = 25
@@ -136,7 +161,7 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
     res = await request(app)
       .get("/api/cart/get")
       .set("Authorization", `Bearer ${userToken}`);
-    expect(res.body.cartData).toEqual({});
+    expect(res.body.items).toEqual([]);
 
     // === Bước 3: Restaurant owner xác nhận đơn (pending → preparing) ===
     res = await request(app)
@@ -182,19 +207,7 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
 
   it("User hủy đơn khi pending → đơn bị cancelled, balance không thay đổi", async () => {
     // Đặt hàng
-    const res = await request(app)
-      .post("/api/order/place")
-      .set("Authorization", `Bearer ${userToken}`)
-      .send({
-        items: [{ _id: food1._id, name: food1.name, quantity: 1, price: food1.price, image: food1.image }],
-        address: {
-          fullName: "Test", address: "123 St", city: "HCM",
-          state: "HCM", country: "VN", zipCode: "70000", phone: "0123456789",
-        },
-        amount: 10,
-        paymentMethod: "COD",
-        restaurantId: restaurant._id.toString(),
-      });
+    const res = await placeCodOrder();
     const orderId = res.body.orderId;
 
     // User hủy đơn khi pending
@@ -217,19 +230,7 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
   });
 
   it("User KHÔNG thể hủy đơn khi đang preparing", async () => {
-    const res = await request(app)
-      .post("/api/order/place")
-      .set("Authorization", `Bearer ${userToken}`)
-      .send({
-        items: [{ _id: food1._id, name: food1.name, quantity: 1, price: food1.price, image: food1.image }],
-        address: {
-          fullName: "Test", address: "123 St", city: "HCM",
-          state: "HCM", country: "VN", zipCode: "70000", phone: "0123456789",
-        },
-        amount: 10,
-        paymentMethod: "COD",
-        restaurantId: restaurant._id.toString(),
-      });
+    const res = await placeCodOrder();
     const orderId = res.body.orderId;
 
     // Restaurant accept → preparing
@@ -251,19 +252,7 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
   });
 
   it("User KHÔNG thể hủy đơn khi đang delivering", async () => {
-    const res = await request(app)
-      .post("/api/order/place")
-      .set("Authorization", `Bearer ${userToken}`)
-      .send({
-        items: [{ _id: food1._id, name: food1.name, quantity: 1, price: food1.price, image: food1.image }],
-        address: {
-          fullName: "Test", address: "123 St", city: "HCM",
-          state: "HCM", country: "VN", zipCode: "70000", phone: "0123456789",
-        },
-        amount: 10,
-        paymentMethod: "COD",
-        restaurantId: restaurant._id.toString(),
-      });
+    const res = await placeCodOrder();
     const orderId = res.body.orderId;
 
     await request(app)
@@ -287,19 +276,7 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
   });
 
   it("Restaurant owner hủy đơn phải có lý do", async () => {
-    const res = await request(app)
-      .post("/api/order/place")
-      .set("Authorization", `Bearer ${userToken}`)
-      .send({
-        items: [{ _id: food1._id, name: food1.name, quantity: 1, price: food1.price, image: food1.image }],
-        address: {
-          fullName: "Test", address: "123 St", city: "HCM",
-          state: "HCM", country: "VN", zipCode: "70000", phone: "0123456789",
-        },
-        amount: 10,
-        paymentMethod: "COD",
-        restaurantId: restaurant._id.toString(),
-      });
+    const res = await placeCodOrder();
     const orderId = res.body.orderId;
 
     // Hủy không có lý do → bị từ chối
@@ -319,19 +296,7 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
   });
 
   it("Không thể nhảy trạng thái: pending → delivering (phải qua preparing)", async () => {
-    const res = await request(app)
-      .post("/api/order/place")
-      .set("Authorization", `Bearer ${userToken}`)
-      .send({
-        items: [{ _id: food1._id, name: food1.name, quantity: 1, price: food1.price, image: food1.image }],
-        address: {
-          fullName: "Test", address: "123 St", city: "HCM",
-          state: "HCM", country: "VN", zipCode: "70000", phone: "0123456789",
-        },
-        amount: 10,
-        paymentMethod: "COD",
-        restaurantId: restaurant._id.toString(),
-      });
+    const res = await placeCodOrder();
     const orderId = res.body.orderId;
 
     // Cố nhảy pending → delivering
@@ -346,19 +311,7 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
   });
 
   it("User KHÔNG thể xác nhận nhận hàng khi đơn chưa delivering", async () => {
-    const res = await request(app)
-      .post("/api/order/place")
-      .set("Authorization", `Bearer ${userToken}`)
-      .send({
-        items: [{ _id: food1._id, name: food1.name, quantity: 1, price: food1.price, image: food1.image }],
-        address: {
-          fullName: "Test", address: "123 St", city: "HCM",
-          state: "HCM", country: "VN", zipCode: "70000", phone: "0123456789",
-        },
-        amount: 10,
-        paymentMethod: "COD",
-        restaurantId: restaurant._id.toString(),
-      });
+    const res = await placeCodOrder();
     const orderId = res.body.orderId;
 
     // Cố đánh dấu delivered khi đang pending
@@ -380,19 +333,7 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
     const userBToken = generateToken(userB._id);
 
     // User A đặt hàng
-    const res = await request(app)
-      .post("/api/order/place")
-      .set("Authorization", `Bearer ${userToken}`)
-      .send({
-        items: [{ _id: food1._id, name: food1.name, quantity: 1, price: food1.price, image: food1.image }],
-        address: {
-          fullName: "Test", address: "123 St", city: "HCM",
-          state: "HCM", country: "VN", zipCode: "70000", phone: "0123456789",
-        },
-        amount: 10,
-        paymentMethod: "COD",
-        restaurantId: restaurant._id.toString(),
-      });
+    const res = await placeCodOrder();
     const orderId = res.body.orderId;
 
     // User B cố hủy đơn của User A → bị từ chối
@@ -455,7 +396,9 @@ describe("Cart Flow: Chỉ được đặt món từ 1 nhà hàng", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({ itemId: food2._id.toString() });
     expect(res.body.success).toBe(true);
-    expect(res.body.cartData[food2._id.toString()]).toBe(1);
+    expect(res.body.items).toHaveLength(1);
+    expect(res.body.items[0].foodId).toBe(food2._id.toString());
+    expect(res.body.items[0].quantity).toBe(1);
   });
 });
 

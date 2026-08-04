@@ -2,6 +2,8 @@ import crypto from "crypto";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import validator from "validator";
+import fs from "fs";
+import { v2 as cloudinary } from "cloudinary";
 import * as userRepo from "../repositories/userRepository.js";
 import * as restaurantRepo from "../repositories/restaurantRepository.js";
 import AppError from "../utils/AppError.js";
@@ -184,6 +186,57 @@ export const updateProfile = async (userId, currentEmail, updates) => {
     }
   }
   const user = await userRepo.updateById(userId, { name, email, phone });
+  return { success: true, data: user };
+};
+
+export const changePassword = async (userId, currentPassword, newPassword) => {
+  // findById hides the password by default; ask for it explicitly so we can
+  // verify the current one before overwriting.
+  const user = await userRepo.findById(userId, "+password");
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!isMatch) {
+    throw new AppError("Mật khẩu hiện tại không đúng", 400);
+  }
+  const isSame = await bcrypt.compare(newPassword, user.password);
+  if (isSame) {
+    throw new AppError("Mật khẩu mới phải khác mật khẩu hiện tại", 400);
+  }
+  const hash = await bcrypt.hash(newPassword, 10);
+  await userRepo.updateById(userId, { password: hash });
+  return { success: true, message: "Đổi mật khẩu thành công" };
+};
+
+export const updateAvatar = async (userId, file) => {
+  if (!file) {
+    throw new AppError("Image required", 400);
+  }
+  const current = await userRepo.findById(userId);
+  if (!current) {
+    fs.unlinkSync(file.path);
+    throw new AppError("User not found", 404);
+  }
+
+  const result = await cloudinary.uploader.upload(file.path, {
+    folder: "avatars",
+    resource_type: "image",
+  });
+  fs.unlinkSync(file.path);
+
+  // Only clean up avatars we previously stored on Cloudinary — never a URL
+  // that came from somewhere else (e.g. a future Google sign-in photo).
+  if (current.avatar && current.avatar.includes("/avatars/")) {
+    try {
+      const publicId = current.avatar.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(`avatars/${publicId}`);
+    } catch (err) {
+      console.error("Failed to remove old avatar:", err.message);
+    }
+  }
+
+  const user = await userRepo.updateById(userId, { avatar: result.secure_url });
   return { success: true, data: user };
 };
 

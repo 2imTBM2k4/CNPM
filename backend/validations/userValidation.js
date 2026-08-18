@@ -62,6 +62,8 @@ export const updateAddressSchema = Joi.object({
   state: Joi.string().trim().max(100).allow("", null),
   country: Joi.string().trim().max(100).allow("", null),
   zipCode: Joi.string().trim().max(20).allow("", null),
+  lat: Joi.number().min(-90).max(90).allow(null),
+  lng: Joi.number().min(-180).max(180).allow(null),
 });
 
 export const changePasswordSchema = Joi.object({

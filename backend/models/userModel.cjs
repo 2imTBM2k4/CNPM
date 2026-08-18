@@ -45,6 +45,9 @@ const userSchema = new mongoose.Schema(
       country: { type: String, default: "" },
       zipCode: { type: String, default: "" },
       phone: { type: String, default: "" },
+      // Exact coordinates from the map picker / geolocation, when provided.
+      lat: { type: Number, default: null },
+      lng: { type: Number, default: null },
     },
     cart: [
       {

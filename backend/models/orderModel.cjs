@@ -59,12 +59,23 @@ const orderSchema = new mongoose.Schema(
         required: true,
       },
       zipCode: {
+        // Optional: Vietnam's current 2-tier admin structure has no postal code,
+        // and the map picker leaves it blank.
         type: String,
-        required: true,
+        default: "",
       },
       phone: {
         type: String,
         required: true,
+      },
+      // Exact drop-off coordinates captured from the map picker / geolocation.
+      lat: {
+        type: Number,
+        default: null,
+      },
+      lng: {
+        type: Number,
+        default: null,
       },
     },
     paymentMethod: {

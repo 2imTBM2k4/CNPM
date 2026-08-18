@@ -6,6 +6,7 @@ import { Check } from "lucide-react";
 import "./Checkout.css";
 import { StoreContext } from "../../context/StoreContext";
 import OrderSummary from "../../components/OrderSummary/OrderSummary";
+import LocationPicker from "../../components/LocationPicker/LocationPicker";
 
 const STEPS = ["Address", "Payment", "Review"];
 
@@ -19,9 +20,16 @@ const emptyAddress = {
   zipcode: "",
   country: "",
   phone: "",
+  lat: null,
+  lng: null,
 };
 
-const REQUIRED_FIELDS = Object.keys(emptyAddress);
+// lat/lng come from the map picker, and Vietnam's current admin structure has
+// no postal code — so none of these gate the "address complete" check.
+const OPTIONAL_FIELDS = new Set(["lat", "lng", "zipcode"]);
+const REQUIRED_FIELDS = Object.keys(emptyAddress).filter(
+  (field) => !OPTIONAL_FIELDS.has(field)
+);
 
 /**
  * One-page checkout: Address → Payment → Review.
@@ -102,6 +110,21 @@ const Checkout = () => {
     setAddress((current) => ({ ...current, [name]: value }));
   };
 
+  // Fill the address fields from a point resolved by the map picker. Recipient
+  // name/email/phone are kept — only the location parts are overwritten.
+  const onLocationResolved = (resolved) => {
+    setAddress((current) => ({
+      ...current,
+      street: resolved.street || current.street,
+      city: resolved.city || current.city,
+      state: resolved.state || current.state,
+      country: resolved.country || current.country,
+      zipcode: resolved.zipcode || current.zipcode,
+      lat: resolved.lat,
+      lng: resolved.lng,
+    }));
+  };
+
   const persistAddress = async () => {
     localStorage.setItem("deliveryInfo", JSON.stringify(address));
     if (!token || !user) return;
@@ -117,6 +140,8 @@ const Checkout = () => {
         state: address.state,
         country: address.country,
         zipCode: address.zipcode,
+        lat: address.lat,
+        lng: address.lng,
       };
       const response = await fetch(`${url}/api/user/update-address`, {
         method: "PUT",
@@ -156,6 +181,8 @@ const Checkout = () => {
             country: address.country,
             zipCode: address.zipcode,
             phone: address.phone,
+            lat: address.lat,
+            lng: address.lng,
           },
           paymentMethod,
           ...(paymentDetails && { paymentDetails }),
@@ -273,6 +300,14 @@ const Checkout = () => {
           {step === 0 && (
             <form className="checkout-panel" onSubmit={submitAddress}>
               <h2>Delivery information</h2>
+              <LocationPicker
+                initial={
+                  address.lat && address.lng
+                    ? { lat: address.lat, lng: address.lng }
+                    : null
+                }
+                onResolve={onLocationResolved}
+              />
               <div className="checkout-fields">
                 <input
                   required
@@ -310,21 +345,20 @@ const Checkout = () => {
                   name="city"
                   value={address.city}
                   onChange={onAddressChange}
-                  placeholder="City"
+                  placeholder="Province / City"
                 />
                 <input
                   required
                   name="state"
                   value={address.state}
                   onChange={onAddressChange}
-                  placeholder="State"
+                  placeholder="Ward"
                 />
                 <input
-                  required
                   name="zipcode"
                   value={address.zipcode}
                   onChange={onAddressChange}
-                  placeholder="Zip code"
+                  placeholder="Postal code (optional)"
                 />
                 <input
                   required

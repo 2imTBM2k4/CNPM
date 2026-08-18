@@ -149,7 +149,7 @@ export const getMe = async (userId) => {
 };
 
 export const updateUserAddress = async (userId, addressData) => {
-  const { fullName, phone, address, city, state, country, zipCode } =
+  const { fullName, phone, address, city, state, country, zipCode, lat, lng } =
     addressData;
   const updateData = {
     "address.fullName": fullName,
@@ -159,6 +159,8 @@ export const updateUserAddress = async (userId, addressData) => {
     "address.state": state,
     "address.country": country,
     "address.zipCode": zipCode,
+    "address.lat": lat ?? null,
+    "address.lng": lng ?? null,
   };
   const updatedUser = await userRepo.updateById(userId, updateData);
   if (!updatedUser) {

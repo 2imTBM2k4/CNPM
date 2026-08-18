@@ -52,6 +52,10 @@ export const getDeliveryAddresses = async (orderId) => {
         fullName: customerAddress.fullName,
         address: customerFullAddress,
         phone: customerAddress.phone,
+        // Exact coordinates when the customer picked them on the map; the map
+        // can use these directly instead of geocoding the address string.
+        lat: customerAddress.lat ?? null,
+        lng: customerAddress.lng ?? null,
       },
       orderId: order._id.toString(),
       orderStatus: order.orderStatus,

@@ -1,0 +1,84 @@
+.location-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.location-picker-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.location-locate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid var(--accent-border, rgba(182, 130, 53, 0.5));
+  background: var(--accent-bg, rgba(182, 130, 53, 0.08));
+  color: var(--accent-color, #b68235);
+  border-radius: var(--radius, 5px);
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.location-locate-btn:hover:not(:disabled) {
+  background: var(--accent-color, #b68235);
+  color: #fff;
+}
+
+.location-locate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.location-hint {
+  font-size: 12.5px;
+  color: var(--text-muted, rgba(43, 43, 43, 0.6));
+}
+
+.location-map {
+  height: 260px;
+  width: 100%;
+  border: 1px solid var(--border-color, rgba(43, 43, 43, 0.13));
+  border-radius: var(--radius, 5px);
+  z-index: 0;
+}
+
+.location-resolved {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-color, #2b2b2b);
+}
+
+.location-resolved svg {
+  margin-top: 2px;
+  flex-shrink: 0;
+  color: var(--accent-color, #b68235);
+}
+
+.location-error {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--danger, #c0392b);
+}
+
+.spin {
+  animation: location-spin 0.9s linear infinite;
+}
+
+@keyframes location-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

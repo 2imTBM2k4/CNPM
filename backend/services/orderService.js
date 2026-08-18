@@ -83,6 +83,8 @@ export const placeOrder = async (user, orderData) => {
       country: address.country,
       zipCode: address.zipCode,
       phone: address.phone,
+      lat: address.lat ?? null,
+      lng: address.lng ?? null,
     },
     paymentMethod,
     totalPrice: totals.total,

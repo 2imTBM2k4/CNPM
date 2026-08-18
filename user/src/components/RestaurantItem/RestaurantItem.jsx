@@ -1,11 +1,12 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Phone, Clock, Star, ArrowRight } from 'lucide-react';
+import { MapPin, Phone, Clock, Star, ArrowRight, Bike } from 'lucide-react';
 import './RestaurantItem.css';
 import { StoreContext } from '../../context/StoreContext';
 import { assets } from '../../assets/assets';
+import { formatDistance } from '../../lib/distance';
 
-const RestaurantItem = ({ id, name, address, phone, image }) => {
+const RestaurantItem = ({ id, name, address, phone, image, distanceKm, etaMin }) => {
   const { url } = useContext(StoreContext);
   const navigate = useNavigate();
 
@@ -34,7 +35,7 @@ const RestaurantItem = ({ id, name, address, phone, image }) => {
         />
         <span className="restaurant-eta-badge">
           <Clock size={13} />
-          15 min
+          {etaMin ? `${etaMin} min` : '15 min'}
         </span>
         <span className="restaurant-open-badge">Open</span>
       </div>
@@ -46,6 +47,14 @@ const RestaurantItem = ({ id, name, address, phone, image }) => {
             4.8
           </span>
         </div>
+        {typeof distanceKm === 'number' && (
+          <p className="restaurant-delivery-meta">
+            <Bike size={14} className="restaurant-meta-icon" />
+            <span>{formatDistance(distanceKm)}</span>
+            <span className="restaurant-meta-dot">·</span>
+            <span>{etaMin} min delivery</span>
+          </p>
+        )}
         <p className="restaurant-address">
           <MapPin size={14} className="restaurant-meta-icon" />
           <span>{address}</span>

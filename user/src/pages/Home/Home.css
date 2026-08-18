@@ -1,7 +1,26 @@
+.home-section {
+  margin-top: clamp(32px, 5vw, 56px);
+}
+
+.home-section-head {
+  margin-bottom: 22px;
+}
+
+.home-section-title,
 .home-section h2 {
-  text-align: center;
-  margin-bottom: 25px;
-  font-size: 1.8rem;
-  font-weight: 600;
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: clamp(24px, 3.4vw, 38px);
+  line-height: 1.1;
+  letter-spacing: 0.005em;
   color: var(--text-color);
+  text-align: left;
+  margin: 0;
+}
+
+.home-section-sub {
+  margin-top: 6px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--text-secondary);
 }

@@ -8,6 +8,7 @@ import * as userRepo from "../repositories/userRepository.js";
 import * as restaurantRepo from "../repositories/restaurantRepository.js";
 import AppError from "../utils/AppError.js";
 import sendEmail from "../utils/sendEmail.js";
+import { geocodeAddress } from "../utils/geocode.js";
 
 const createAccessToken = (id) => {
   return jwt.sign({ id, type: "access" }, process.env.JWT_SECRET, { expiresIn: "30m" });
@@ -100,6 +101,11 @@ export const registerUser = async (userData) => {
   await userRepo.updateById(newUser._id, { refreshToken: hashedRefreshToken }, "+refreshToken");
 
   if (role === "restaurant_owner") {
+    // Geocode the address here too: signing up is the other way a restaurant
+    // gets created, and without coordinates it never shows up in the
+    // customer's "restaurants near you" list.
+    const coords = await geocodeAddress(address);
+
     const newRestaurant = await restaurantRepo.create({
       name: restaurantName,
       owner: newUser._id,
@@ -107,6 +113,7 @@ export const registerUser = async (userData) => {
       phone: newUser.phone,
       email: email,
       isLocked: true,
+      ...(coords && { lat: coords.lat, lng: coords.lng }),
     });
     newUser = await userRepo.updateRestaurantForUser(
       newUser._id,
@@ -142,8 +149,12 @@ export const getMe = async (userId) => {
     throw new AppError("User not found", 404);
   }
   const userObj = user.toObject ? user.toObject() : { ...user };
+  // The repository populates `restaurantId`, so it arrives as a full object
+  // here. Calling toString() on that yields "[object Object]" — take the _id.
   if (userObj.restaurantId) {
-    userObj.restaurantId = userObj.restaurantId.toString();
+    userObj.restaurantId = (
+      userObj.restaurantId._id || userObj.restaurantId
+    ).toString();
   }
   return { success: true, data: userObj };
 };
@@ -173,7 +184,9 @@ export const listUsers = async ({ page, limit } = {}) => {
   const result = await userRepo.findAll(undefined, { page, limit });
   const usersData = result.data.map((u) => {
     const obj = u.toObject ? u.toObject() : { ...u };
-    if (obj.restaurantId) obj.restaurantId = obj.restaurantId.toString();
+    // Same populated-object caveat as getMe — take the _id, not the object.
+    if (obj.restaurantId)
+      obj.restaurantId = (obj.restaurantId._id || obj.restaurantId).toString();
     return obj;
   });
   return { success: true, data: usersData, ...(result.pagination && { pagination: result.pagination }) };

@@ -9,10 +9,26 @@ import AppError from "../utils/AppError.js";
 /**
  * Lấy thông tin địa chỉ đầy đủ cho drone delivery
  */
-export const getDeliveryAddresses = async (orderId) => {
+export const getDeliveryAddresses = async (user, orderId) => {
   const order = await orderRepo.findById(orderId);
   if (!order) {
     throw new AppError("Order not found", 404);
+  }
+
+  // This returns the customer's name, address and phone, so only the customer
+  // themselves, the restaurant handling the order, or an admin may read it.
+  if (user.role !== "admin") {
+    const isCustomer = String(order.user?._id || order.user) === String(user._id);
+    const orderRestId = String(
+      order.restaurantId?._id || order.restaurantId || ""
+    );
+    const isTheRestaurant =
+      user.role === "restaurant_owner" &&
+      String(user.restaurantId || "") === orderRestId;
+
+    if (!isCustomer && !isTheRestaurant) {
+      throw new AppError("Unauthorized: Not your order", 403);
+    }
   }
 
   let restaurant;

@@ -1,12 +1,16 @@
 import React from 'react';
 import './Sidebar.css';
 import { NavLink } from 'react-router-dom';
-import { PlusCircle, UtensilsCrossed, ClipboardList, Store } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, UtensilsCrossed, ClipboardList, Store } from 'lucide-react';
 
 const Sidebar = () => {
   return (
     <aside className='sidebar'>
       <nav className="sidebar-nav">
+        <NavLink to='/dashboard' className="sidebar-item">
+          <LayoutDashboard size={20} />
+          <span>Dashboard</span>
+        </NavLink>
         <NavLink to='/add' className="sidebar-item">
           <PlusCircle size={20} />
           <span>Add Items</span>

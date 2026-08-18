@@ -11,8 +11,9 @@
 }
 
 .restaurant-hero-image {
+  position: relative;
   width: 100%;
-  height: 260px;
+  height: clamp(260px, 32vw, 340px);
   border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--border-light);
@@ -23,6 +24,20 @@
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+/* Subtle scrim so the card edge reads cleanly over any photo. */
+.restaurant-hero-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(25, 23, 19, 0.05) 0%,
+    rgba(25, 23, 19, 0) 40%,
+    rgba(25, 23, 19, 0.28) 100%
+  );
+  pointer-events: none;
 }
 
 .restaurant-banner-skeleton {

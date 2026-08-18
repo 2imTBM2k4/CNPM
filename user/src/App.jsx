@@ -14,7 +14,7 @@ import MyOrders from "./pages/MyOrders/MyOrders";
 import Profile from "./pages/Profile/Profile";
 import ProductDetail from "./pages/ProductDetail/ProductDetail";
 import { StoreContext } from "./context/StoreContext";
-import FoodPage from "./pages/Food/FoodPage";
+import RestaurantsPage from "./pages/Restaurants/RestaurantsPage";
 import RestaurantPage from "./pages/Restaurant/RestaurantPage";
 import FloatingCartBar from "./components/FloatingCartBar/FloatingCartBar";
 
@@ -62,7 +62,9 @@ const App = () => {
         <PageTransition>
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/food" element={<FoodPage />} />
+            <Route path="/restaurants" element={<RestaurantsPage />} />
+            {/* the old dish-browsing route now lands on the restaurant list */}
+            <Route path="/food" element={<Navigate to="/restaurants" replace />} />
             <Route path="/restaurant/:id" element={<RestaurantPage />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />

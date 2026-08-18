@@ -1,0 +1,138 @@
+.restaurants-page {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 8px var(--container-pad) 70px;
+}
+
+.restaurants-head {
+  margin-bottom: 20px;
+}
+
+.restaurants-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: clamp(26px, 3.6vw, 40px);
+  line-height: 1.1;
+  color: var(--text-color);
+}
+
+.restaurants-sub {
+  margin: 6px 0 0;
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+
+/* ── Search ─────────────────────────────────────────────────────────── */
+
+.restaurants-search-wrap {
+  margin-bottom: 18px;
+}
+
+.restaurants-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 560px;
+  padding: 11px 18px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  transition: border-color 0.2s ease;
+}
+
+.restaurants-search:focus-within {
+  border-color: var(--accent-color);
+}
+
+.restaurants-search-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.restaurants-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-color);
+  font-family: var(--font-sans);
+  font-size: 15px;
+}
+
+.restaurants-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.restaurants-search-clear {
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px;
+}
+
+.restaurants-search-clear:hover {
+  color: var(--accent-color);
+}
+
+/* ── Cuisine chips ──────────────────────────────────────────────────── */
+
+.restaurants-catalog {
+  margin-bottom: 22px;
+}
+
+/* ── Grid ───────────────────────────────────────────────────────────── */
+
+.restaurants-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
+}
+
+
+/* ── Cuisine chips ──────────────────────────────────────────────────── */
+
+.restaurants-catalog .catalog-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.restaurants-catalog .catalog-item {
+  padding: 9px 18px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.restaurants-catalog .catalog-item:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.restaurants-catalog .catalog-item.active {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: #fff;
+}
+
+@media (max-width: 560px) {
+  .restaurants-catalog .catalog-list {
+    gap: 8px;
+  }
+
+  .restaurants-catalog .catalog-item {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+}

@@ -1,12 +1,17 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { MapPin, Phone, Star, Clock, Bike, UtensilsCrossed, Store } from "lucide-react";
+import { MapPin, Phone, Star, Clock, Bike, Navigation, UtensilsCrossed, Store } from "lucide-react";
 import "./RestaurantPage.css";
 import { StoreContext } from "../../context/StoreContext";
 import FoodDisplay from "../../components/FoodDisplay/FoodDisplay";
 import { SkeletonGrid } from "../../components/Skeleton/Skeleton";
 import { EmptyState, ErrorState } from "../../../../shared/components/StateBlock";
 import { assets } from "../../assets/assets";
+import {
+  haversineKm,
+  estimateEtaMinutes,
+  formatDistance,
+} from "../../lib/distance";
 
 /** Turn a category name into a DOM id we can scroll to. */
 const sectionId = (category) =>
@@ -15,7 +20,7 @@ const sectionId = (category) =>
 const RestaurantPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { restaurant_list, url } = useContext(StoreContext);
+  const { restaurant_list, url, user, fees } = useContext(StoreContext);
 
   const [restaurant, setRestaurant] = useState(null);
   const [restaurantFoods, setRestaurantFoods] = useState([]);
@@ -151,6 +156,28 @@ const RestaurantPage = () => {
     return `${url}${image}`;
   };
 
+  // Real distance + delivery estimate when we know both ends' coordinates.
+  const { distanceKm, etaMin } = useMemo(() => {
+    const a = user?.address;
+    if (
+      restaurant &&
+      typeof restaurant.lat === "number" &&
+      typeof restaurant.lng === "number" &&
+      a &&
+      typeof a.lat === "number" &&
+      typeof a.lng === "number"
+    ) {
+      const d = haversineKm(
+        { lat: a.lat, lng: a.lng },
+        { lat: restaurant.lat, lng: restaurant.lng }
+      );
+      return { distanceKm: d, etaMin: estimateEtaMinutes(d) };
+    }
+    return { distanceKm: null, etaMin: null };
+  }, [restaurant, user]);
+
+  const deliveryFee = fees?.deliveryFee;
+
   // The restaurant list may still be loading — don't call it missing yet.
   if (!restaurant && restaurant_list.length === 0) {
     return (
@@ -212,15 +239,30 @@ const RestaurantPage = () => {
                 {restaurant.phone}
               </span>
             )}
+            {typeof distanceKm === "number" && (
+              <span className="restaurant-hero-meta-item">
+                <Navigation size={14} />
+                {formatDistance(distanceKm)}
+              </span>
+            )}
             <span className="restaurant-hero-meta-item">
               <Clock size={14} />
-              15–25 min
+              {etaMin ? `${etaMin} min` : "15–25 min"}
             </span>
             <span className="restaurant-hero-meta-item">
               <Bike size={14} />
-              $2.00 delivery
+              {typeof deliveryFee === "number"
+                ? `$${deliveryFee.toFixed(2)} delivery`
+                : "Delivery"}
             </span>
           </div>
+
+          {restaurant.isOpen === false && (
+            <p className="restaurant-hero-closed">
+              Closed right now — this restaurant isn't taking orders at the
+              moment. Please check back later.
+            </p>
+          )}
 
           {restaurant.isLocked && (
             <p className="restaurant-hero-closed">
@@ -231,7 +273,7 @@ const RestaurantPage = () => {
         </div>
       </header>
 
-      {sections.length > 0 && (
+      {sections.length > 0 && restaurant.isOpen !== false && (
         <nav className="restaurant-catalog" ref={navRef} aria-label="Menu categories">
           <div className="catalog-list">
             {sections.map(({ category }) => (
@@ -263,8 +305,19 @@ const RestaurantPage = () => {
           />
         )}
 
+        {!loading && !error && restaurant.isOpen === false && (
+          <EmptyState
+            icon={Store}
+            title="This restaurant is closed"
+            description="The kitchen has paused orders for now. Browse other restaurants delivering to you."
+            actionLabel="Browse restaurants"
+            onAction={() => navigate("/restaurants")}
+          />
+        )}
+
         {!loading &&
           !error &&
+          restaurant.isOpen !== false &&
           sections.map(({ category, id: anchor, foods }) => (
             <section
               key={category}

@@ -126,7 +126,9 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
     expect(lineFor(res.body, food2).quantity).toBe(1);
 
     // === Bước 2: User đặt hàng COD ===
-    const totalPrice = food1.price * 2 + food2.price + 2; // 8*2 + 7 + 2 shipping = 25
+    const itemsSubtotal = food1.price * 2 + food2.price; // 8*2 + 7 = 23
+    const deliveryFee = 2;
+    const totalPrice = itemsSubtotal + deliveryFee; // 25
     res = await request(app)
       .post("/api/order/place")
       .set("Authorization", `Bearer ${userToken}`)
@@ -198,11 +200,15 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
     expect(order.isPaid).toBe(true);
     expect(order.paidAt).toBeDefined();
 
-    // === Bước 6: Verify balance đã được chia đúng 80/20 ===
+    // === Bước 6: Verify balance chia 80/20 trên TIỀN MÓN ===
+    // Phí giao hàng thuộc về nền tảng, không chia cho nhà hàng.
     const updatedRestaurant = await Restaurant.findById(restaurant._id);
     const updatedAdmin = await User.findById(admin._id);
-    expect(updatedRestaurant.balance).toBe(totalPrice * 0.8);
-    expect(updatedAdmin.balance).toBe(totalPrice * 0.2);
+    expect(updatedRestaurant.balance).toBeCloseTo(itemsSubtotal * 0.8, 6);
+    expect(updatedAdmin.balance).toBeCloseTo(
+      itemsSubtotal * 0.2 + deliveryFee,
+      6
+    );
   });
 
   it("User hủy đơn khi pending → đơn bị cancelled, balance không thay đổi", async () => {

@@ -283,3 +283,121 @@
   width: 132px;
   height: 38px;
 }
+
+/* ── Status filter tabs ─────────────────────────────────────────────── */
+
+.order-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.order-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.order-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.order-tab:hover {
+  border-color: var(--accent-border);
+  color: var(--accent-color);
+}
+
+.order-tab.active {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: #fff;
+}
+
+.order-tab-count {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--background-secondary);
+  color: var(--text-color);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.order-tab.active .order-tab-count {
+  background: rgba(255, 255, 255, 0.24);
+  color: #fff;
+}
+
+/* Status colours — same palette as the dashboard so a pill reads the same
+   on both pages. */
+.order-status-badge.status-pending { background: #e0a030; }
+.order-status-badge.status-preparing { background: #3b82c4; }
+.order-status-badge.status-delivering { background: #7c5cc4; }
+.order-status-badge.status-delivered { background: #3f9e63; }
+.order-status-badge.status-cancelled { background: #c0523f; }
+
+/* ── Reject-order modal ─────────────────────────────────────────────── */
+
+.cancel-modal-lead {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.cancel-modal-label {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cancel-modal-input {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--body-color);
+  color: var(--text-color);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.cancel-modal-input:focus {
+  border-color: var(--accent-color);
+}
+
+.cancel-modal-count {
+  display: block;
+  margin-top: 5px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.cancel-modal .modal-buttons button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

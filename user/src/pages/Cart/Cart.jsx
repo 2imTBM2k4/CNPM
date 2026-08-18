@@ -3,7 +3,7 @@ import "./Cart.css";
 import { StoreContext } from "../../context/StoreContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Store, Trash2, Plus, Minus } from "lucide-react";
 import { EmptyState } from "../../../../shared/components/StateBlock";
 import ItemOptionsSheet from "../../components/ItemOptionsSheet/ItemOptionsSheet";
 
@@ -18,6 +18,8 @@ const Cart = () => {
     url,
     token,
     setShowLogin,
+    cartRestaurantId,
+    restaurant_list,
   } = useContext(StoreContext);
   const navigate = useNavigate();
   const [pendingRemoval, setPendingRemoval] = useState(null);
@@ -27,6 +29,10 @@ const Cart = () => {
   const deliveryFee = subtotal > 0 ? fees.deliveryFee : 0;
   const serviceFee = subtotal > 0 ? fees.serviceFee : 0;
   const total = subtotal + deliveryFee + serviceFee;
+
+  // The cart is single-restaurant, so one name heads the whole order.
+  const restaurant = restaurant_list.find((r) => r._id === cartRestaurantId);
+  const itemCount = cartLines.reduce((sum, line) => sum + line.quantity, 0);
 
   const getImageUrl = (line) => {
     if (!line?.image) return "/placeholder.png";
@@ -99,35 +105,37 @@ const Cart = () => {
         </div>
       )}
 
-      <div className="cart-items">
-        {cartLines.length > 0 && (
-          <>
-            <div className="cart-items-title">
-              <p>Image</p>
-              <p>Name</p>
-              <p>Price</p>
-              <p>Quantity</p>
-              <p>Total</p>
-              <p>Remove</p>
+      {cartLines.length === 0 ? (
+        <EmptyState
+          icon={ShoppingCart}
+          title="Your cart is empty"
+          description="Add a few dishes and they'll show up here, ready for the drone."
+          actionLabel="Browse restaurants"
+          onAction={() => navigate("/")}
+        />
+      ) : (
+        <div className="cart-layout">
+          <div className="cart-lines">
+            <div className="cart-lines-head">
+              <h1 className="cart-title">Your order</h1>
+              {restaurant && (
+                <button
+                  type="button"
+                  className="cart-restaurant"
+                  onClick={() => navigate(`/restaurant/${restaurant._id}`)}
+                >
+                  <Store size={15} />
+                  <span>{restaurant.name}</span>
+                </button>
+              )}
+              <p className="cart-line-count">
+                {itemCount} {itemCount === 1 ? "item" : "items"}
+              </p>
             </div>
-            <br />
-            <hr />
-          </>
-        )}
 
-        {cartLines.length === 0 ? (
-          <EmptyState
-            icon={ShoppingCart}
-            title="Your cart is empty"
-            description="Add a few dishes and they'll show up here, ready for the drone."
-            actionLabel="Browse restaurants"
-            onAction={() => navigate("/")}
-          />
-        ) : (
-          cartLines.map((line) => (
-            <div key={line.lineKey}>
-              <div className="cart-items-title cart-items-item">
-                <div className="cart-item-image">
+            {cartLines.map((line) => (
+              <article className="cart-line" key={line.lineKey}>
+                <div className="cart-line-image">
                   <img
                     src={getImageUrl(line)}
                     alt={line.name}
@@ -137,8 +145,9 @@ const Cart = () => {
                     loading="lazy"
                   />
                 </div>
-                <div className="cart-item-name">
-                  <p>{line.name}</p>
+
+                <div className="cart-line-main">
+                  <p className="cart-line-name">{line.name}</p>
                   {line.selectedOptions.length > 0 && (
                     <p className="cart-item-options">
                       {line.selectedOptions
@@ -146,9 +155,10 @@ const Cart = () => {
                         .join(" · ")}
                     </p>
                   )}
-                  {line.note && (
-                    <p className="cart-item-note">“{line.note}”</p>
-                  )}
+                  {line.note && <p className="cart-item-note">“{line.note}”</p>}
+                  <p className="cart-line-unit">
+                    ${line.unitPrice.toFixed(2)} each
+                  </p>
                   <button
                     type="button"
                     className="cart-item-edit"
@@ -157,72 +167,80 @@ const Cart = () => {
                     Edit
                   </button>
                 </div>
-                <p className="cart-item-price">${line.unitPrice.toFixed(2)}</p>
-                <div className="quantity-controls">
-                  <button
-                    className="quantity-btn decrease"
-                    onClick={() => handleDecrease(line)}
-                    aria-label={`Decrease quantity of ${line.name}`}
-                  >
-                    -
-                  </button>
-                  <span className="quantity-display">{line.quantity}</span>
-                  <button
-                    className="quantity-btn increase"
-                    onClick={() => updateLine(line.lineKey, line.quantity + 1)}
-                    aria-label={`Increase quantity of ${line.name}`}
-                  >
-                    +
-                  </button>
-                </div>
-                <p className="cart-item-total">
-                  ${(line.unitPrice * line.quantity).toFixed(2)}
-                </p>
-                <p
-                  onClick={() => setPendingRemoval(line)}
-                  className="cross"
-                  title="Remove item"
-                >
-                  x
-                </p>
-              </div>
-              <hr />
-            </div>
-          ))
-        )}
-      </div>
 
-      {cartLines.length > 0 && (
-        <div className="cart-bottom">
-          <div className="cart-total">
-            <h2>Cart Totals</h2>
-            <div>
+                <div className="cart-line-side">
+                  <p className="cart-line-total">
+                    ${(line.unitPrice * line.quantity).toFixed(2)}
+                  </p>
+                  <div className="quantity-controls">
+                    <button
+                      className="quantity-btn decrease"
+                      onClick={() => handleDecrease(line)}
+                      aria-label={`Decrease quantity of ${line.name}`}
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="quantity-display">{line.quantity}</span>
+                    <button
+                      className="quantity-btn increase"
+                      onClick={() => updateLine(line.lineKey, line.quantity + 1)}
+                      aria-label={`Increase quantity of ${line.name}`}
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setPendingRemoval(line)}
+                  className="cart-line-remove"
+                  title="Remove item"
+                  aria-label={`Remove ${line.name}`}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </article>
+            ))}
+
+            <button
+              type="button"
+              className="cart-add-more"
+              onClick={() =>
+                navigate(restaurant ? `/restaurant/${restaurant._id}` : "/restaurants")
+              }
+            >
+              + Add more items
+            </button>
+          </div>
+
+          <aside className="cart-summary">
+            <div className="cart-total">
+              <h2>Order summary</h2>
               <div className="cart-total-details">
                 <p>Subtotal</p>
                 <p className="ds-num">${subtotal.toFixed(2)}</p>
               </div>
-              <hr />
               <div className="cart-total-details">
-                <p>Delivery Fee</p>
+                <p>Delivery fee</p>
                 <p className="ds-num">${deliveryFee.toFixed(2)}</p>
               </div>
               {serviceFee > 0 && (
-                <>
-                  <hr />
-                  <div className="cart-total-details">
-                    <p>Service Fee</p>
-                    <p className="ds-num">${serviceFee.toFixed(2)}</p>
-                  </div>
-                </>
+                <div className="cart-total-details">
+                  <p>Service fee</p>
+                  <p className="ds-num">${serviceFee.toFixed(2)}</p>
+                </div>
               )}
               <hr />
-              <div className="cart-total-details">
+              <div className="cart-total-details cart-total-grand">
                 <b>Total</b>
                 <b className="ds-num">${total.toFixed(2)}</b>
               </div>
+              <button className="cart-checkout-btn" onClick={handleProceedCheckout}>
+                Proceed to checkout
+              </button>
             </div>
-            <button onClick={handleProceedCheckout}>PROCEED TO CHECKOUT</button>
-          </div>
+          </aside>
         </div>
       )}
 

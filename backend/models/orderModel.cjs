@@ -89,6 +89,16 @@ const orderSchema = new mongoose.Schema(
       update_time: String,
       email_address: String,
     },
+    // Food subtotal before any fees — the figure the restaurant's share is
+    // calculated from. Stored so the split can be audited later.
+    itemsPrice: {
+      type: Number,
+      default: 0,
+    },
+    serviceFee: {
+      type: Number,
+      default: 0,
+    },
     taxPrice: {
       type: Number,
       default: 0,

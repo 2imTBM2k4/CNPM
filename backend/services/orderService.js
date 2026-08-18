@@ -10,18 +10,6 @@ import { computeOrderTotals } from "../config/fees.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-const getRandomCoordinates = () => {
-  const minLat = 10.3695;
-  const maxLat = 11.163114;
-  const minLng = 106.354983;
-  const maxLng = 107.012085;
-
-  const lat = Math.random() * (maxLat - minLat) + minLat;
-  const lng = Math.random() * (maxLng - minLng) + minLng;
-
-  return { lat, lng };
-};
-
 export const placeOrder = async (user, orderData) => {
   const { address, paymentMethod, paymentDetails } = orderData;
 
@@ -69,8 +57,18 @@ export const placeOrder = async (user, orderData) => {
     throw new AppError("Restaurant ID is required.", 400);
   }
 
-  const restaurantLocation = getRandomCoordinates();
-  const customerLocation = getRandomCoordinates();
+  // The storefront hides closed restaurants, but a stale tab could still get
+  // this far — the order has to be refused here too.
+  const restaurant = await restaurantRepo.findById(restaurantId);
+  if (!restaurant) {
+    throw new AppError("Restaurant not found.", 404);
+  }
+  if (restaurant.isOpen === false) {
+    throw new AppError(
+      "This restaurant is currently closed and is not taking orders.",
+      409
+    );
+  }
 
   const newOrderData = {
     user: user._id,
@@ -87,15 +85,14 @@ export const placeOrder = async (user, orderData) => {
       lng: address.lng ?? null,
     },
     paymentMethod,
+    itemsPrice: totals.subtotal,
     totalPrice: totals.total,
     shippingPrice: totals.deliveryFee,
+    serviceFee: totals.serviceFee,
     restaurantId: restaurantId,
     isPaid: paymentMethod === "PayPal" && paymentDetails ? true : false,
     paidAt: paymentMethod === "PayPal" && paymentDetails ? Date.now() : null,
     orderStatus: "pending",
-    restaurantLocation,
-    customerLocation,
-    droneLocation: restaurantLocation,
     ...(paymentDetails?.paypalOrderId && { 
       paypalOrderId: paymentDetails.paypalOrderId 
     }),
@@ -282,12 +279,7 @@ export const updateStatus = async (user, updateData) => {
     }
 
     if (!isAuthorized) {
-      throw new AppError(
-        `Unauthorized: Not your restaurant (user: ${user._id.toString()}, order: { restaurantId: ${orderRestStr}, owner: ${
-          order.restaurantId?.owner?._id || order.restaurantId?.owner
-        }})`,
-        403
-      );
+      throw new AppError("Unauthorized: Not your restaurant", 403);
     }
 
     // Validation rules từ gốc (status transitions)
@@ -374,8 +366,21 @@ export const updateStatus = async (user, updateData) => {
         throw new AppError("Admin account not found. Cannot process balance update.", 500);
       }
       if (restaurant && admin) {
-        const restaurantShare = order.totalPrice * 0.8;
-        const adminShare = order.totalPrice * 0.2;
+        // Split the FOOD subtotal only — the delivery and service fees are the
+        // platform's, so paying the restaurant a cut of them would overpay it.
+        // Older orders predate `itemsPrice`, so fall back to the item snapshot.
+        const itemsSubtotal =
+          typeof order.itemsPrice === "number" && order.itemsPrice > 0
+            ? order.itemsPrice
+            : (order.orderItems || []).reduce(
+                (sum, item) => sum + item.price * item.quantity,
+                0
+              );
+        const platformFees =
+          (order.shippingPrice || 0) + (order.serviceFee || 0);
+
+        const restaurantShare = itemsSubtotal * 0.8;
+        const adminShare = itemsSubtotal * 0.2 + platformFees;
 
         try {
           const session = await mongoose.startSession();

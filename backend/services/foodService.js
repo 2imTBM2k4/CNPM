@@ -72,7 +72,10 @@ export const removeFood = async (user, id) => {
       : user.restaurantId
     : null;
 
-  if (user.role === "restaurant_owner" && userRestIdStr !== foodRestIdStr) {
+  // Admins may touch any dish. Everyone else must own the restaurant it
+  // belongs to — checking only the restaurant_owner role would let a plain
+  // customer through.
+  if (user.role !== "admin" && userRestIdStr !== foodRestIdStr) {
     throw new AppError("Unauthorized: Not your restaurant's food", 403);
   }
 
@@ -108,7 +111,10 @@ export const updateFood = async (user, updates, file) => {
       : user.restaurantId
     : null;
 
-  if (user.role === "restaurant_owner" && userRestIdStr !== foodRestIdStr) {
+  // Admins may touch any dish. Everyone else must own the restaurant it
+  // belongs to — checking only the restaurant_owner role would let a plain
+  // customer through.
+  if (user.role !== "admin" && userRestIdStr !== foodRestIdStr) {
     throw new AppError("Unauthorized: Not your restaurant's food", 403);
   }
 

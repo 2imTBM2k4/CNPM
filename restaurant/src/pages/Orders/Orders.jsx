@@ -11,6 +11,12 @@ const Orders = ({ url }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [filter, setFilter] = useState("all");
+  // Cancelling asks for a reason, which needs a modal — so the flow splits in
+  // two: open it here, finish in confirmCancel() once the owner submits.
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
 
   const fetchAllOrders = async () => {
     try {
@@ -48,7 +54,7 @@ const Orders = ({ url }) => {
       setLoading(false);
     }
   };
-  const updateStatus = async (orderId, status) => {
+  const updateStatus = async (orderId, status, reason = "") => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -56,13 +62,11 @@ const Orders = ({ url }) => {
         return;
       }
 
-      let reason = "";
-      if (status === "cancelled") {
-        reason = prompt("Enter cancellation reason:");
-        if (!reason || reason.trim() === "") {
-          toast.error("Reason is required for cancellation");
-          return;
-        }
+      // Second line of defence: the modal already requires a reason, and so
+      // does the API, but never send a cancellation without one.
+      if (status === "cancelled" && !reason.trim()) {
+        toast.error("Reason is required for cancellation");
+        return;
       }
 
       // CHỈ GỌI /status - BỎ FALLBACK /update
@@ -97,6 +101,20 @@ const Orders = ({ url }) => {
       }
     }
   };
+  const closeCancelModal = () => {
+    // Always clear the target, or the next cancel could hit the wrong order.
+    setCancelTarget(null);
+    setCancelReason("");
+    setCancelling(false);
+  };
+
+  const confirmCancel = async () => {
+    if (!cancelTarget || !cancelReason.trim() || cancelling) return;
+    setCancelling(true);
+    await updateStatus(cancelTarget._id, "cancelled", cancelReason);
+    closeCancelModal();
+  };
+
   useEffect(() => {
     fetchAllOrders();
 
@@ -151,22 +169,26 @@ const Orders = ({ url }) => {
     );
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "pending":
-        return "#f39c12";
-      case "preparing":
-        return "#3498db";
-      case "delivering":
-        return "#9b59b6";
-      case "delivered":
-        return "#27ae60";
-      case "cancelled":
-        return "#e74c3c";
-      default:
-        return "#95a5a6";
-    }
-  };
+  // Tabs the owner can filter by, in the order an order moves through them.
+  const STATUS_TABS = [
+    "all",
+    "pending",
+    "preparing",
+    "delivering",
+    "delivered",
+    "cancelled",
+  ];
+
+  const counts = orders.reduce(
+    (acc, o) => {
+      acc[o.orderStatus] = (acc[o.orderStatus] || 0) + 1;
+      return acc;
+    },
+    { all: orders.length }
+  );
+
+  const visibleOrders =
+    filter === "all" ? orders : orders.filter((o) => o.orderStatus === filter);
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -226,19 +248,40 @@ const Orders = ({ url }) => {
       <h1 className="page-title">Orders</h1>
       <div className="order-header-info">
         <p>
-          Tổng số đơn hàng: <strong>{orders.length}</strong>
+          <strong>{orders.length}</strong> orders in total · newest first · this
+          page updates live
         </p>
-        <p>Đơn hàng được sắp xếp mới nhất lên đầu</p>
       </div>
+
+      <div className="order-tabs" role="tablist" aria-label="Filter by status">
+        {STATUS_TABS.map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            role="tab"
+            aria-selected={filter === tab}
+            className={`order-tab ${filter === tab ? "active" : ""}`}
+            onClick={() => setFilter(tab)}
+          >
+            {tab === "all" ? "All" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+            <span className="order-tab-count">{counts[tab] || 0}</span>
+          </button>
+        ))}
+      </div>
+
       <div className="order-list">
-        {orders.length === 0 ? (
+        {visibleOrders.length === 0 ? (
           <EmptyState
             icon={ClipboardList}
-            title="No orders yet"
-            description="New orders land here the moment a customer places one — this page updates live."
+            title={filter === "all" ? "No orders yet" : `No ${filter} orders`}
+            description={
+              filter === "all"
+                ? "New orders land here the moment a customer places one — this page updates live."
+                : "Nothing in this status right now. Pick another tab to see the rest."
+            }
           />
         ) : (
-          orders.map((order, index) => (
+          visibleOrders.map((order, index) => (
             <div key={order._id || index} className="order-item">
               <div className="order-item-header">
                 <img src={assets.parcel_icon} alt="Order" />
@@ -251,8 +294,7 @@ const Orders = ({ url }) => {
                   </span>
                 </div>
                 <div
-                  className="order-status-badge"
-                  style={{ backgroundColor: getStatusColor(order.orderStatus) }}
+                  className={`order-status-badge status-${order.orderStatus}`}
                 >
                   {order.orderStatus}
                 </div>
@@ -311,13 +353,13 @@ const Orders = ({ url }) => {
                       className="btn-accept"
                       onClick={() => updateStatus(order._id, "preparing")}
                     >
-                      Accept (Preparing)
+                      Accept order
                     </button>
                     <button
                       className="btn-reject"
-                      onClick={() => updateStatus(order._id, "cancelled")}
+                      onClick={() => setCancelTarget(order)}
                     >
-                      Reject (Cancel)
+                      Reject
                     </button>
                   </div>
                 )}
@@ -327,7 +369,7 @@ const Orders = ({ url }) => {
                       className="btn-deliver"
                       onClick={() => updateStatus(order._id, "delivering")}
                     >
-                      Handover to Shipper (Delivering)
+                      Hand over to drone
                     </button>
                   </div>
                 )}
@@ -336,6 +378,69 @@ const Orders = ({ url }) => {
           ))
         )}
       </div>
+
+      {cancelTarget && (
+        <div
+          className="edit-modal cancel-modal"
+          onClick={closeCancelModal}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Reject order"
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Reject order</h3>
+              <span className="close" onClick={closeCancelModal}>
+                &times;
+              </span>
+            </div>
+
+            <p className="cancel-modal-lead">
+              Order #{cancelTarget._id?.slice(-8)?.toUpperCase()} for{" "}
+              <strong>
+                {cancelTarget.shippingAddress?.fullName || "the customer"}
+              </strong>{" "}
+              will be cancelled. The reason is shown to them, so be clear.
+            </p>
+
+            <label className="cancel-modal-label" htmlFor="cancel-reason">
+              Reason for cancellation
+            </label>
+            <textarea
+              id="cancel-reason"
+              className="cancel-modal-input"
+              rows={3}
+              maxLength={500}
+              autoFocus
+              placeholder="e.g. Out of stock — we've run out of this dish tonight."
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+            />
+            <span className="cancel-modal-count">
+              {cancelReason.length}/500
+            </span>
+
+            <div className="modal-buttons">
+              <button
+                type="button"
+                className="cancel-btn"
+                onClick={closeCancelModal}
+                disabled={cancelling}
+              >
+                Keep order
+              </button>
+              <button
+                type="button"
+                className="btn-reject"
+                onClick={confirmCancel}
+                disabled={!cancelReason.trim() || cancelling}
+              >
+                {cancelling ? "Rejecting…" : "Reject order"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

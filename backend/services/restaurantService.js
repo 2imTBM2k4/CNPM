@@ -3,13 +3,30 @@ import fs from "fs";
 import * as restaurantRepo from "../repositories/restaurantRepository.js";
 import * as userRepo from "../repositories/userRepository.js";
 import AppError from "../utils/AppError.js";
+import { geocodeAddress } from "../utils/geocode.js";
 
 export const listRestaurants = async ({ page, limit } = {}) => {
   const result = await restaurantRepo.findAll({ page, limit });
   return { success: true, data: result.data, ...(result.pagination && { pagination: result.pagination }) };
 };
 
-export const updateRestaurant = async (id, updates, file) => {
+export const updateRestaurant = async (user, id, updates, file) => {
+  // Only the restaurant's own owner (or an admin) may edit it. Ownership is
+  // read from either side of the link, since some older restaurants have a
+  // corrupt `owner` field while the user's `restaurantId` still points here.
+  const existing = await restaurantRepo.findById(id);
+  if (!existing) {
+    throw new AppError("Restaurant not found", 404);
+  }
+  if (user.role !== "admin") {
+    const ownerId = String(existing.owner?._id || existing.owner || "");
+    const ownsViaRestaurant = ownerId === String(user._id);
+    const ownsViaUser = String(user.restaurantId || "") === String(id);
+    if (!ownsViaRestaurant && !ownsViaUser) {
+      throw new AppError("You can only edit your own restaurant", 403);
+    }
+  }
+
   if (file) {
     const current = await restaurantRepo.findById(id);
     if (current && current.image) {
@@ -27,6 +44,16 @@ export const updateRestaurant = async (id, updates, file) => {
     updates.image = result.secure_url;
     fs.unlinkSync(file.path);
   }
+
+  // Re-geocode when the address is being changed so distance stays accurate.
+  if (updates.address) {
+    const coords = await geocodeAddress(updates.address);
+    if (coords) {
+      updates.lat = coords.lat;
+      updates.lng = coords.lng;
+    }
+  }
+
   const restaurant = await restaurantRepo.updateById(id, updates);
   if (!restaurant) {
     throw new AppError("Restaurant not found", 404);
@@ -39,6 +66,12 @@ export const updateRestaurant = async (id, updates, file) => {
 };
 
 export const createRestaurant = async (user, data, file) => {
+  // Creating a restaurant also re-points the caller's `restaurantId`, so a
+  // plain customer must not be able to do it.
+  if (user.role !== "restaurant_owner" && user.role !== "admin") {
+    throw new AppError("Only restaurant owners can create a restaurant", 403);
+  }
+
   let imageUrl = null;
   if (file) {
     const result = await cloudinary.uploader.upload(file.path, {
@@ -49,6 +82,16 @@ export const createRestaurant = async (user, data, file) => {
     fs.unlinkSync(file.path);
   }
   const restaurantData = { ...data, image: imageUrl, owner: user._id };
+
+  // Geocode the address so the storefront can rank this restaurant by distance.
+  if (restaurantData.address) {
+    const coords = await geocodeAddress(restaurantData.address);
+    if (coords) {
+      restaurantData.lat = coords.lat;
+      restaurantData.lng = coords.lng;
+    }
+  }
+
   const newRestaurant = await restaurantRepo.create(restaurantData);
 
   await userRepo.updateById(user._id, { restaurantId: newRestaurant._id });
@@ -107,5 +150,37 @@ export const lockRestaurant = async (id, isLocked) => {
     success: true,
     message: `Restaurant ${isLocked ? "locked" : "unlocked"} successfully`,
     data: restaurant,
+  };
+};
+
+/**
+ * The owner's open/closed switch. Unlike `isLocked` (admin approval) this only
+ * affects trading: a closed restaurant disappears from the storefront and
+ * refuses new orders, while its owner keeps full access to the dashboard.
+ */
+export const setOpenState = async (user, id, isOpen) => {
+  const restaurant = await restaurantRepo.findById(id);
+  if (!restaurant) {
+    throw new AppError("Restaurant not found", 404);
+  }
+
+  // Owners may only flip their own restaurant; admins may flip any.
+  // Ownership is read from either side of the link — some older restaurants
+  // have a corrupt `owner` field, but the user's `restaurantId` still points
+  // here, and that is just as good a proof.
+  if (user.role !== "admin") {
+    const ownerId = String(restaurant.owner?._id || restaurant.owner || "");
+    const ownsViaRestaurant = ownerId === String(user._id);
+    const ownsViaUser = String(user.restaurantId || "") === String(id);
+    if (!ownsViaRestaurant && !ownsViaUser) {
+      throw new AppError("You can only change your own restaurant", 403);
+    }
+  }
+
+  const updated = await restaurantRepo.updateById(id, { isOpen });
+  return {
+    success: true,
+    message: isOpen ? "Restaurant is now open" : "Restaurant is now closed",
+    data: updated,
   };
 };

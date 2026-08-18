@@ -47,8 +47,8 @@ userRouter.post("/register", authLimiter, validate(registerSchema), registerUser
 userRouter.post("/login", authLimiter, validate(loginSchema), loginUser);
 userRouter.post("/logout", logoutUser);
 userRouter.post("/forgot-password", authLimiter, forgotPassword);
-userRouter.post("/reset-password", resetPassword);
-userRouter.post("/refresh-token", refreshToken);
+userRouter.post("/reset-password", authLimiter, resetPassword);
+userRouter.post("/refresh-token", authLimiter, refreshToken);
 
 // ============ PROTECTED ROUTES ============
 userRouter.get("/me", protect, getMe);

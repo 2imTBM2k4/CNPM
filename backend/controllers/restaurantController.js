@@ -18,6 +18,7 @@ export const updateRestaurant = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await restaurantService.updateRestaurant(
+      req.user,
       id,
       req.body,
       req.file
@@ -76,6 +77,21 @@ export const lockRestaurant = async (req, res) => {
     const { id } = req.params;
     const { isLocked } = req.body;
     const result = await restaurantService.lockRestaurant(id, isLocked);
+    res.json(result);
+  } catch (error) {
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
+  }
+};
+
+export const setOpenState = async (req, res) => {
+  try {
+    const result = await restaurantService.setOpenState(
+      req.user,
+      req.params.id,
+      req.body.isOpen
+    );
     res.json(result);
   } catch (error) {
     res

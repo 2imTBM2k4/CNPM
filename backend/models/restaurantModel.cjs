@@ -8,13 +8,22 @@ const restaurantSchema = new mongoose.Schema(
     phone: { type: String },
     description: { type: String },
     image: { type: String },
+    // Geocoded from `address` (TrackAsia) so the storefront can compute
+    // distance / ETA and filter restaurants near the customer.
+    lat: { type: Number, default: null },
+    lng: { type: Number, default: null },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
     balance: { type: Number, default: 0 },
+    // Admin approval gate — a locked restaurant cannot trade at all and its
+    // owner cannot even sign in.
     isLocked: { type: Boolean, default: true },
+    // The owner's own open/closed switch. Closed hides the restaurant from
+    // customers and refuses new orders, but the owner keeps full access.
+    isOpen: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

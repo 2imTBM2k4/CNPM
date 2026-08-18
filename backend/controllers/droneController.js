@@ -2,7 +2,10 @@ import * as droneService from "../services/droneService.js";
 
 export const getDeliveryAddresses = async (req, res) => {
   try {
-    const result = await droneService.getDeliveryAddresses(req.params.orderId);
+    const result = await droneService.getDeliveryAddresses(
+      req.user,
+      req.params.orderId
+    );
     res.json(result);
   } catch (error) {
     res

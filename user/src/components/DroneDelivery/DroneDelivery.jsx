@@ -198,27 +198,43 @@ const DroneDelivery = ({ order, onDeliveryComplete }) => {
 
     const initializeDelivery = async () => {
       const storageKey = `drone_location_${order._id}`;
-      let startPos, endPos;
 
-      const restaurantAddr = order.restaurantId?.address || "Ho Chi Minh City, Vietnam";
+      const restaurant = order.restaurantId;
+      const restaurantAddr = restaurant?.address || "Ho Chi Minh City, Vietnam";
       const shipping = order.shippingAddress;
-      const customerAddr = shipping 
+      const customerAddr = shipping
         ? `${shipping.address}, ${shipping.city}, ${shipping.state}, ${shipping.country}`
         : "Ho Chi Minh City, Vietnam";
 
       setStartAddress(restaurantAddr);
       setEndAddress(customerAddr);
 
-      const storedLocations = localStorage.getItem(storageKey);
-      if (storedLocations) {
-        const { start, end } = JSON.parse(storedLocations);
-        startPos = start;
-        endPos = end;
-      } else {
-        startPos = await getCoordsFromAddress(restaurantAddr);
-        endPos = await getCoordsFromAddress(customerAddr);
-        localStorage.setItem(storageKey, JSON.stringify({ start: startPos, end: endPos }));
+      // Prefer the exact coordinates saved on the order (customer picked their
+      // drop-off on the map; the restaurant was geocoded at signup). Fall back
+      // to the cached run, then to on-the-fly geocoding of the address string.
+      const asCoord = (obj) =>
+        obj && typeof obj.lat === "number" && typeof obj.lng === "number"
+          ? [obj.lat, obj.lng]
+          : null;
+
+      let startPos = asCoord(restaurant);
+      let endPos = asCoord(shipping);
+
+      if (!startPos || !endPos) {
+        const stored = JSON.parse(localStorage.getItem(storageKey) || "null");
+        if (stored) {
+          startPos = startPos || stored.start;
+          endPos = endPos || stored.end;
+        }
       }
+
+      if (!startPos) startPos = await getCoordsFromAddress(restaurantAddr);
+      if (!endPos) endPos = await getCoordsFromAddress(customerAddr);
+
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({ start: startPos, end: endPos })
+      );
 
       const straightPath = createStraightPath(startPos, endPos);
       setStart(startPos);

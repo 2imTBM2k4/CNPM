@@ -91,8 +91,8 @@ const Navbar = ({ setShowLogin }) => {
               Delivering to <b>{deliveryAddress}</b>
             </span>
           </div>
-          <Link to="/food" className="ds-label gold live-bar-cta">
-            SEE MENU ▾
+          <Link to="/restaurants" className="ds-label gold live-bar-cta">
+            BROWSE RESTAURANTS ▾
           </Link>
         </div>
       )}
@@ -101,19 +101,6 @@ const Navbar = ({ setShowLogin }) => {
       <Link to="/" aria-label="Home" className="brand">
         <span className="brand-mark ds-serif">Drone Delivery</span>
       </Link>
-
-      <ul className={`navbar-menu ${mobileMenuOpen ? "open" : ""}`} ref={menuRef}>
-        <li>
-          <Link to="/" className={isActive("/") ? "active" : ""}>
-            Home
-          </Link>
-        </li>
-        <li>
-          <Link to="/food" className={isActive("/food") ? "active" : ""}>
-            Menu
-          </Link>
-        </li>
-      </ul>
 
       <div className="navbar-right">
         <button

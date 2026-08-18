@@ -15,7 +15,7 @@ export const createRestaurantSchema = Joi.object({
     }),
   email: Joi.string().trim().email().allow("", null),
   description: Joi.string().trim().max(500).allow("", null),
-}).unknown(true);
+});
 
 export const updateRestaurantSchema = Joi.object({
   name: Joi.string().trim().min(2).max(100),
@@ -26,7 +26,7 @@ export const updateRestaurantSchema = Joi.object({
     .allow("", null),
   email: Joi.string().trim().email().allow("", null),
   description: Joi.string().trim().max(500).allow("", null),
-}).unknown(true);
+});
 
 export const deleteRestaurantSchema = Joi.object({
   id: Joi.string().trim().required().messages({
@@ -37,5 +37,11 @@ export const deleteRestaurantSchema = Joi.object({
 export const lockRestaurantSchema = Joi.object({
   isLocked: Joi.boolean().required().messages({
     "any.required": "isLocked là bắt buộc",
+  }),
+});
+
+export const setOpenStateSchema = Joi.object({
+  isOpen: Joi.boolean().required().messages({
+    "any.required": "isOpen là bắt buộc",
   }),
 });

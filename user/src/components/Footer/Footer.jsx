@@ -20,7 +20,7 @@ const Footer = () => {
           <h2>COMPANY</h2>
           <ul>
             <li><Link to="/">Home</Link></li>
-            <li><Link to="/food">Menu</Link></li>
+            <li><Link to="/restaurants">Restaurants</Link></li>
           </ul>
         </div>
         <div className="footer-content-right">

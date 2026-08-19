@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard/Dashboard";
 import ListUsers from "./pages/ListUsers/ListUsers";
 import Login from "./pages/Login/Login";
 import Drones from "./pages/Drones/Drones";
+import AuditLog from "./pages/AuditLog/AuditLog";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AuthContext } from "./context/AuthContext";
@@ -73,6 +74,7 @@ const App = () => {
               <Route path="/list-users" element={<ListUsers url={url} />} />
               <Route path="/orders" element={<Orders url={url} />} />
               <Route path="/drones" element={<Drones url={url} />} />
+              <Route path="/audit" element={<AuditLog url={url} />} />
             </Routes>
           </PageTransition>
         </div>

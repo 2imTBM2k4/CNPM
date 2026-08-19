@@ -4,6 +4,7 @@ import * as restaurantRepo from "../repositories/restaurantRepository.js";
 import * as userRepo from "../repositories/userRepository.js";
 import AppError from "../utils/AppError.js";
 import { geocodeAddress } from "../utils/geocode.js";
+import { recordAudit } from "../utils/auditLog.js";
 
 export const listRestaurants = async ({ page, limit } = {}) => {
   const result = await restaurantRepo.findAll({ page, limit });
@@ -103,7 +104,7 @@ export const createRestaurant = async (user, data, file) => {
   };
 };
 
-export const deleteRestaurant = async (id) => {
+export const deleteRestaurant = async (actor, id) => {
   const restaurant = await restaurantRepo.findById(id);
   if (!restaurant) {
     throw new AppError("Restaurant not found", 404);
@@ -127,6 +128,15 @@ export const deleteRestaurant = async (id) => {
     }
   }
   await restaurantRepo.deleteById(id);
+
+  await recordAudit({
+    actor,
+    action: "restaurant.deleted",
+    targetType: "restaurant",
+    targetId: id,
+    metadata: { name: restaurant.name, email: restaurant.email },
+  });
+
   return { success: true, message: "Restaurant deleted successfully" };
 };
 
@@ -138,7 +148,7 @@ export const getRestaurantById = async (id) => {
   return { success: true, data: restaurant };
 };
 
-export const lockRestaurant = async (id, isLocked) => {
+export const lockRestaurant = async (actor, id, isLocked) => {
   if (typeof isLocked !== "boolean") {
     throw new AppError("isLocked must be a boolean", 400);
   }
@@ -146,6 +156,14 @@ export const lockRestaurant = async (id, isLocked) => {
   if (!restaurant) {
     throw new AppError("Restaurant not found", 404);
   }
+  await recordAudit({
+    actor,
+    action: isLocked ? "restaurant.locked" : "restaurant.unlocked",
+    targetType: "restaurant",
+    targetId: id,
+    metadata: { name: restaurant.name },
+  });
+
   return {
     success: true,
     message: `Restaurant ${isLocked ? "locked" : "unlocked"} successfully`,
@@ -178,6 +196,15 @@ export const setOpenState = async (user, id, isOpen) => {
   }
 
   const updated = await restaurantRepo.updateById(id, { isOpen });
+
+  await recordAudit({
+    actor: user,
+    action: isOpen ? "restaurant.opened" : "restaurant.closed",
+    targetType: "restaurant",
+    targetId: id,
+    metadata: { name: restaurant.name },
+  });
+
   return {
     success: true,
     message: isOpen ? "Restaurant is now open" : "Restaurant is now closed",

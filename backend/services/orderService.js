@@ -7,6 +7,7 @@ import * as cartRepo from "../repositories/cartRepository.js";
 import AppError from "../utils/AppError.js";
 import { computeUnitPrice } from "../utils/foodOptions.js";
 import { computeOrderTotals } from "../config/fees.js";
+import { recordAudit } from "../utils/auditLog.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -206,15 +207,23 @@ export const updateStatus = async (user, updateData) => {
     const cargoWeight = Math.floor(Math.random() * 1500) + 500;
     const drone = await droneRepo.claimAvailable(orderId, cargoWeight);
 
-    if (drone) {
-      const hash = crypto.default.createHash("sha256");
-      hash.update(`${orderId}-${Date.now()}-${process.env.JWT_SECRET || "secret"}`);
-      const qrCode = hash.digest("hex").substring(0, 16).toUpperCase();
-
-      order.droneId = drone._id;
-      order.qrCode = qrCode;
-      await order.save();
+    // No fit drone means the food cannot actually leave. Letting the order slip
+    // into "delivering" anyway would strand it: no drone, no QR code, and the
+    // customer could never confirm receipt. It stays in "preparing" instead.
+    if (!drone) {
+      throw new AppError(
+        `No drone is available with at least ${droneRepo.MIN_BATTERY_PERCENT}% battery. Please try again once one is free.`,
+        409
+      );
     }
+
+    const hash = crypto.default.createHash("sha256");
+    hash.update(`${orderId}-${Date.now()}-${process.env.JWT_SECRET || "secret"}`);
+    const qrCode = hash.digest("hex").substring(0, 16).toUpperCase();
+
+    order.droneId = drone._id;
+    order.qrCode = qrCode;
+    await order.save();
   }
 
   // THAY THẾ TOÀN BỘ PHẦN CHECK CHO ROLE "restaurant_owner" (fallback + auto-fix, FIX: dùng order.restaurantId thay vì order.restaurant)
@@ -311,10 +320,21 @@ export const updateStatus = async (user, updateData) => {
     } else {
       throw new AppError("Only delivered or cancelled status allowed for users", 400);
     }
-  } else if (user.role !== "admin") {
+  } else if (user.role === "admin") {
+    // An admin can override any transition — that is what a support console is
+    // for — but never silently. A reason is mandatory and the override is
+    // written to the audit trail once it succeeds.
+    if (!reason || reason.trim() === "") {
+      throw new AppError(
+        "A reason is required when an admin changes an order's status.",
+        400
+      );
+    }
+  } else {
     throw new AppError("Unauthorized: Invalid role", 403);
   }
 
+  const previousStatus = order.orderStatus;
   const updateDataObj = { orderStatus: status };
   if (status === "cancelled" && reason) {
     updateDataObj.reason = reason.trim();
@@ -424,6 +444,21 @@ export const updateStatus = async (user, updateData) => {
   }
 
   await orderRepo.updateById(orderId, updateDataObj);
+  // Every status change is recorded, whoever made it. Admin overrides carry the
+  // mandatory reason; the customer's and restaurant's own actions are logged
+  // too so the order's history is complete.
+  await recordAudit({
+    actor: user,
+    action:
+      user.role === "admin"
+        ? "order.status_overridden_by_admin"
+        : "order.status_changed",
+    targetType: "order",
+    targetId: orderId,
+    reason: reason || "",
+    metadata: { from: previousStatus, to: status },
+  });
+
   return { success: true, message: "Status Updated" };
 };
 

@@ -101,14 +101,14 @@ const ListRestaurant = ({ url }) => {
 
   if (loading) {
     return (
-      <div className="list add flex-col">
+      <div className="list add flex-col restaurants-list">
         <p>Loading restaurants...</p>
       </div>
     );
   }
 
   return (
-    <div className="list add flex-col">
+    <div className="list add flex-col restaurants-list">
       <p>All Restaurants List</p>
       <div className="list-table">
         <div className="list-table-format title">
@@ -133,53 +133,33 @@ const ListRestaurant = ({ url }) => {
                 <p>{item.phone || "N/A"}</p>
                 <p>{item.description || "N/A"}</p>
                 <p>{item.owner?.email || "N/A"}</p>
-                <p
-                  style={{
-                    color: item.isLocked ? "#f44336" : "#4CAF50",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {item.isLocked ? "Locked" : "Active"}
+                <p>
+                  <span
+                    className={`status-pill ${
+                      item.isLocked
+                        ? "status-pill--locked"
+                        : "status-pill--active"
+                    }`}
+                  >
+                    {item.isLocked ? "Locked" : "Active"}
+                  </span>
                 </p>
                 <div className="actions">
                   <button
                     onClick={() => toggleLock(item._id, !item.isLocked)}
-                    className="cursor lock-btn"
-                    style={{
-                      padding: "8px 16px",
-                      cursor: "pointer",
-                      backgroundColor: item.isLocked ? "#4CAF50" : "#f44336",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      marginRight: "10px",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      transition: "opacity 0.3s",
-                    }}
-                    onMouseEnter={(e) => (e.target.style.opacity = "0.8")}
-                    onMouseLeave={(e) => (e.target.style.opacity = "1")}
+                    className={`cursor lock-btn ${
+                      item.isLocked ? "lock-btn--unlock" : "lock-btn--lock"
+                    }`}
                   >
                     {item.isLocked ? "Unlock" : "Lock"}
                   </button>
                   <button
                     onClick={() => removeRestaurant(item._id)}
                     className="cursor delete-btn"
-                    style={{
-                      padding: "8px 16px",
-                      cursor: "pointer",
-                      backgroundColor: "#ff5722",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      transition: "opacity 0.3s",
-                    }}
                     onMouseEnter={(e) => (e.target.style.opacity = "0.8")}
                     onMouseLeave={(e) => (e.target.style.opacity = "1")}
                   >
-                    Xóa
+                    Delete
                   </button>
                 </div>
               </div>

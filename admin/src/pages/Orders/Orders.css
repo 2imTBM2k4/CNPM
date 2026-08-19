@@ -233,3 +233,47 @@
     width: 40px;
   }
 }
+
+/* The swap action is a correction, not the normal path — muted so it reads as
+   the exception it is. */
+.assign-drone-btn--swap {
+  background: transparent;
+  border: 1px solid var(--accent-border);
+  color: var(--accent-color);
+}
+
+.assign-drone-btn--swap:hover {
+  background: var(--accent-bg);
+}
+
+.modal-note {
+  padding: 10px 12px;
+  margin: 8px 0;
+  border-left: 3px solid var(--accent-color);
+  background: var(--accent-bg);
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.reassign-reason {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--body-color);
+  color: var(--text-color);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  resize: vertical;
+}
+
+.reassign-reason:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.modal-footer button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -51,7 +51,7 @@ export const createRestaurant = async (req, res) => {
 export const deleteRestaurant = async (req, res) => {
   try {
     const { id } = req.body;
-    const result = await restaurantService.deleteRestaurant(id);
+    const result = await restaurantService.deleteRestaurant(req.user, id);
     res.json(result);
   } catch (error) {
     res
@@ -76,7 +76,7 @@ export const lockRestaurant = async (req, res) => {
   try {
     const { id } = req.params;
     const { isLocked } = req.body;
-    const result = await restaurantService.lockRestaurant(id, isLocked);
+    const result = await restaurantService.lockRestaurant(req.user, id, isLocked);
     res.json(result);
   } catch (error) {
     res

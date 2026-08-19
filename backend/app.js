@@ -10,6 +10,7 @@ import orderRouter from "./routes/orderRoute.js";
 import restaurantRouter from "./routes/restaurantRoute.js";
 import droneRouter from "./routes/droneRoute.js";
 import configRouter from "./routes/configRoute.js";
+import auditRouter from "./routes/auditRoute.js";
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use("/api/order", cleanOrderPayload, orderRouter);
 app.use("/api/restaurant", restaurantRouter);
 app.use("/api/drone", droneRouter);
 app.use("/api/config", configRouter);
+app.use("/api/audit", auditRouter);
 
 app.get("/api/health", (req, res) => {
   const dbState = mongoose.connection.readyState;

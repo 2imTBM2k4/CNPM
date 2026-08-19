@@ -9,6 +9,7 @@ import * as restaurantRepo from "../repositories/restaurantRepository.js";
 import AppError from "../utils/AppError.js";
 import sendEmail from "../utils/sendEmail.js";
 import { geocodeAddress } from "../utils/geocode.js";
+import { recordAudit } from "../utils/auditLog.js";
 
 const createAccessToken = (id) => {
   return jwt.sign({ id, type: "access" }, process.env.JWT_SECRET, { expiresIn: "30m" });
@@ -124,7 +125,7 @@ export const registerUser = async (userData) => {
   return { success: true, token, refreshToken };
 };
 
-export const lockUser = async (userId, lock) => {
+export const lockUser = async (actor, userId, lock) => {
   if (!userId) {
     throw new AppError("Missing userId parameter", 400);
   }
@@ -136,6 +137,15 @@ export const lockUser = async (userId, lock) => {
     throw new AppError("User not found", 404);
   }
   const updated = await userRepo.updateById(userId, { locked: lock });
+
+  await recordAudit({
+    actor,
+    action: lock ? "user.locked" : "user.unlocked",
+    targetType: "user",
+    targetId: userId,
+    metadata: { email: user.email },
+  });
+
   return {
     success: true,
     message: `User ${lock ? "locked" : "unlocked"}`,
@@ -255,14 +265,38 @@ export const updateAvatar = async (userId, file) => {
   return { success: true, data: user };
 };
 
-export const updateUserByAdmin = async (userId, updates) => {
+export const updateUserByAdmin = async (actor, userId, updates) => {
+  // Belt and braces: the Joi schema already strips it, but never let an admin
+  // set someone else's password — that is account takeover, not support.
   if (updates.password) {
-    updates.password = await bcrypt.hash(updates.password, 10);
+    throw new AppError(
+      "Admins cannot set a user's password. Ask the user to reset it by email.",
+      403
+    );
   }
+
+  const before = await userRepo.findById(userId);
+  if (!before) {
+    throw new AppError("User not found", 404);
+  }
+
   const updatedUser = await userRepo.updateById(userId, updates);
   if (!updatedUser) {
     throw new AppError("User not found", 404);
   }
+
+  await recordAudit({
+    actor,
+    action: "user.updated_by_admin",
+    targetType: "user",
+    targetId: userId,
+    reason: updates.reason || "",
+    metadata: {
+      changedFields: Object.keys(updates).filter((k) => k !== "userId"),
+      roleBefore: before.role,
+      roleAfter: updatedUser.role,
+    },
+  });
   const obj = updatedUser.toObject ? updatedUser.toObject() : { ...updatedUser };
   if (obj.restaurantId) obj.restaurantId = obj.restaurantId.toString();
   return { success: true, data: obj };

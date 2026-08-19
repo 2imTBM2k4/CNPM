@@ -5,6 +5,7 @@ import crypto from "crypto";
 import Drone from "../models/droneModel.cjs";
 import DroneDeliveryHistory from "../models/droneDeliveryHistoryModel.cjs";
 import AppError from "../utils/AppError.js";
+import { recordAudit } from "../utils/auditLog.js";
 
 /**
  * Lấy thông tin địa chỉ đầy đủ cho drone delivery
@@ -112,7 +113,13 @@ export const assignDroneToOrder = async (orderId, droneId) => {
   const cargoWeight = Math.floor(Math.random() * 1500) + 500;
 
   const drone = await Drone.findOneAndUpdate(
-    { _id: droneId, status: "available" },
+    // Same battery floor as the automatic dispatcher — picking the drone by
+    // hand does not make a flat battery safe.
+    {
+      _id: droneId,
+      status: "available",
+      batteryLevel: { $gte: droneRepo.MIN_BATTERY_PERCENT },
+    },
     {
       $set: {
         status: "delivering",
@@ -124,7 +131,10 @@ export const assignDroneToOrder = async (orderId, droneId) => {
   );
 
   if (!drone) {
-    throw new AppError("Drone not found or not available", 400);
+    throw new AppError(
+      `Drone not found, already flying, or below ${droneRepo.MIN_BATTERY_PERCENT}% battery`,
+      400
+    );
   }
 
   const restaurant = await restaurantRepo.findById(order.restaurantId);
@@ -524,6 +534,101 @@ export const updateCargoWeight = async (droneId, weight) => {
     data: {
       droneId: drone._id,
       cargoWeight: drone.cargoWeight,
+    },
+  };
+};
+
+/**
+ * Swap the drone on an in-flight order — the human-in-the-loop action a real
+ * operator needs when the assigned aircraft fails, runs low or is grounded.
+ *
+ * The old drone is released back to the fleet and the new one takes over. The
+ * order keeps its QR code: the customer may already have it on screen, and the
+ * code identifies the order, not the aircraft.
+ */
+export const reassignDrone = async (actor, orderId, newDroneId, reason) => {
+  if (!reason || !reason.trim()) {
+    throw new AppError("A reason is required when changing an order's drone", 400);
+  }
+
+  const order = await orderRepo.findById(orderId);
+  if (!order) {
+    throw new AppError("Order not found", 404);
+  }
+  if (!order.droneId) {
+    throw new AppError("This order has no drone assigned yet", 400);
+  }
+  if (["delivered", "cancelled"].includes(order.orderStatus)) {
+    throw new AppError("This order is already finished", 400);
+  }
+
+  const previousDroneId = String(order.droneId._id || order.droneId);
+  if (previousDroneId === String(newDroneId)) {
+    throw new AppError("That drone is already on this order", 400);
+  }
+
+  // Claim the replacement first: if nothing suitable is free we must not have
+  // released the current drone and left the order with none at all.
+  const cargoWeight = order.orderItems?.length
+    ? Math.floor(Math.random() * 1500) + 500
+    : 0;
+
+  const newDrone = await Drone.findOneAndUpdate(
+    {
+      _id: newDroneId,
+      status: "available",
+      batteryLevel: { $gte: droneRepo.MIN_BATTERY_PERCENT },
+    },
+    {
+      $set: {
+        status: "delivering",
+        currentOrder: orderId,
+        cargoWeight,
+        cargoLidStatus: "closed",
+      },
+    },
+    { new: true }
+  );
+
+  if (!newDrone) {
+    throw new AppError(
+      `Replacement drone not found, already flying, or below ${droneRepo.MIN_BATTERY_PERCENT}% battery`,
+      400
+    );
+  }
+
+  const previousDrone = await Drone.findById(previousDroneId);
+  await Drone.findByIdAndUpdate(previousDroneId, {
+    $set: {
+      status: "available",
+      currentOrder: null,
+      cargoWeight: 0,
+      cargoLidStatus: "closed",
+    },
+  });
+
+  order.droneId = newDrone._id;
+  await order.save();
+
+  await recordAudit({
+    actor,
+    action: "order.drone_reassigned",
+    targetType: "order",
+    targetId: orderId,
+    reason: reason.trim(),
+    metadata: {
+      fromDrone: previousDrone?.droneCode || previousDroneId,
+      toDrone: newDrone.droneCode,
+    },
+  });
+
+  return {
+    success: true,
+    message: `Order moved to drone ${newDrone.droneCode}`,
+    data: {
+      orderId: order._id,
+      droneId: newDrone._id,
+      droneCode: newDrone.droneCode,
     },
   };
 };

@@ -141,6 +141,13 @@ describe("userService", () => {
   });
 
   describe("lockUser", () => {
+    // lockUser records who performed the action, so it takes the actor first.
+    const adminActor = {
+      _id: "507f1f77bcf86cd799439099",
+      email: "admin@test.com",
+      role: "admin",
+    };
+
     it("should lock a user", async () => {
       const user = await User.create({
         name: "Lock Me",
@@ -148,7 +155,7 @@ describe("userService", () => {
         password: await bcrypt.hash("pass123", 10),
       });
 
-      const result = await userService.lockUser(user._id, true);
+      const result = await userService.lockUser(adminActor, user._id, true);
       expect(result.success).toBe(true);
 
       const updated = await User.findById(user._id);
@@ -163,7 +170,7 @@ describe("userService", () => {
         locked: true,
       });
 
-      const result = await userService.lockUser(user._id, false);
+      const result = await userService.lockUser(adminActor, user._id, false);
       expect(result.success).toBe(true);
 
       const updated = await User.findById(user._id);
@@ -172,7 +179,7 @@ describe("userService", () => {
 
     it("should throw for non-existent user", async () => {
       const fakeId = "507f1f77bcf86cd799439011";
-      await expect(userService.lockUser(fakeId, true)).rejects.toThrow(
+      await expect(userService.lockUser(adminActor, fakeId, true)).rejects.toThrow(
         "not found"
       );
     });

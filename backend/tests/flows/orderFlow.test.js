@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import request from "supertest";
 import app from "../../app.js";
 import { User, Food, Restaurant, Order, Cart } from "../../models/index.cjs";
+import Drone from "../../models/droneModel.cjs";
 import { generateToken } from "../helpers.js";
 import bcrypt from "bcrypt";
 
@@ -9,9 +10,18 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
   let user, userToken;
   let owner, ownerToken, restaurant, food1, food2;
   let admin, adminToken;
+  let drone;
 
   beforeEach(async () => {
     const hash = await bcrypt.hash("password123", 10);
+
+    // The fleet must have a charged drone: an order can no longer move to
+    // "delivering" without one, since that would strand it with no QR code.
+    drone = await Drone.create({
+      droneCode: "TEST-DRONE-01",
+      status: "available",
+      batteryLevel: 95,
+    });
 
     admin = await User.create({
       name: "Admin",
@@ -99,6 +109,17 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
         },
         paymentMethod: "COD",
       });
+  };
+
+  /** Place a COD order and let the restaurant accept it → status "preparing". */
+  const placeOrderAndAccept = async () => {
+    const res = await placeCodOrder();
+    const orderId = res.body.orderId;
+    await request(app)
+      .post("/api/order/status")
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({ orderId: orderId.toString(), status: "preparing" });
+    return orderId;
   };
 
   it("Luồng hoàn chỉnh: thêm giỏ → đặt COD → restaurant xác nhận → giao → user nhận → balance cập nhật", async () => {
@@ -350,6 +371,102 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
     expect(cancelRes.body.success).toBe(false);
     expect(cancelRes.body.message).toMatch(/[Uu]nauthorized/);
   });
+
+  it("Không gán drone pin yếu: đơn phải ở lại preparing", async () => {
+    // Only drone in the fleet is nearly flat.
+    await Drone.updateMany({}, { $set: { batteryLevel: 10 } });
+
+    const orderId = await placeOrderAndAccept();
+
+    const res = await request(app)
+      .post("/api/order/status")
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({ orderId: orderId.toString(), status: "delivering" });
+
+    expect(res.status).toBe(409);
+    expect(res.body.success).toBe(false);
+
+    // The order must not be stranded in "delivering" with no drone.
+    const order = await Order.findById(orderId);
+    expect(order.orderStatus).toBe("preparing");
+    expect(order.droneId).toBeFalsy();
+    expect(order.qrCode).toBeFalsy();
+  });
+
+  it("Admin đổi drone: drone cũ được giải phóng, đơn giữ nguyên QR", async () => {
+    const AuditLog = (await import("../../models/auditLogModel.cjs")).default;
+    const orderId = await placeOrderAndAccept();
+
+    await request(app)
+      .post("/api/order/status")
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({ orderId: orderId.toString(), status: "delivering" });
+
+    const before = await Order.findById(orderId);
+    const originalQr = before.qrCode;
+    expect(before.droneId.toString()).toBe(drone._id.toString());
+
+    const spare = await Drone.create({
+      droneCode: "TEST-DRONE-02",
+      status: "available",
+      batteryLevel: 88,
+    });
+
+    const res = await request(app)
+      .post("/api/drone/reassign")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({
+        orderId: orderId.toString(),
+        droneId: spare._id.toString(),
+        reason: "Drone gốc báo lỗi cảm biến",
+      });
+
+    expect(res.body.success).toBe(true);
+
+    const after = await Order.findById(orderId);
+    expect(after.droneId.toString()).toBe(spare._id.toString());
+    expect(after.qrCode).toBe(originalQr); // customer may already hold this code
+
+    const freed = await Drone.findById(drone._id);
+    expect(freed.status).toBe("available");
+    expect(freed.currentOrder).toBeFalsy();
+
+    const taken = await Drone.findById(spare._id);
+    expect(taken.status).toBe("delivering");
+
+    const entry = await AuditLog.findOne({ action: "order.drone_reassigned" });
+    expect(entry).toBeTruthy();
+    expect(entry.reason).toBe("Drone gốc báo lỗi cảm biến");
+    expect(entry.metadata.toDrone).toBe("TEST-DRONE-02");
+  });
+
+  it("Đổi drone bắt buộc có lý do", async () => {
+    const orderId = await placeOrderAndAccept();
+    await request(app)
+      .post("/api/order/status")
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({ orderId: orderId.toString(), status: "delivering" });
+
+    const spare = await Drone.create({
+      droneCode: "TEST-DRONE-03",
+      status: "available",
+      batteryLevel: 90,
+    });
+
+    const res = await request(app)
+      .post("/api/drone/reassign")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ orderId: orderId.toString(), droneId: spare._id.toString() });
+
+    expect(res.status).toBe(400);
+
+    // Nothing may change when the request is refused.
+    const order = await Order.findById(orderId);
+    expect(order.droneId.toString()).toBe(drone._id.toString());
+    const untouched = await Drone.findById(spare._id);
+    expect(untouched.status).toBe("available");
+  });
+
 });
 
 describe("Cart Flow: Chỉ được đặt món từ 1 nhà hàng", () => {

@@ -145,3 +145,20 @@ export const getAllDeliveryHistory = async (req, res) => {
       .json({ success: false, message: error.message });
   }
 };
+
+export const reassignDrone = async (req, res) => {
+  try {
+    const { orderId, droneId, reason } = req.body;
+    const result = await droneService.reassignDrone(
+      req.user,
+      orderId,
+      droneId,
+      reason
+    );
+    res.json(result);
+  } catch (error) {
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
+  }
+};

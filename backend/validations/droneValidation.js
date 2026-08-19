@@ -66,3 +66,16 @@ export const historyQuerySchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(100).default(20),
 });
+
+export const reassignDroneSchema = Joi.object({
+  orderId: Joi.string().trim().required().messages({
+    "any.required": "orderId là bắt buộc",
+  }),
+  droneId: Joi.string().trim().required().messages({
+    "any.required": "droneId là bắt buộc",
+  }),
+  reason: Joi.string().trim().min(3).max(500).required().messages({
+    "any.required": "Lý do đổi drone là bắt buộc",
+    "string.min": "Lý do quá ngắn",
+  }),
+});

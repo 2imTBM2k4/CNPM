@@ -104,7 +104,7 @@ export const lockUser = async (req, res) => {
     const userId = req.body.id || req.body.userId;
     const locked =
       req.body.locked !== undefined ? req.body.locked : req.body.lock;
-    const result = await userService.lockUser(userId, locked);
+    const result = await userService.lockUser(req.user, userId, locked);
     res.json(result);
   } catch (error) {
     res
@@ -129,7 +129,11 @@ export const listUsers = async (req, res) => {
 export const updateUserByAdmin = async (req, res) => {
   try {
     const { userId, ...updates } = req.body;
-    const result = await userService.updateUserByAdmin(userId, updates);
+    const result = await userService.updateUserByAdmin(
+      req.user,
+      userId,
+      updates
+    );
     res.json(result);
   } catch (error) {
     res

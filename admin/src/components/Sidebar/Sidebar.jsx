@@ -7,6 +7,7 @@ import {
   Users,
   ClipboardList,
   Plane,
+  ScrollText,
 } from "lucide-react";
 
 const Sidebar = ({ mobileOpen = false, onMobileToggle }) => {
@@ -19,6 +20,7 @@ const Sidebar = ({ mobileOpen = false, onMobileToggle }) => {
     { path: "/list-users", icon: Users, label: "Users" },
     { path: "/orders", icon: ClipboardList, label: "Orders" },
     { path: "/drones", icon: Plane, label: "Drones" },
+    { path: "/audit", icon: ScrollText, label: "Audit Log" },
   ];
 
   // SỬA: Function toggle cho mobile (gọi khi click close button hoặc menu item)

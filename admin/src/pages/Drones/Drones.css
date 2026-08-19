@@ -378,7 +378,7 @@
 }
 
 .btn-history:hover {
-  background: #7c3aed;
+  background: var(--accent-hover);
 }
 
 .history-modal {

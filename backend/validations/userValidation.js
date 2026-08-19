@@ -115,7 +115,13 @@ export const updateByAdminSchema = Joi.object({
     .trim()
     .pattern(/^[0-9+\-\s()]{8,15}$/)
     .allow("", null),
-  password: Joi.string().min(8).max(128),
+  // Explicitly forbidden rather than merely absent: an admin who can set
+  // someone's password can take over their account. Rejecting it loudly beats
+  // silently stripping it, which would look like the change had worked.
+  password: Joi.any().forbidden().messages({
+    "any.unknown":
+      "Admins cannot set a user's password. Ask the user to reset it by email.",
+  }),
   role: Joi.string().valid("user", "restaurant_owner", "admin"),
   locked: Joi.boolean(),
 });

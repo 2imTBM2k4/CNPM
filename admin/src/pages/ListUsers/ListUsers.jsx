@@ -52,7 +52,7 @@ const ListUsers = ({ url }) => {
   }, []);
 
   return (
-    <div className="list add flex-col">
+    <div className="list add flex-col users-list">
       <p>All Users List</p>
       <div className="list-table">
         <div className="list-table-format title">
@@ -70,19 +70,21 @@ const ListUsers = ({ url }) => {
               <p>{item.email}</p>
               <p>{item.role}</p>
               <p>{item.phone || "N/A"}</p>
-              <p>{item.locked ? "Yes" : "No"}</p>
+              <p>
+                <span
+                  className={`status-pill ${
+                    item.locked ? "status-pill--locked" : "status-pill--active"
+                  }`}
+                >
+                  {item.locked ? "Locked" : "Active"}
+                </span>
+              </p>
               <div className="actions">
                 <button
                   onClick={() => lockUser(item._id, !item.locked)}
-                  className="cursor lock-btn"
-                  style={{
-                    padding: "5px 10px",
-                    cursor: "pointer",
-                    backgroundColor: item.locked ? "#4CAF50" : "#f44336",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                  }}
+                  className={`cursor lock-btn ${
+                    item.locked ? "lock-btn--unlock" : "lock-btn--lock"
+                  }`}
                 >
                   {item.locked ? "Unlock" : "Lock"}
                 </button>

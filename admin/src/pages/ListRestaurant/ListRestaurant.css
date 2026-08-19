@@ -1,6 +1,6 @@
-.list-table-format {
+.restaurants-list .list-table-format {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1.2fr 2fr 1fr 1.5fr 1.4fr 0.8fr auto;
   align-items: center;
   gap: 10px;
   padding: 14px 18px;
@@ -10,11 +10,11 @@
   transition: background-color 0.15s ease;
 }
 
-.list-table-format:not(.title):hover {
+.restaurants-list .list-table-format:not(.title):hover {
   background-color: var(--body-color);
 }
 
-.list-table-format.title {
+.restaurants-list .list-table-format.title {
   background-color: var(--body-color);
   font-weight: 600;
   text-transform: uppercase;
@@ -24,7 +24,7 @@
   border-bottom: 2px solid var(--border-color);
 }
 
-.list-table-format img {
+.restaurants-list .list-table-format img {
   width: 48px;
   height: 48px;
   object-fit: cover;
@@ -55,12 +55,86 @@
 }
 
 @media (max-width: 600px) {
-  .list-table-format {
+  .restaurants-list .list-table-format {
     grid-template-columns: 1fr 2fr 1fr;
     gap: 12px;
     padding: 12px;
   }
-  .list-table-format.title {
+  .restaurants-list .list-table-format.title {
     display: none;
+  }
+}
+
+/* ── Status pills + action buttons (design tokens, not inline hex) ───── */
+
+.status-pill {
+  display: inline-block;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.status-pill--active {
+  background: #3f9e63;
+}
+
+.status-pill--locked {
+  background: #c0523f;
+}
+
+.lock-btn,
+.delete-btn {
+  padding: 7px 15px;
+  border: none;
+  border-radius: var(--radius);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.lock-btn:hover,
+.delete-btn:hover {
+  opacity: 0.85;
+}
+
+/* Unlocking is the restorative action, locking the restrictive one. */
+.lock-btn--unlock {
+  background: #3f9e63;
+}
+
+.lock-btn--lock {
+  background: #c0523f;
+}
+
+.delete-btn {
+  background: var(--danger, #c0523f);
+}
+
+/* Actions sit on one row at the end of the line — the column used to be a
+   plain 1fr, so the two buttons stacked on top of each other. */
+.restaurants-list .list-table-format .actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.restaurants-list .list-table-format .actions button {
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .restaurants-list .list-table-format .actions {
+    justify-content: flex-start;
   }
 }

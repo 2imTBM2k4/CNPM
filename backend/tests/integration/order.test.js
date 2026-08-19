@@ -215,7 +215,28 @@ describe("Order API", () => {
   });
 
   describe("POST /api/order/status", () => {
-    it("should allow admin to update order status", async () => {
+    it("should allow admin to update order status when a reason is given", async () => {
+      const admin = await createAdmin();
+      const token = generateToken(admin._id);
+      const { restaurant } = await createRestaurantOwner();
+      const order = await createOrder(admin._id, restaurant._id);
+
+      const res = await request(app)
+        .post("/api/order/status")
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+          orderId: order._id.toString(),
+          status: "preparing",
+          reason: "Customer called to confirm by phone",
+        });
+
+      expect(res.body.success).toBe(true);
+
+      const updated = await Order.findById(order._id);
+      expect(updated.orderStatus).toBe("preparing");
+    });
+
+    it("should reject an admin status change with no reason", async () => {
       const admin = await createAdmin();
       const token = generateToken(admin._id);
       const { restaurant } = await createRestaurantOwner();
@@ -226,10 +247,36 @@ describe("Order API", () => {
         .set("Authorization", `Bearer ${token}`)
         .send({ orderId: order._id.toString(), status: "preparing" });
 
-      expect(res.body.success).toBe(true);
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
 
-      const updated = await Order.findById(order._id);
-      expect(updated.orderStatus).toBe("preparing");
+      // The order must be untouched when the override is refused.
+      const untouched = await Order.findById(order._id);
+      expect(untouched.orderStatus).toBe("pending");
+    });
+
+    it("should write an audit entry for an admin override", async () => {
+      const AuditLog = (await import("../../models/auditLogModel.cjs")).default;
+      const admin = await createAdmin();
+      const token = generateToken(admin._id);
+      const { restaurant } = await createRestaurantOwner();
+      const order = await createOrder(admin._id, restaurant._id);
+
+      await request(app)
+        .post("/api/order/status")
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+          orderId: order._id.toString(),
+          status: "preparing",
+          reason: "Merchant confirmed by phone",
+        });
+
+      const entry = await AuditLog.findOne({ targetId: order._id });
+      expect(entry).toBeTruthy();
+      expect(entry.action).toBe("order.status_overridden_by_admin");
+      expect(entry.reason).toBe("Merchant confirmed by phone");
+      expect(entry.metadata.from).toBe("pending");
+      expect(entry.metadata.to).toBe("preparing");
     });
 
     it("should require orderId and status", async () => {

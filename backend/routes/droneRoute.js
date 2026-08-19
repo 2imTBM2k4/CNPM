@@ -12,6 +12,7 @@ import {
   updateCargoWeight,
   getDroneDeliveryHistory,
   getAllDeliveryHistory,
+  reassignDrone,
 } from "../controllers/droneController.js";
 import { protect, authorize } from "../middleware/auth.js";
 import validate from "../middleware/validate.js";
@@ -23,12 +24,20 @@ import {
   confirmDeliverySchema,
   cargoWeightSchema,
   historyQuerySchema,
+  reassignDroneSchema,
 } from "../validations/droneValidation.js";
 
 const router = express.Router();
 
 router.get("/addresses/:orderId", protect, getDeliveryAddresses);
 router.post("/assign", protect, authorize("admin", "restaurant_owner"), validate(assignDroneSchema), assignDrone);
+router.post(
+  "/reassign",
+  protect,
+  authorize("admin"),
+  validate(reassignDroneSchema),
+  reassignDrone
+);
 router.post("/scan-qr", protect, validate(scanQRSchema), scanQR);
 router.post("/confirm-delivery", protect, validate(confirmDeliverySchema), confirmDelivery);
 router.post("/cargo-weight", protect, authorize("admin"), validate(cargoWeightSchema), updateCargoWeight);

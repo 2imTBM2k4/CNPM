@@ -2,6 +2,13 @@
 
 A full-stack food delivery web application with drone-based delivery, built with Express.js, React, and MongoDB.
 
+## Documentation
+
+Full system architecture (27 sections, with diagrams):
+
+- 🇻🇳 [`docs/ARCHITECTURE.vi.md`](docs/ARCHITECTURE.vi.md) — Tiếng Việt
+- 🇬🇧 [`docs/ARCHITECTURE.en.md`](docs/ARCHITECTURE.en.md) — English
+
 ## Architecture
 
 ```

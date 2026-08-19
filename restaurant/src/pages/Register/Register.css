@@ -3,7 +3,14 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #c2410c 0%, var(--accent-color) 50%, #fb923c 100%);
+  /* Gold gradient matching the accent palette — the old one was left over
+     from the retired orange design. */
+  background: linear-gradient(
+    135deg,
+    var(--accent-hover) 0%,
+    var(--accent-color) 50%,
+    #e6c17a 100%
+  );
 }
 
 .register-form {

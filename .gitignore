@@ -122,3 +122,6 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Claude Code local config (dev-specific, không chia sẻ)
+.claude/

@@ -8,6 +8,11 @@ const Orders = ({ url }) => {
   const [orders, setOrders] = useState([]);
   const [drones, setDrones] = useState([]);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  // "assign" = order still has no drone; "reassign" = swapping the drone on an
+  // order already in flight, which is the exception handling a human is for.
+  const [modalMode, setModalMode] = useState("assign");
+  const [reassignReason, setReassignReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [selectedDrone, setSelectedDrone] = useState("");
 
@@ -47,14 +52,23 @@ const Orders = ({ url }) => {
       toast.error("Please select a drone");
       return;
     }
+    if (modalMode === "reassign" && !reassignReason.trim()) {
+      toast.error("A reason is required when changing the drone");
+      return;
+    }
 
     const token = localStorage.getItem("token");
+    setSubmitting(true);
     try {
+      const endpoint =
+        modalMode === "reassign" ? "/api/drone/reassign" : "/api/drone/assign";
+
       const response = await axios.post(
-        url + "/api/drone/assign",
+        url + endpoint,
         {
           orderId: selectedOrder._id,
           droneId: selectedDrone,
+          ...(modalMode === "reassign" && { reason: reassignReason.trim() }),
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -62,15 +76,19 @@ const Orders = ({ url }) => {
       );
 
       if (response.data.success) {
-        toast.success("Drone assigned successfully!");
+        toast.success(response.data.message || "Drone assigned successfully!");
         setShowAssignModal(false);
         setSelectedOrder(null);
         setSelectedDrone("");
+        setReassignReason("");
         fetchAllOrders();
         fetchDrones();
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Error assigning drone");
+    } finally {
+      // Always clear the flag, or the button stays disabled after any failure.
+      setSubmitting(false);
     }
   };
 
@@ -132,12 +150,30 @@ const Orders = ({ url }) => {
                 className="assign-drone-btn"
                 onClick={() => {
                   setSelectedOrder(order);
+                  setModalMode("assign");
                   setShowAssignModal(true);
                 }}
               >
                 🚁 Assign Drone
               </button>
             )}
+
+            {/* An order already in the air can still need a different drone:
+                the assigned one fails, runs low or gets grounded. */}
+            {order.droneId &&
+              !["delivered", "cancelled"].includes(order.orderStatus) && (
+                <button
+                  className="assign-drone-btn assign-drone-btn--swap"
+                  onClick={() => {
+                    setSelectedOrder(order);
+                    setModalMode("reassign");
+                    setReassignReason("");
+                    setShowAssignModal(true);
+                  }}
+                >
+                  🔄 Change Drone
+                </button>
+              )}
           </div>
         ))}
       </div>
@@ -146,7 +182,11 @@ const Orders = ({ url }) => {
         <div className="modal-overlay" onClick={() => setShowAssignModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Assign Drone to Order</h3>
+              <h3>
+                {modalMode === "reassign"
+                  ? "Change the drone on this order"
+                  : "Assign Drone to Order"}
+              </h3>
               <button className="btn-close" onClick={() => setShowAssignModal(false)}>
                 ×
               </button>
@@ -155,9 +195,20 @@ const Orders = ({ url }) => {
             <div className="modal-body">
               <p>Order ID: {selectedOrder?._id}</p>
               <p>Customer: {selectedOrder?.shippingAddress?.fullName}</p>
+              {modalMode === "reassign" && (
+                <p className="modal-note">
+                  The current drone is released back to the fleet. The order
+                  keeps its QR code, so a customer already holding it can still
+                  collect.
+                </p>
+              )}
               
               <div className="form-group">
-                <label>Select Available Drone:</label>
+                <label>
+                  {modalMode === "reassign"
+                    ? "Replacement drone:"
+                    : "Select Available Drone:"}
+                </label>
                 <select
                   value={selectedDrone}
                   onChange={(e) => setSelectedDrone(e.target.value)}
@@ -170,14 +221,40 @@ const Orders = ({ url }) => {
                   ))}
                 </select>
               </div>
+
+              {modalMode === "reassign" && (
+                <div className="form-group">
+                  <label>Reason (required)</label>
+                  <textarea
+                    rows={3}
+                    maxLength={500}
+                    className="reassign-reason"
+                    placeholder="e.g. Drone reported a sensor fault mid-flight"
+                    value={reassignReason}
+                    onChange={(e) => setReassignReason(e.target.value)}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="modal-footer">
               <button className="btn-cancel" onClick={() => setShowAssignModal(false)}>
                 Cancel
               </button>
-              <button className="btn-submit" onClick={handleAssignDrone}>
-                Assign
+              <button
+                className="btn-submit"
+                onClick={handleAssignDrone}
+                disabled={
+                  submitting ||
+                  !selectedDrone ||
+                  (modalMode === "reassign" && !reassignReason.trim())
+                }
+              >
+                {submitting
+                  ? "Working…"
+                  : modalMode === "reassign"
+                  ? "Change drone"
+                  : "Assign"}
               </button>
             </div>
           </div>

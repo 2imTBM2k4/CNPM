@@ -16,9 +16,18 @@ export const findAvailable = async () => {
   return await Drone.find({ status: "available" }).sort({ totalDeliveries: 1 });
 };
 
+/**
+ * A drone must hold enough charge for the whole round trip. Dispatching one
+ * that is nearly flat risks it coming down mid-flight, so anything below this
+ * stays on the ground until it is charged.
+ */
+export const MIN_BATTERY_PERCENT = 30;
+
 export const claimAvailable = async (orderId, cargoWeight) => {
+  // Among the drones fit to fly, the least-used one goes first so wear spreads
+  // evenly across the fleet.
   return await Drone.findOneAndUpdate(
-    { status: "available" },
+    { status: "available", batteryLevel: { $gte: MIN_BATTERY_PERCENT } },
     {
       $set: {
         status: "delivering",

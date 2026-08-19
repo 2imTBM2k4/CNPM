@@ -1,47 +1,24 @@
 import React from "react";
 import "./Sidebar.css";
-import { assets } from "../../assets/assets";
 import { NavLink } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Store,
+  Users,
+  ClipboardList,
+  Plane,
+} from "lucide-react";
 
 const Sidebar = ({ mobileOpen = false, onMobileToggle }) => {
   // SỬA: Thêm props cho mobile
+  // One distinct icon per destination — the old PNG set reused the same
+  // image for Dashboard and Restaurants.
   const menuItems = [
-    {
-      path: "/",
-      icon: assets.order_icon,
-      label: "Dashboard",
-      className: "dash",
-    },
-    // {
-    //   path: "/add",
-    //   icon: assets.add_icon,
-    //   label: "Add Restaurant",
-    //   className: "addd",
-    // },
-    {
-      path: "/list-restaurants",
-      icon: assets.order_icon,
-      label: "Restaurants",
-      className: "listt",
-    },
-    {
-      path: "/list-users",
-      icon: assets.profile_image,
-      label: "Users",
-      className: "users",
-    },
-    {
-      path: "/orders",
-      icon: assets.parcel_icon,
-      label: "Orders",
-      className: "orderr",
-    },
-    {
-      path: "/drones",
-      icon: assets.parcel_icon,
-      label: "Drones",
-      className: "drones",
-    },
+    { path: "/", icon: LayoutDashboard, label: "Dashboard" },
+    { path: "/list-restaurants", icon: Store, label: "Restaurants" },
+    { path: "/list-users", icon: Users, label: "Users" },
+    { path: "/orders", icon: ClipboardList, label: "Orders" },
+    { path: "/drones", icon: Plane, label: "Drones" },
   ];
 
   // SỬA: Function toggle cho mobile (gọi khi click close button hoặc menu item)
@@ -88,7 +65,7 @@ const Sidebar = ({ mobileOpen = false, onMobileToggle }) => {
             end={item.path === "/"} // Use exact matching for dashboard
             onClick={handleMobileToggle} // SỬA: Đóng menu khi click item trên mobile
           >
-            <img className={item.className} src={item.icon} alt={item.label} />
+            <item.icon className="sidebar-icon" size={20} />
             <p>{item.label}</p>
           </NavLink>
         ))}

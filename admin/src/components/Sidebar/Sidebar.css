@@ -68,21 +68,21 @@
   border-left-color: var(--accent-color);
 }
 
-.sidebar-option img {
-  width: 18px;
-  height: 18px;
-  filter: brightness(0);
-  opacity: 0.55;
-  transition: opacity 0.2s ease;
+/* Lucide icons inherit currentColor, so they follow the option's own colour
+   and need none of the brightness/invert filtering the PNGs did. */
+.sidebar-icon {
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity 0.2s ease, color 0.2s ease;
 }
 
-.sidebar-option:hover img,
-.sidebar-option.active img {
-  opacity: 0.85;
+.sidebar-option:hover .sidebar-icon,
+.sidebar-option.active .sidebar-icon {
+  opacity: 1;
 }
 
-.dark-mode .sidebar-option img {
-  filter: brightness(0) invert(1);
+.sidebar-option.active .sidebar-icon {
+  color: var(--accent-color);
 }
 
 .sidebar-option p {

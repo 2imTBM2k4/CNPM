@@ -114,3 +114,13 @@ label img[src*="assets/upload_area"] {
 .error {
   color: var(--danger);
 }
+
+/* Header reuses .add-header/.add-title/.add-subtitle from Add.css, which is
+   loaded app-wide; only the address hint is specific to this form. */
+.field-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}

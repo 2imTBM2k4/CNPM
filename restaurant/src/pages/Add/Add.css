@@ -123,3 +123,24 @@
 label img[src*="assets/upload_area"] {
   filter: var(--upload);
 }
+
+/* ── Page header, matching the other pages ──────────────────────────── */
+
+.add-header {
+  margin-bottom: 22px;
+}
+
+.add-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.1;
+  color: var(--text-color);
+}
+
+.add-subtitle {
+  margin: 5px 0 0;
+  font-size: 14.5px;
+  color: var(--text-secondary);
+}

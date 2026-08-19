@@ -143,6 +143,13 @@ const EditRestaurant = ({ url }) => {
 
   return (
     <div className="edit-restaurant">
+      <div className="add-header">
+        <h1 className="add-title">Restaurant</h1>
+        <p className="add-subtitle">
+          How your restaurant appears to customers
+        </p>
+      </div>
+
       <form className="flex-col" onSubmit={onSubmitHandler}>
         <div className="add-img-upload flex-col">
           <p>Restaurant Image</p>
@@ -171,7 +178,7 @@ const EditRestaurant = ({ url }) => {
             value={data.name}
             type="text"
             name="name"
-            placeholder="Type here"
+            placeholder="Your restaurant's name"
             required
           />
         </div>
@@ -183,9 +190,13 @@ const EditRestaurant = ({ url }) => {
             value={data.address}
             type="text"
             name="address"
-            placeholder="Type here"
+            placeholder="e.g. 24 Thach Lam, Phu Thanh, Tan Phu, HCMC"
             required
           />
+          <small className="field-hint">
+            Customers see restaurants near them, so a full, accurate address
+            decides who finds you and what delivery time they're quoted.
+          </small>
         </div>
 
         <div className="add-product-name flex-col">

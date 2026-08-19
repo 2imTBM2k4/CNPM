@@ -20,8 +20,31 @@ const Add = ({ url }) => {
     name: "",
     description: "",
     price: "",
-    category: "", // Đổi default từ "Salad" sang "" để khuyến khích nhập thủ công
+    category: "",
   });
+  // Categories already in use, offered as suggestions. Free text alone let the
+  // same cuisine be typed three different ways ("GÀ", "GÀ CAY", "Gà"), which
+  // then splits the customer-facing filters.
+  const [knownCategories, setKnownCategories] = useState([]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    axios
+      .get(`${url}/api/food/list`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        if (res.data.success) {
+          setKnownCategories([
+            ...new Set((res.data.data || []).map((f) => f.category).filter(Boolean)),
+          ]);
+        }
+      })
+      .catch(() => {
+        /* suggestions are a convenience; the field still accepts free text */
+      });
+  }, [url]);
 
   // createObjectURL in the render body would mint a new blob URL on every
   // render and never free any of them. Make one per file and revoke it.
@@ -111,6 +134,11 @@ const Add = ({ url }) => {
 
   return (
     <div className="add">
+      <div className="add-header">
+        <h1 className="add-title">Add Item</h1>
+        <p className="add-subtitle">Put a new dish on your menu</p>
+      </div>
+
       <form className="flex-col" onSubmit={onSubmitHandler}>
         <div className="add-img-upload flex-col">
           <p>Upload Image</p>
@@ -137,7 +165,8 @@ const Add = ({ url }) => {
             value={data.name}
             type="text"
             name="name"
-            placeholder="Type here"
+            placeholder="e.g. Milk tea with pearls"
+            required
           />
         </div>
         <div className="add-product-description flex-col">
@@ -147,24 +176,30 @@ const Add = ({ url }) => {
             value={data.description}
             name="description"
             rows="6"
-            placeholder="Write content here"
+            placeholder="What's in it? Anything the customer should know."
             required
           ></textarea>
         </div>
         <div className="add-category-price">
           <div className="add-category flex-col">
-            {" "}
-            {/* Giữ class để CSS không thay đổi */}
             <p>Product Category</p>
-            <input // Thay select bằng input text
-              className="selectt" // Giữ class CSS cũ để style giống dropdown (nếu cần chỉnh CSS thì thêm border-radius, etc.)
+            <input
+              className="selectt"
               onChange={onChangeHandler}
               value={data.category}
               type="text"
               name="category"
-              placeholder="Nhập category (ví dụ: Salad, Rolls...)"
-              required // Bắt buộc nhập
+              list="known-categories"
+              placeholder="e.g. Milk tea, Rice, Chicken"
+              required
             />
+            {/* Pick an existing one to keep the menu grouped consistently,
+                or type a brand-new category. */}
+            <datalist id="known-categories">
+              {knownCategories.map((cat) => (
+                <option key={cat} value={cat} />
+              ))}
+            </datalist>
           </div>
           <div className="add-price flex-col">
             <p>Product Price</p>
@@ -172,15 +207,18 @@ const Add = ({ url }) => {
               className="inputclasa"
               onChange={onChangeHandler}
               value={data.price}
-              type="Number"
+              type="number"
               name="price"
-              placeholder="$20"
+              min="0"
+              step="0.01"
+              placeholder="20.00"
+              required
             />
           </div>
         </div>
         <OptionGroupBuilder value={optionGroups} onChange={setOptionGroups} />
         <button type="submit" className="add-btn" disabled={submitting}>
-          {submitting ? "ADDING…" : "ADD"}
+          {submitting ? "Adding…" : "Add item"}
         </button>
       </form>
     </div>

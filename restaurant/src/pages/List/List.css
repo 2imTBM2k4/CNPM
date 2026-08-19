@@ -293,3 +293,118 @@
     display: none;
   }
 }
+
+/* ── Search + category chips ────────────────────────────────────────── */
+
+.list-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.list-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 460px;
+  padding: 10px 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  transition: border-color 0.2s ease;
+}
+
+.list-search:focus-within {
+  border-color: var(--accent-color);
+}
+
+.list-search-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.list-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-color);
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+}
+
+.list-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.list-search-clear {
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px;
+}
+
+.list-search-clear:hover {
+  color: var(--accent-color);
+}
+
+.list-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.list-chip {
+  padding: 7px 15px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.list-chip:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.list-chip.active {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: #fff;
+}
+
+/* ── Remove-dish dialog ─────────────────────────────────────────────── */
+
+.remove-dialog-lead {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.remove-confirm-btn {
+  width: auto;
+  height: auto;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modal-buttons button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

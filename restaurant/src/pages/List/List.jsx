@@ -5,11 +5,16 @@ import "./List.css";
 import axios from "axios";
 import { toast } from "react-toastify";
 import EditProduct from "../Products/EditProduct";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Search, X } from "lucide-react";
 
 const List = ({ url }) => {
   const [list, setList] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("All");
+  // Deleting a dish also drops its image, so it asks first.
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -55,13 +60,16 @@ const List = ({ url }) => {
     }
   };
 
-  const removeFood = async (foodId) => {
+  const confirmRemove = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
       toast.error("No authentication token found. Please login again.");
       return;
     }
+    if (!pendingDelete || deleting) return;
 
+    const foodId = pendingDelete._id;
+    setDeleting(true);
     try {
       const response = await axios.post(
         `${url}/api/food/remove`,
@@ -81,6 +89,10 @@ const List = ({ url }) => {
     } catch (error) {
       console.error("Remove food error:", error);
       toast.error("Error removing food");
+    } finally {
+      // Always clear the target, or the next delete could hit the wrong dish.
+      setDeleting(false);
+      setPendingDelete(null);
     }
   };
 
@@ -92,16 +104,23 @@ const List = ({ url }) => {
     setEditingProduct(null);
   };
 
-  useEffect(() => {
-    fetchList();
-  }, []);
-
   const getImgSrc = (img) => {
     if (!img) return "/placeholder.jpg";
     return img.startsWith("http") ? img : `${url}/images/${img}`;
   };
 
-  const categories = [...new Set(list.map((item) => item.category))];
+  const categories = [...new Set(list.map((item) => item.category))].filter(Boolean);
+
+  const query = search.trim().toLowerCase();
+  const visible = list.filter((item) => {
+    const matchesCategory = category === "All" || item.category === category;
+    const matchesQuery =
+      !query ||
+      item.name?.toLowerCase().includes(query) ||
+      item.description?.toLowerCase().includes(query);
+    return matchesCategory && matchesQuery;
+  });
+
 
   return (
     <div className="list-page">
@@ -115,19 +134,43 @@ const List = ({ url }) => {
         </button>
       </div>
 
-      <div className="list-stats">
-        <div className="stat-card">
-          <span className="stat-value">{list.length}</span>
-          <span className="stat-label">Total items</span>
+      <div className="list-filters">
+        <div className="list-search">
+          <Search size={18} className="list-search-icon" />
+          <input
+            type="text"
+            className="list-search-input"
+            placeholder="Search dishes by name or description…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Search dishes"
+          />
+          {search && (
+            <button
+              type="button"
+              className="list-search-clear"
+              onClick={() => setSearch("")}
+              aria-label="Clear search"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
-        <div className="stat-card">
-          <span className="stat-value">{list.filter((i) => i.price > 0).length}</span>
-          <span className="stat-label">Available</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-value">{categories.length}</span>
-          <span className="stat-label">Categories</span>
-        </div>
+
+        {categories.length > 0 && (
+          <div className="list-chips">
+            {["All", ...categories].map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                className={`list-chip ${category === cat ? "active" : ""}`}
+                onClick={() => setCategory(cat)}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="list-card">
@@ -139,12 +182,16 @@ const List = ({ url }) => {
             <b>Price</b>
             <b>Actions</b>
           </div>
-          {list.length === 0 ? (
+          {visible.length === 0 ? (
             <div className="list-empty">
-              <p>No menu items yet. Add your first item to get started.</p>
+              <p>
+                {list.length === 0
+                  ? "No menu items yet. Add your first item to get started."
+                  : "No dishes match this search or category."}
+              </p>
             </div>
           ) : (
-            list.map((item, index) => (
+            visible.map((item, index) => (
               <div key={index} className="list-table-format">
                 <img
                   src={getImgSrc(item.image)}
@@ -165,7 +212,7 @@ const List = ({ url }) => {
                     <Pencil size={15} />
                   </button>
                   <button
-                    onClick={() => removeFood(item._id)}
+                    onClick={() => setPendingDelete(item)}
                     className="action-btn action-btn--delete"
                     title="Remove"
                   >
@@ -177,6 +224,47 @@ const List = ({ url }) => {
           )}
         </div>
       </div>
+
+      {pendingDelete && (
+        <div
+          className="edit-modal"
+          onClick={() => !deleting && setPendingDelete(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Remove dish"
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Remove dish</h3>
+              <span className="close" onClick={() => setPendingDelete(null)}>
+                &times;
+              </span>
+            </div>
+            <p className="remove-dialog-lead">
+              Remove <strong>{pendingDelete.name}</strong> from your menu? Its
+              photo is deleted too and this can't be undone.
+            </p>
+            <div className="modal-buttons">
+              <button
+                type="button"
+                className="cancel-btn"
+                onClick={() => setPendingDelete(null)}
+                disabled={deleting}
+              >
+                Keep it
+              </button>
+              <button
+                type="button"
+                className="action-btn--delete remove-confirm-btn"
+                onClick={confirmRemove}
+                disabled={deleting}
+              >
+                {deleting ? "Removing…" : "Remove dish"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {editingProduct && (
         <EditProduct

@@ -1,90 +1,5 @@
-// // admin/src/pages/Dashboard/Dashboard.jsx (Giả sử file này tồn tại, thêm charts. Cần install recharts: npm i recharts)
-// import React, { useEffect, useState } from "react";
-// import axios from "axios";
-// import { toast } from "react-toastify";
-// import {
-//   LineChart,
-//   Line,
-//   XAxis,
-//   YAxis,
-//   CartesianGrid,
-//   Tooltip,
-//   Legend,
-//   ResponsiveContainer,
-// } from "recharts";
-// import "./Dashboard.css";
-
-// const Dashboard = ({ url }) => {
-//   const [stats, setStats] = useState({});
-//   const [period, setPeriod] = useState("day"); // day or month
-//   const [revenueData, setRevenueData] = useState([]);
-
-//   const fetchStats = async () => {
-//     const token = localStorage.getItem("token");
-//     try {
-//       const response = await axios.get(
-//         `${url}/api/user/stats?period=${period}`,
-//         {
-//           headers: { Authorization: `Bearer ${token}` },
-//         }
-//       );
-//       if (response.data.success) {
-//         setStats(response.data.data);
-//         // Format data cho chart
-//         const formattedRevenue = response.data.data.revenue.map((item) => ({
-//           date: item._id,
-//           revenue: item.totalRevenue,
-//         }));
-//         setRevenueData(formattedRevenue);
-//       } else {
-//         toast.error("Error fetching stats");
-//       }
-//     } catch (error) {
-//       toast.error("Network error");
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchStats();
-//   }, [period]);
-
-//   return (
-//     <div className="dashboard">
-//       <h2>Dashboard</h2>
-//       <div className="stats">
-//         <p>Users: {stats.userCount}</p>
-//         <p>Restaurants: {stats.restaurantCount}</p>
-//         <p>Completed Orders: {stats.completedOrdersCount}</p>
-//       </div>
-//       <div className="chart-section">
-//         <h3>Admin Revenue ({period})</h3>
-//         <select onChange={(e) => setPeriod(e.target.value)} value={period}>
-//           <option value="day">By Day</option>
-//           <option value="month">By Month</option>
-//         </select>
-//         <ResponsiveContainer width="100%" height={300}>
-//           <LineChart data={revenueData}>
-//             <CartesianGrid strokeDasharray="3 3" />
-//             <XAxis dataKey="date" />
-//             <YAxis />
-//             <Tooltip />
-//             <Legend />
-//             <Line
-//               type="monotone"
-//               dataKey="revenue"
-//               stroke="#8884d8"
-//               activeDot={{ r: 8 }}
-//             />
-//           </LineChart>
-//         </ResponsiveContainer>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Dashboard;
-
 import React, { useEffect, useState } from "react";
+import { Users, Store, CheckCircle2, DollarSign } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import {
@@ -202,14 +117,7 @@ const Dashboard = ({ url }) => {
       <div className="stats-grid">
         <div className="stat-card total-users">
           <div className="stat-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-              />
-            </svg>
+            <Users size={22} />
           </div>
           <div className="stat-content">
             <h3>Total Users</h3>
@@ -220,14 +128,7 @@ const Dashboard = ({ url }) => {
 
         <div className="stat-card total-restaurants">
           <div className="stat-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-              />
-            </svg>
+            <Store size={22} />
           </div>
           <div className="stat-content">
             <h3>Total Restaurants</h3>
@@ -238,14 +139,7 @@ const Dashboard = ({ url }) => {
 
         <div className="stat-card completed-orders">
           <div className="stat-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <CheckCircle2 size={22} />
           </div>
           <div className="stat-content">
             <h3>Completed Orders</h3>
@@ -256,14 +150,7 @@ const Dashboard = ({ url }) => {
 
         <div className="stat-card admin-revenue">
           <div className="stat-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <DollarSign size={22} />
           </div>
           <div className="stat-content">
             <h3>Admin Revenue</h3>

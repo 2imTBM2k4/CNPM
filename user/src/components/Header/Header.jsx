@@ -6,11 +6,13 @@ import "./Header.css";
 
 const Header = () => {
   const navigate = useNavigate();
-  const { user } = useContext(StoreContext);
+  const { user, liveLocation, liveAddress } = useContext(StoreContext);
 
-  const addr = user?.address;
+  const addr = liveAddress || user?.address;
   const deliveryAddress = addr
-    ? [addr.address, addr.city].filter(Boolean).join(", ")
+    ? addr.formatted || [addr.address || addr.street, addr.city].filter(Boolean).join(", ")
+    : liveLocation
+    ? "Updating your location…"
     : "";
 
   return (

@@ -16,14 +16,22 @@ import {
  * Without a saved location we fall back to the major cities.
  */
 export default function useNearbyRestaurants() {
-  const { restaurant_list, food_list, user } = useContext(StoreContext);
+  const { restaurant_list, food_list, user, liveLocation } =
+    useContext(StoreContext);
 
   const customer = useMemo(() => {
+    if (
+      typeof liveLocation?.lat === "number" &&
+      typeof liveLocation?.lng === "number"
+    ) {
+      return { lat: liveLocation.lat, lng: liveLocation.lng };
+    }
+
     const a = user?.address;
     return a && typeof a.lat === "number" && typeof a.lng === "number"
       ? { lat: a.lat, lng: a.lng }
       : null;
-  }, [user]);
+  }, [liveLocation, user]);
 
   // restaurantId -> the categories that restaurant actually serves.
   const categoriesByRestaurant = useMemo(() => {

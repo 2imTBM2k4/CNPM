@@ -1,6 +1,8 @@
 import axios from "axios";
-import { createContext, useCallback, useEffect, useState } from "react";
+import { createContext, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
+import { reverseGeocode } from "../lib/trackasia";
+import { haversineKm } from "../lib/distance";
 
 export const StoreContext = createContext(null);
 
@@ -13,6 +15,13 @@ const StoreContextProvider = (props) => {
   const [cartRestaurantId, setCartRestaurantId] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
   const [user, setUser] = useState(null);
+  // This is intentionally separate from the saved delivery address. It is
+  // only used to keep nearby-restaurant results current while the customer
+  // moves, and must not silently change where an order will be delivered.
+  const [liveLocation, setLiveLocation] = useState(null);
+  const [liveAddress, setLiveAddress] = useState(null);
+  const lastGeocodedLocation = useRef(null);
+  const geocodeRequestId = useRef(0);
   const url = import.meta.env.VITE_API_URL;
   const [token, setToken] = useState("");
   const [food_list, setFoodList] = useState([]);
@@ -242,6 +251,65 @@ const StoreContextProvider = (props) => {
     init();
   }, []);
 
+  // `watchPosition` continues to report movement after the initial browser
+  // permission prompt. Starting it at app level means both the home page and
+  // the restaurant browse page receive the same up-to-date location.
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
+      return undefined;
+    }
+
+    let isMounted = true;
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        if (!isMounted) return;
+
+        const nextLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        };
+        setLiveLocation(nextLocation);
+
+        // GPS may report many tiny accuracy adjustments while stationary.
+        // Refresh the readable address on the first fix and after moving 100m
+        // so the UI stays current without flooding the geocoding service.
+        if (
+          lastGeocodedLocation.current &&
+          haversineKm(lastGeocodedLocation.current, nextLocation) < 0.1
+        ) {
+          return;
+        }
+
+        lastGeocodedLocation.current = nextLocation;
+        setLiveAddress(null);
+        const requestId = ++geocodeRequestId.current;
+        reverseGeocode(nextLocation.lat, nextLocation.lng)
+          .then((address) => {
+            if (isMounted && requestId === geocodeRequestId.current && address) {
+              setLiveAddress(address);
+            }
+          })
+          .catch(() => {
+            // Keep the last resolved address if a transient lookup fails.
+            if (requestId === geocodeRequestId.current) {
+              lastGeocodedLocation.current = null;
+            }
+          });
+      },
+      () => {
+        // Keep the saved address as the fallback if location permission is
+        // denied or a later GPS update is unavailable.
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+
+    return () => {
+      isMounted = false;
+      navigator.geolocation.clearWatch(watchId);
+    };
+  }, []);
+
   useEffect(() => {
     if (token) {
       fetchUserInfo(token);
@@ -274,6 +342,8 @@ const StoreContextProvider = (props) => {
     cartRestaurantId,
     user,
     setUser,
+    liveLocation,
+    liveAddress,
     isLoadingFoods,
     isLoadingRestaurants,
     restaurantError,

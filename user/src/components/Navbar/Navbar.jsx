@@ -11,7 +11,7 @@ const Navbar = ({ setShowLogin }) => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [isDark, setIsDark] = useState(() => localStorage.getItem("mode") === "dark");
   const [scrolled, setScrolled] = useState(false);
-  const { getCartItemCount, token, setToken, user } = useContext(StoreContext);
+  const { getCartItemCount, token, setToken, user, liveLocation, liveAddress } = useContext(StoreContext);
   const navigate = useNavigate();
   const location = useLocation();
   const menuRef = useRef(null);
@@ -44,9 +44,11 @@ const Navbar = ({ setShowLogin }) => {
 
   // When the live bar is hidden the fixed header is one strip shorter, so the
   // static top offset would leave a gap. Flag it on <html> to shrink the offset.
-  const addr = user?.address;
+  const addr = liveAddress || user?.address;
   const deliveryAddress = addr
-    ? [addr.address, addr.city].filter(Boolean).join(", ")
+    ? addr.formatted || [addr.address || addr.street, addr.city].filter(Boolean).join(", ")
+    : liveLocation
+    ? "Updating your location…"
     : "";
   const showLiveBar = Boolean(token && deliveryAddress);
 

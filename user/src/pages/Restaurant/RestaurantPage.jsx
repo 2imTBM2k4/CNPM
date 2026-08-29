@@ -20,7 +20,7 @@ const sectionId = (category) =>
 const RestaurantPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { restaurant_list, url, user, fees } = useContext(StoreContext);
+  const { restaurant_list, url, user, liveLocation, fees } = useContext(StoreContext);
 
   const [restaurant, setRestaurant] = useState(null);
   const [restaurantFoods, setRestaurantFoods] = useState([]);
@@ -158,7 +158,7 @@ const RestaurantPage = () => {
 
   // Real distance + delivery estimate when we know both ends' coordinates.
   const { distanceKm, etaMin } = useMemo(() => {
-    const a = user?.address;
+    const a = liveLocation || user?.address;
     if (
       restaurant &&
       typeof restaurant.lat === "number" &&
@@ -174,7 +174,7 @@ const RestaurantPage = () => {
       return { distanceKm: d, etaMin: estimateEtaMinutes(d) };
     }
     return { distanceKm: null, etaMin: null };
-  }, [restaurant, user]);
+  }, [restaurant, liveLocation, user]);
 
   const deliveryFee = fees?.deliveryFee;
 

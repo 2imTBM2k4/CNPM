@@ -101,7 +101,7 @@ const Navbar = ({ setShowLogin }) => {
 
       <nav className="navbar">
       <Link to="/" aria-label="Home" className="brand">
-        <span className="brand-mark ds-serif">Drone Delivery</span>
+        <span className="brand-mark ds-serif">Drone Food</span>
       </Link>
 
       <div className="navbar-right">

@@ -1,6 +1,6 @@
-# Tài liệu Kiến trúc Hệ thống — Drone Delivery
+# Tài liệu Kiến trúc Hệ thống — Drone Food
 
-> **Phiên bản:** 1.0 · **Cập nhật:** 2026-08-19 · **Nhánh:** `sub-main`
+> **Phiên bản:** 1.1 · **Cập nhật:** 2026-08-30 · **Nhánh:** `sub-main`
 > Tài liệu này mô tả hệ thống **đúng như code hiện tại**, không phải thiết kế mong muốn.
 > Bản tiếng Anh: [`ARCHITECTURE.en.md`](./ARCHITECTURE.en.md)
 
@@ -27,7 +27,7 @@
 
 ## 1. Tổng quan dự án
 
-**Drone Delivery** là nền tảng đặt đồ ăn trực tuyến, trong đó khâu giao hàng do **drone (máy bay không người lái)** đảm nhiệm thay vì shipper.
+**Drone Food** là nền tảng đặt đồ ăn trực tuyến, trong đó khâu giao hàng do **drone (máy bay không người lái)** đảm nhiệm thay vì shipper.
 
 ### Bài toán giải quyết
 Giao đồ ăn truyền thống phụ thuộc vào đội shipper: chi phí nhân công cao, thời gian giao biến động theo giao thông, và khó mở rộng vào giờ cao điểm. Hệ thống này mô phỏng mô hình giao bằng drone: rút ngắn thời gian giao, loại bỏ yếu tố tắc đường, và tự động hoá khâu điều phối.

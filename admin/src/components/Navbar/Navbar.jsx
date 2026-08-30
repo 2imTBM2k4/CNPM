@@ -28,7 +28,7 @@ const Navbar = () => {
   return (
     <div className="navbar">
       <div className="brand">
-        <span className="brand-mark">Drone Delivery</span>
+        <span className="brand-mark">Drone Food</span>
         <span className="brand-role">Admin</span>
       </div>
       <div className="navbar-right">

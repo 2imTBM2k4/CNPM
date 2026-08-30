@@ -8,7 +8,7 @@ const Footer = () => {
     <div className="footer" id="footer">
       <div className="footer-content">
         <div className="footer-content-left">
-          <span className="footer-logo">Drone Delivery</span>
+          <span className="footer-logo">Drone Food</span>
           <p>Fast, reliable drone-powered food delivery straight to your door.</p>
           <div className="footer-social-icons">
             <a href="#" aria-label="Facebook"><img src={assets.facebook_icon} alt="Facebook" /></a>
@@ -32,7 +32,7 @@ const Footer = () => {
       </div>
       <hr />
       <p className="footer-copyright">
-        Copyright {new Date().getFullYear()} &copy; Drone Delivery - All rights reserved.
+        Copyright {new Date().getFullYear()} &copy; Drone Food - All rights reserved.
       </p>
     </div>
   );

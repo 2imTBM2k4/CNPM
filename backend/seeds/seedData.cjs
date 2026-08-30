@@ -243,7 +243,7 @@ const connectDB = async () => {
 // Sample Restaurants (giữ nguyên)
 const sampleRestaurants = [
   {
-    name: "Drone Delivery Burger Joint",
+    name: "Drone Food Burger Joint",
     address: "123 Food Street, Ho Chi Minh City, Vietnam",
     phone: "0901234567",
     description: "Delicious burgers and fast food classics.",
@@ -335,7 +335,7 @@ const seedDatabase = async () => {
     console.log("👤 Creating users...");
     const hashedAdminPassword = await bcrypt.hash("admin123", 10);
     const adminUser = await User.create({
-      name: "Admin Drone Delivery",
+      name: "Admin Drone Food",
       email: "admin@dronedelivery.com",
       password: hashedAdminPassword,
       role: "admin", // Thêm role

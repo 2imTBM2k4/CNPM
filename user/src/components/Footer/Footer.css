@@ -94,7 +94,12 @@
   width: 18px;
   height: 18px;
   opacity: 0.75;
-  transition: opacity 0.2s ease;
+  filter: brightness(0);
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.dark-mode .footer-social-icons a img {
+  filter: brightness(0) invert(1);
 }
 
 .footer-social-icons a:hover {
@@ -105,6 +110,7 @@
 
 .footer-social-icons a:hover img {
   opacity: 1;
+  filter: brightness(0) invert(1);
 }
 
 .footer hr {

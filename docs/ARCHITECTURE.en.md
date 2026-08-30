@@ -1,6 +1,6 @@
-# System Architecture — Drone Delivery
+# System Architecture — Drone Food
 
-> **Version:** 1.0 · **Updated:** 2026-08-19 · **Branch:** `sub-main`
+> **Version:** 1.1 · **Updated:** 2026-08-30 · **Branch:** `sub-main`
 > This document describes the system **as the code actually is**, not as it was hoped to be.
 > Vietnamese edition: [`ARCHITECTURE.vi.md`](./ARCHITECTURE.vi.md)
 
@@ -27,7 +27,7 @@
 
 ## 1. Project overview
 
-**Drone Delivery** is an online food-ordering platform where the delivery leg is flown by **drones** rather than carried by human couriers.
+**Drone Food** is an online food-ordering platform where the delivery leg is flown by **drones** rather than carried by human couriers.
 
 ### The problem
 Conventional food delivery depends on a courier fleet: labour costs are high, delivery times swing with traffic, and capacity is hard to scale at peak hours. This system models drone delivery instead — shorter delivery times, no traffic variable, and automated dispatch.

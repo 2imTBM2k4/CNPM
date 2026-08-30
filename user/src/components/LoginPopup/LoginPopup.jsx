@@ -4,6 +4,7 @@ import { StoreContext } from "../../context/StoreContext";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { Mail, ArrowLeft, Loader2 } from "lucide-react";
 
 const LoginPopup = ({ setShowLogin }) => {
   const { url, setToken } = useContext(StoreContext);
@@ -16,6 +17,9 @@ const LoginPopup = ({ setShowLogin }) => {
     email: "",
     password: "",
   });
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -63,18 +67,117 @@ const LoginPopup = ({ setShowLogin }) => {
     // Luôn đăng ký với role "user"
     const postData = { ...data, role: "user" };
 
-    const response = await axios.post(newUrl, postData);
+    try {
+      const response = await axios.post(newUrl, postData);
 
-    if (response.data.success) {
-      setToken(response.data.token);
-      localStorage.setItem("token", response.data.token);
-      setShowLogin(false);
-      navigate("/");
-    } else {
-      toast.error(response.data.message);
+      if (response.data.success) {
+        setToken(response.data.token);
+        localStorage.setItem("token", response.data.token);
+        setShowLogin(false);
+        navigate("/");
+      } else {
+        toast.error(response.data.message);
+      }
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Something went wrong. Please try again."
+      );
     }
   };
 
+  const onForgotPassword = async (event) => {
+    event.preventDefault();
+    setForgotLoading(true);
+    try {
+      const response = await axios.post(`${url}/api/user/forgot-password`, {
+        email: forgotEmail,
+      });
+      if (response.data.success) {
+        setForgotSent(true);
+      } else {
+        toast.error(response.data.message);
+      }
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Failed to send reset email"
+      );
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const switchToForgot = () => {
+    setCurrState("Forgot");
+    setForgotEmail(data.email || "");
+    setForgotSent(false);
+  };
+
+  const switchToLogin = () => {
+    setCurrState("Login");
+    setForgotSent(false);
+  };
+
+  // ---------- Forgot Password view ----------
+  if (currState === "Forgot") {
+    return (
+      <div className="login-popup" onClick={(e) => e.target === e.currentTarget && setShowLogin(false)}>
+        <form onSubmit={onForgotPassword} className="login-popup-container" ref={dialogRef} role="dialog" aria-label="Forgot Password">
+          <div className="login-popup-title">
+            <button type="button" className="login-back-btn" onClick={switchToLogin} aria-label="Back to login">
+              <ArrowLeft size={20} />
+            </button>
+            <h2>Forgot Password</h2>
+            <button type="button" className="login-close-btn" onClick={() => setShowLogin(false)} aria-label="Close">
+              &times;
+            </button>
+          </div>
+
+          {forgotSent ? (
+            <div className="forgot-success">
+              <div className="forgot-success-icon">
+                <Mail size={32} />
+              </div>
+              <p className="forgot-success-title">Check your email</p>
+              <p className="forgot-success-desc">
+                We sent a password reset link to <strong>{forgotEmail}</strong>. The link expires in 15 minutes.
+              </p>
+              <button type="button" onClick={switchToLogin}>Back to Login</button>
+            </div>
+          ) : (
+            <>
+              <p className="forgot-desc">
+                Enter the email address you used to create your account and we'll send you a link to reset your password.
+              </p>
+              <div className="login-popup-inputs">
+                <input
+                  name="forgotEmail"
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  value={forgotEmail}
+                  type="email"
+                  placeholder="Your email address"
+                  required
+                  autoFocus
+                />
+              </div>
+              <button type="submit" disabled={forgotLoading} className={forgotLoading ? "loading" : ""}>
+                {forgotLoading ? (
+                  <><Loader2 size={16} className="spin-icon" /> Sending...</>
+                ) : (
+                  "Send Reset Link"
+                )}
+              </button>
+              <p>
+                Remember your password?{" "}
+                <span onClick={switchToLogin}>Login here</span>
+              </p>
+            </>
+          )}
+        </form>
+      </div>
+    );
+  }
+
+  // ---------- Login / Sign Up view ----------
   return (
     <div className="login-popup" onClick={(e) => e.target === e.currentTarget && setShowLogin(false)}>
       <form onSubmit={onLogin} className="login-popup-container" ref={dialogRef} role="dialog" aria-label={currState}>
@@ -117,7 +220,11 @@ const LoginPopup = ({ setShowLogin }) => {
           {currState === "Sign Up" ? "Create account" : "Login"}
         </button>
 
-        {/* Bỏ checkbox terms & conditions */}
+        {currState === "Login" && (
+          <p className="forgot-link">
+            <span onClick={switchToForgot}>Forgot password?</span>
+          </p>
+        )}
 
         {currState === "Login" ? (
           <p>

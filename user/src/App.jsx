@@ -17,6 +17,7 @@ import { StoreContext } from "./context/StoreContext";
 import RestaurantsPage from "./pages/Restaurants/RestaurantsPage";
 import RestaurantPage from "./pages/Restaurant/RestaurantPage";
 import FloatingCartBar from "./components/FloatingCartBar/FloatingCartBar";
+import ResetPassword from "./pages/ResetPassword/ResetPassword";
 
 const PageTransition = ({ children }) => {
   const location = useLocation();
@@ -72,6 +73,7 @@ const App = () => {
             <Route path="/myorders" element={<MyOrders />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             {/* The old three-route flow (Cart → PlaceOrder → Payment) is now
                 one page; keep the old paths working for saved links. */}
             <Route path="/order" element={<Navigate to="/checkout" replace />} />

@@ -36,7 +36,7 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-left">
-        <span className="brand-mark">Drone Delivery</span>
+        <span className="brand-mark">Drone Food</span>
         <span className="brand-role">Restaurant</span>
       </div>
 

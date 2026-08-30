@@ -361,7 +361,7 @@ export const forgotPassword = async (email) => {
 
   await sendEmail({
     to: email,
-    subject: "Password Reset - Drone Delivery",
+    subject: "Password Reset - Drone Food",
     html: `
       <h2>Password Reset Request</h2>
       <p>You requested a password reset. Click the link below to set a new password:</p>

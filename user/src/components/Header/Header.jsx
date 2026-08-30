@@ -19,7 +19,7 @@ const Header = () => {
     <header className="header">
       <div className="header-overlay" aria-hidden="true" />
       <div className="header-inner">
-        <span className="header-eyebrow">Drone Delivery</span>
+        <span className="header-eyebrow">Drone Food</span>
         <h1 className="header-title">
           Order food to your door in fifteen minutes
         </h1>

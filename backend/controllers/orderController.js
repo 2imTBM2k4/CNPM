@@ -1,23 +1,5 @@
 import * as orderService from "../services/orderService.js";
-
-const notifyCustomerOrderUpdated = async (req, orderId) => {
-  if (!req.app.get("io")) return;
-  const { Order } = await import("../models/index.cjs");
-  const order = await Order.findById(orderId)
-    .select("user orderStatus deliveryMethod cancellationCode reason qrCode qrScanned cargoChecked")
-    .lean();
-  if (!order?.user) return;
-  req.app.get("io").to(`customer_${order.user}`).emit("orderStatusUpdated", {
-    orderId: String(order._id),
-    orderStatus: order.orderStatus,
-    deliveryMethod: order.deliveryMethod,
-    cancellationCode: order.cancellationCode,
-    reason: order.reason,
-    qrCode: order.qrCode,
-    qrScanned: order.qrScanned,
-    cargoChecked: order.cargoChecked,
-  });
-};
+import { emitCustomerOrderUpdate } from "../utils/orderRealtime.js";
 
 export const placeOrder = async (req, res) => {
   try {
@@ -102,7 +84,7 @@ export const listOrders = async (req, res) => {
 export const updateStatus = async (req, res) => {
   try {
     const result = await orderService.updateStatus(req.user, req.body);
-    await notifyCustomerOrderUpdated(req, req.body.orderId);
+    await emitCustomerOrderUpdate(req.app.get("io"), req.body.orderId);
     res.json(result);
   } catch (error) {
     res

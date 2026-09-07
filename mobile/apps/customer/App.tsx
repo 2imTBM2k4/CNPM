@@ -104,7 +104,10 @@ function CustomerApp() {
     queryKey: ["orders", token],
     queryFn: async () => (await axios.get<{ data: Order[] }>(`${API_URL}/api/order/userorders`, { headers: authHeaders(token!) })).data.data || [],
     enabled: Boolean(token && (screen === "orders" || screen === "track")),
-    refetchInterval: screen === "track" ? 30000 : false,
+    // Socket is the fast path; polling also catches status changes made by an
+    // external expiry job, which runs in a separate process and cannot emit on
+    // this app server's Socket.io instance.
+    refetchInterval: screen === "track" || screen === "orders" ? 30000 : false,
   });
   const cartCount = useMemo(() => cart.data?.items.reduce((total, item) => total + item.quantity, 0) || 0, [cart.data]);
   const trackingOrder = orders.data?.find((order) => order._id === trackingOrderId) || null;

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Order, ShipperProfile } from "../../models/index.cjs";
 import { createRestaurantOwner, createUser } from "../helpers.js";
 import * as shipperService from "../../services/shipperService.js";
+import * as orderService from "../../services/orderService.js";
 
 const point = (lng, lat) => ({ type: "Point", coordinates: [lng, lat] });
 
@@ -34,15 +35,31 @@ const makeOrder = async (userId, restaurantId, overrides = {}) =>
   });
 
 describe("Shipper dispatch", () => {
-  it("only exposes unassigned shipper orders within 3 km of the pickup", async () => {
+  it("exposes unassigned shipper orders within 5 km of the pickup", async () => {
     const { restaurant } = await createRestaurantOwner();
     const customer = await createUser({ email: "customer-near@test.com" });
     const shipper = await makeShipper("near");
     const near = await makeOrder(customer._id, restaurant._id);
-    await makeOrder(customer._id, restaurant._id, { pickupLocation: point(106.77, 10.85) });
+    const withinFiveKm = await makeOrder(customer._id, restaurant._id, { pickupLocation: point(106.701, 10.817) });
+    await makeOrder(customer._id, restaurant._id, { pickupLocation: point(106.701, 10.823) });
 
     const result = await shipperService.availableOrders(shipper._id);
-    expect(result.data.map((order) => String(order._id))).toEqual([String(near._id)]);
+    expect(result.data.map((order) => String(order._id))).toEqual([String(near._id), String(withinFiveKm._id)]);
+  });
+
+  it("keeps finding and accepting a shipper after the restaurant starts preparing", async () => {
+    const { restaurant } = await createRestaurantOwner();
+    const customer = await createUser({ email: "customer-preparing@test.com" });
+    const shipper = await makeShipper("preparing");
+    const order = await makeOrder(customer._id, restaurant._id, { orderStatus: "preparing" });
+
+    const offers = await shipperService.availableOrders(shipper._id);
+    expect(offers.data.map((item) => String(item._id))).toContain(String(order._id));
+
+    await shipperService.acceptOrder(shipper, order._id);
+    const accepted = await Order.findById(order._id);
+    expect(accepted.orderStatus).toBe("preparing");
+    expect(accepted.shipperAssignmentStatus).toBe("accepted");
   });
 
   it("atomically lets only one available shipper accept an order", async () => {
@@ -68,6 +85,7 @@ describe("Shipper dispatch", () => {
     const { restaurant } = await createRestaurantOwner();
     const customer = await createUser({ email: "customer-expire@test.com" });
     const overdue = await makeOrder(customer._id, restaurant._id, {
+      orderStatus: "preparing",
       shipperAssignmentDeadlineAt: new Date(Date.now() - 1),
     });
     const active = await makeOrder(customer._id, restaurant._id);
@@ -76,5 +94,25 @@ describe("Shipper dispatch", () => {
     expect(result.cancelledCount).toBe(1);
     expect((await Order.findById(overdue._id)).cancellationCode).toBe("NO_SHIPPER_AVAILABLE");
     expect((await Order.findById(active._id)).orderStatus).toBe("pending");
+  });
+
+  it("keeps the restaurant from marking a shipper order as picked up", async () => {
+    const { owner, restaurant } = await createRestaurantOwner();
+    const customer = await createUser({ email: "customer-handover@test.com" });
+    const order = await makeOrder(customer._id, restaurant._id, { orderStatus: "preparing" });
+
+    await expect(orderService.updateStatus(owner, {
+      orderId: order._id,
+      status: "delivering",
+    })).rejects.toThrow("assigned shipper");
+  });
+
+  it("repairs an older shipper account that has no profile", async () => {
+    const orphan = await createUser({ role: "shipper", email: "shipper-orphan@test.com" });
+
+    const result = await shipperService.me(orphan._id);
+
+    expect(result.data.user.toString()).toBe(orphan._id.toString());
+    expect(result.data.approvalStatus).toBe("pending");
   });
 });

@@ -4,12 +4,15 @@ import { recordAudit } from "../utils/auditLog.js";
 import * as orderService from "./orderService.js";
 
 const LOCATION_STALE_MS = 90 * 1000;
-const OFFER_RADIUS_METRES = 3000;
+const OFFER_RADIUS_METRES = 5000;
+const DISPATCHABLE_ORDER_STATUSES = ["pending", "preparing"];
 
 const getProfile = async (userId) => {
   const profile = await ShipperProfile.findOne({ user: userId });
-  if (!profile) throw new AppError("Shipper profile not found", 404);
-  return profile;
+  // Older registrations could create the user before MongoDB rejected an
+  // empty GeoJSON point. Recover that orphaned account on its first Shipper
+  // request so an admin can approve it normally.
+  return profile || ShipperProfile.create({ user: userId, vehicleType: "motorbike" });
 };
 
 const requireApproved = (profile) => {
@@ -71,7 +74,7 @@ export const availableOrders = async (userId) => {
   const orders = await Order.find({
     deliveryMethod: "shipper",
     shipperAssignmentStatus: "unassigned",
-    orderStatus: "pending",
+    orderStatus: { $in: DISPATCHABLE_ORDER_STATUSES },
     shipperAssignmentDeadlineAt: { $gt: now },
     pickupLocation: {
       $near: {
@@ -81,6 +84,18 @@ export const availableOrders = async (userId) => {
     },
   }).populate("restaurantId", "name address phone");
   return { success: true, data: orders };
+};
+
+export const currentOrder = async (userId) => {
+  const profile = await getProfile(userId);
+  if (!profile.currentOrder) return { success: true, data: null };
+
+  const order = await Order.findById(profile.currentOrder)
+    .populate("restaurantId", "name address phone lat lng")
+    .populate("user", "name phone")
+    .lean();
+
+  return { success: true, data: order || null };
 };
 
 export const nearbyAvailableShipperIds = async (pickupLocation) => {
@@ -116,7 +131,7 @@ export const acceptOrder = async (user, orderId) => {
       _id: orderId,
       deliveryMethod: "shipper",
       shipperAssignmentStatus: "unassigned",
-      orderStatus: "pending",
+      orderStatus: { $in: DISPATCHABLE_ORDER_STATUSES },
       shipperAssignmentDeadlineAt: { $gt: now },
     },
     {
@@ -200,7 +215,7 @@ export const expireUnacceptedOrders = async () => {
     {
       deliveryMethod: "shipper",
       shipperAssignmentStatus: "unassigned",
-      orderStatus: "pending",
+      orderStatus: { $in: DISPATCHABLE_ORDER_STATUSES },
       shipperAssignmentDeadlineAt: { $lte: now },
     },
     {

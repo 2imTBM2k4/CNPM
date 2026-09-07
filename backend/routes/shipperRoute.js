@@ -10,6 +10,7 @@ router.get("/me", protect, authorize("shipper"), controller.me);
 router.put("/me/location", protect, authorize("shipper"), validate(locationSchema), controller.location);
 router.put("/me/status", protect, authorize("shipper"), validate(statusSchema), controller.status);
 router.get("/me/orders/available", protect, authorize("shipper"), controller.available);
+router.get("/me/orders/current", protect, authorize("shipper"), controller.current);
 router.post("/me/orders/:id/accept", protect, authorize("shipper"), controller.accept);
 router.post("/me/orders/:id/pick-up", protect, authorize("shipper"), controller.pickup);
 router.post("/me/orders/:id/complete", protect, authorize("shipper"), controller.complete);

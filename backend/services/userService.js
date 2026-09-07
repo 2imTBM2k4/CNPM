@@ -124,7 +124,13 @@ export const registerUser = async (userData) => {
   }
 
   if (role === "shipper") {
-    await ShipperProfile.create({ user: newUser._id, vehicleType: "motorbike" });
+    try {
+      await ShipperProfile.create({ user: newUser._id, vehicleType: "motorbike" });
+    } catch (error) {
+      // Do not leave a duplicate email that cannot enter the Shipper workflow.
+      await userRepo.deleteById(newUser._id);
+      throw error;
+    }
   }
 
   return { success: true, token, refreshToken };

@@ -10,7 +10,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "mobile:build": "npm run build --workspace=@drone-food/contracts && npm run build --workspace=@drone-food/api-client && npm run typecheck --workspace=customer",
+    "mobile:build": "npm run build --workspace=@drone-food/contracts && npm run build --workspace=@drone-food/api-client && npm run typecheck --workspace=customer && npm run typecheck --workspace=shipper && npm run typecheck --workspace=restaurant-mobile",
     "mobile:typecheck": "npm run mobile:build"
   },
   "dependencies": {

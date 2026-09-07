@@ -8,7 +8,6 @@ on:
       - "restaurant/**"
       - ".github/workflows/web-ci.yml"
   push:
-    branches: [main, develop]
     paths:
       - "user/**"
       - "admin/**"

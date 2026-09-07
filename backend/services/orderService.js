@@ -337,6 +337,9 @@ export const updateStatus = async (user, updateData) => {
     if (order.orderStatus !== "preparing" && status === "delivering") {
       throw new AppError("Cannot handover (not preparing)", 400);
     }
+    if (order.deliveryMethod === "shipper" && status === "delivering") {
+      throw new AppError("A shipper delivery can only be marked picked up by its assigned shipper", 403);
+    }
     if (status === "cancelled" && (!reason || reason.trim() === "")) {
       throw new AppError("Reason required for cancellation", 400);
     }

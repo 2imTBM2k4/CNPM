@@ -29,7 +29,7 @@ const StoreContextProvider = (props) => {
   const [isLoadingFoods, setIsLoadingFoods] = useState(true);
   const [isLoadingRestaurants, setIsLoadingRestaurants] = useState(true);
   const [restaurantError, setRestaurantError] = useState(null);
-  const [fees, setFees] = useState({ deliveryFee: 0, serviceFee: 0 });
+  const [fees, setFees] = useState({ deliveryFee: null, serviceFee: 0, rates: null });
   // False until the saved token has been read AND the cart fetched. Guards
   // that redirect on "no token" or "empty cart" must wait for this, or a
   // direct hit on /checkout bounces before the session is restored.
@@ -69,15 +69,19 @@ const StoreContextProvider = (props) => {
     }
   };
 
-  // Delivery and service fees come from the server so the figures shown at
-  // checkout match the ones the server charges.
+  // The rate card comes from the server. A delivery price is intentionally not
+  // known until checkout has both delivery coordinates and a chosen method.
   const fetchFees = async () => {
     try {
       const res = await axios.get(`${url}/api/config/fees`);
       if (res.data.success) {
         setFees({
-          deliveryFee: res.data.deliveryFee ?? 0,
+          deliveryFee: null,
           serviceFee: res.data.serviceFee ?? 0,
+          rates: {
+            shipperRatePerKm: res.data.shipperRatePerKm,
+            droneRatePerKm: res.data.droneRatePerKm,
+          },
         });
       }
     } catch (err) {

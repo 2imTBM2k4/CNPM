@@ -6,13 +6,30 @@ import * as userRepo from "../repositories/userRepository.js";
 import * as cartRepo from "../repositories/cartRepository.js";
 import AppError from "../utils/AppError.js";
 import { computeUnitPrice } from "../utils/foodOptions.js";
-import { computeOrderTotals } from "../config/fees.js";
+import { calculateShippingQuote, computeOrderTotals } from "../config/fees.js";
 import { recordAudit } from "../utils/auditLog.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+export const quoteDelivery = async (user, { address, deliveryMethod }) => {
+  const cart = await cartRepo.findByUserId(user._id);
+  const firstLine = (cart?.items || []).find((line) => line.foodId);
+  if (!firstLine?.foodId?.restaurantId) {
+    throw new AppError("Cart is empty. Please add items to your cart.", 400);
+  }
+
+  const restaurant = await restaurantRepo.findById(firstLine.foodId.restaurantId);
+  if (!restaurant) throw new AppError("Restaurant not found.", 404);
+
+  return calculateShippingQuote({
+    deliveryMethod,
+    origin: { lat: restaurant.lat, lng: restaurant.lng },
+    destination: { lat: address.lat, lng: address.lng },
+  });
+};
+
 export const placeOrder = async (user, orderData) => {
-  const { address, paymentMethod, paymentDetails } = orderData;
+  const { address, paymentMethod, paymentDetails, deliveryMethod } = orderData;
 
   if (!address) {
     throw new AppError("Shipping address is required.", 400);
@@ -51,8 +68,6 @@ export const placeOrder = async (user, orderData) => {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  const totals = computeOrderTotals(subtotal);
-
   const restaurantId = cartLines[0].foodId.restaurantId;
   if (!restaurantId) {
     throw new AppError("Restaurant ID is required.", 400);
@@ -71,6 +86,13 @@ export const placeOrder = async (user, orderData) => {
     );
   }
 
+  const deliveryQuote = await calculateShippingQuote({
+    deliveryMethod,
+    origin: { lat: restaurant.lat, lng: restaurant.lng },
+    destination: { lat: address.lat, lng: address.lng },
+  });
+  const totals = computeOrderTotals(subtotal, deliveryQuote.shippingPrice);
+
   const newOrderData = {
     user: user._id,
     orderItems,
@@ -86,6 +108,19 @@ export const placeOrder = async (user, orderData) => {
       lng: address.lng ?? null,
     },
     paymentMethod,
+    currency: "VND",
+    deliveryMethod: deliveryQuote.deliveryMethod,
+    deliveryDistanceKm: deliveryQuote.billedDistanceKm,
+    deliveryDistanceType: deliveryQuote.distanceType,
+    deliveryRatePerKm: deliveryQuote.ratePerKm,
+    ...(deliveryMethod === "shipper" && {
+      pickupLocation: {
+        type: "Point",
+        coordinates: [restaurant.lng, restaurant.lat],
+      },
+      shipperAssignmentStatus: "unassigned",
+      shipperAssignmentDeadlineAt: new Date(Date.now() + 15 * 60 * 1000),
+    }),
     itemsPrice: totals.subtotal,
     totalPrice: totals.total,
     shippingPrice: totals.deliveryFee,
@@ -114,17 +149,19 @@ export const placeOrder = async (user, orderData) => {
   if (paymentMethod === "Card") {
     const line_items = orderItems.map((item) => ({
       price_data: {
-        currency: "usd",
+        // VND is a Stripe zero-decimal currency: send the VND amount itself,
+        // never multiply it by 100.
+        currency: "vnd",
         product_data: { name: item.name },
-        unit_amount: Math.round(item.price * 100),
+        unit_amount: Math.round(item.price),
       },
       quantity: item.quantity,
     }));
     line_items.push({
       price_data: {
-        currency: "usd",
+        currency: "vnd",
         product_data: { name: "Delivery" },
-        unit_amount: Math.round(totals.deliveryFee * 100),
+        unit_amount: Math.round(totals.deliveryFee),
       },
       quantity: 1,
     });
@@ -141,6 +178,8 @@ export const placeOrder = async (user, orderData) => {
     success: true,
     ...(sessionUrl && { session_url: sessionUrl }),
     orderId: newOrder._id,
+    restaurantId: restaurantId.toString(),
+    deliveryMethod,
     message:
       paymentMethod === "COD"
         ? "Order placed with COD"
@@ -201,7 +240,7 @@ export const updateStatus = async (user, updateData) => {
     throw new AppError("Order not found", 404);
   }
 
-  if (status === "delivering" && !order.droneId) {
+  if (status === "delivering" && order.deliveryMethod === "drone" && !order.droneId) {
     const droneRepo = await import("../repositories/droneRepository.js");
     const crypto = await import("crypto");
     const cargoWeight = Math.floor(Math.random() * 1500) + 500;
@@ -320,6 +359,16 @@ export const updateStatus = async (user, updateData) => {
     } else {
       throw new AppError("Only delivered or cancelled status allowed for users", 400);
     }
+  } else if (user.role === "shipper") {
+    if (status !== "delivered" || order.deliveryMethod !== "shipper") {
+      throw new AppError("Shippers can only complete their assigned shipper delivery", 403);
+    }
+    if (String(order.shipperId) !== String(user._id)) {
+      throw new AppError("Unauthorized: Not your delivery", 403);
+    }
+    if (order.orderStatus !== "delivering") {
+      throw new AppError("Cannot complete before pickup", 400);
+    }
   } else if (user.role === "admin") {
     // An admin can override any transition — that is what a support console is
     // for — but never silently. A reason is mandatory and the override is
@@ -356,6 +405,10 @@ export const updateStatus = async (user, updateData) => {
   if (status === "delivered") {
     updateDataObj.isDelivered = true;
     updateDataObj.deliveredAt = Date.now();
+    if (order.deliveryMethod === "shipper") {
+      updateDataObj.shipperAssignmentStatus = "completed";
+      updateDataObj.shipperCompletedAt = Date.now();
+    }
 
     if (isPaid === true) {
       updateDataObj.isPaid = true;

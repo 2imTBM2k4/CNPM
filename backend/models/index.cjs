@@ -26,6 +26,7 @@ const Order = require("./orderModel.cjs");
 const Food = require("./foodModel.cjs");
 const Restaurant = require("./restaurantModel.cjs");
 const Cart = require("./cartModel.cjs");
+const ShipperProfile = require("./shipperProfileModel.cjs");
 
 module.exports = {
   User,
@@ -36,4 +37,5 @@ module.exports = {
   Food,
   Restaurant,
   Cart,
+  ShipperProfile,
 };

@@ -78,6 +78,41 @@ const orderSchema = new mongoose.Schema(
         default: null,
       },
     },
+    currency: {
+      type: String,
+      enum: ["VND"],
+      default: "VND",
+      required: true,
+    },
+    // The delivery quote is persisted at checkout so a later route refresh or
+    // rate change can never alter the amount that the customer accepted.
+    deliveryMethod: {
+      type: String,
+      enum: ["shipper", "drone"],
+      default: "drone",
+    },
+    deliveryDistanceKm: { type: Number, default: 0, min: 0 },
+    deliveryDistanceType: {
+      type: String,
+      enum: ["road", "air"],
+      default: "air",
+    },
+    deliveryRatePerKm: { type: Number, default: 0, min: 0 },
+    pickupLocation: {
+      type: { type: String, enum: ["Point"], default: undefined },
+      coordinates: { type: [Number], default: undefined },
+    },
+    shipperId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    shipperAssignmentStatus: {
+      type: String,
+      enum: ["not_applicable", "unassigned", "accepted", "picked_up", "completed", "expired"],
+      default: "not_applicable",
+    },
+    shipperAssignmentDeadlineAt: { type: Date, default: null, index: true },
+    shipperAcceptedAt: { type: Date, default: null },
+    shipperPickedUpAt: { type: Date, default: null },
+    shipperCompletedAt: { type: Date, default: null },
+    cancellationCode: { type: String, default: "" },
     paymentMethod: {
       type: String,
       // required: true,
@@ -180,5 +215,8 @@ const orderSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+orderSchema.index({ pickupLocation: "2dsphere" });
+orderSchema.index({ deliveryMethod: 1, shipperAssignmentStatus: 1, shipperAssignmentDeadlineAt: 1 });
 
 module.exports = mongoose.models.Order || mongoose.model("Order", orderSchema);

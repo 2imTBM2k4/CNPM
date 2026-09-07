@@ -9,6 +9,8 @@
     "server": "nodemon server.js",
     "seed:drones": "node seeds/seedDrones.js",
     "test": "vitest run",
+    "migrate:usd-to-vnd": "node seeds/migrateUsdToVnd.cjs",
+    "jobs:expire-shipper-orders": "node jobs/expireShipperOrders.js",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },

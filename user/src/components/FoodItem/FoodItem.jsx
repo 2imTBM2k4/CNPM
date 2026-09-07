@@ -4,6 +4,7 @@ import './FoodItem.css';
 import { assets } from '../../assets/assets';
 import { StoreContext } from '../../context/StoreContext';
 import ItemOptionsSheet from '../ItemOptionsSheet/ItemOptionsSheet';
+import { formatVND } from "../../../../shared/utils/money";
 
 function FoodItem({ id, name, price, description, image, optionGroups = [] }) {
   const { url, food_list } = useContext(StoreContext);
@@ -83,7 +84,7 @@ function FoodItem({ id, name, price, description, image, optionGroups = [] }) {
           </div>
           <p className="food-item-desc">{description}</p>
           <div className="food-item-footer">
-            <p className="food-item-price">${price}</p>
+            <p className="food-item-price">{formatVND(price)}</p>
             {hasOptions && <span className="ds-label">Customisable</span>}
           </div>
         </div>

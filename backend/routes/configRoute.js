@@ -1,5 +1,5 @@
 import express from "express";
-import { DELIVERY_FEE, SERVICE_FEE } from "../config/fees.js";
+import { getDeliveryRates } from "../config/fees.js";
 
 const configRouter = express.Router();
 
@@ -13,8 +13,7 @@ configRouter.get("/paypal", (req, res) => {
 configRouter.get("/fees", (req, res) => {
   res.json({
     success: true,
-    deliveryFee: DELIVERY_FEE,
-    serviceFee: SERVICE_FEE,
+    ...getDeliveryRates(),
   });
 });
 

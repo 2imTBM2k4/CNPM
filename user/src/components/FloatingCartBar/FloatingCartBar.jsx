@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ShoppingBag, ArrowRight } from "lucide-react";
 import "./FloatingCartBar.css";
 import { StoreContext } from "../../context/StoreContext";
+import { formatVND } from "../../../../shared/utils/money";
 
 /** Routes where the cart is already the subject of the page. */
 const HIDDEN_ROUTES = ["/cart", "/checkout", "/payment", "/placeorder", "/order"];
@@ -39,7 +40,7 @@ const FloatingCartBar = () => {
         <span className="floating-cart-text">
           {itemCount} {itemCount === 1 ? "item" : "items"}
           <span className="floating-cart-sep">·</span>
-          <span className="ds-num">${total.toFixed(2)}</span>
+          <span className="ds-num">{formatVND(total)}</span>
         </span>
 
         <span className="floating-cart-cta">

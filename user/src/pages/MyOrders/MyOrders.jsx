@@ -8,6 +8,7 @@ import DroneDelivery from "../../components/DroneDelivery/DroneDelivery";
 import { SkeletonList } from "../../components/Skeleton/Skeleton";
 import { EmptyState, ErrorState } from "../../../../shared/components/StateBlock";
 import "./MyOrders.css"; // Giả sử bạn có file CSS này cho style nhất quán với light mode
+import { formatVND } from "../../../../shared/utils/money";
 
 const MyOrders = () => {
   const { url, token, setShowLogin } = useContext(StoreContext);
@@ -219,7 +220,7 @@ const MyOrders = () => {
                           )}
                         </span>
                         <span className="item-quantity">x{item.quantity}</span>
-                        <span className="item-price">${item.price}</span>
+                        <span className="item-price">{formatVND(item.price)}</span>
                       </div>
                     ))}
                   </div>
@@ -228,7 +229,7 @@ const MyOrders = () => {
                 <div className="order-summary">
                   <div className="summary-row">
                     <span>Total:</span>
-                    <strong>${order.totalPrice}</strong>
+                    <strong>{formatVND(order.totalPrice)}</strong>
                   </div>
                   <div className="summary-row">
                     <span>Payment method:</span>

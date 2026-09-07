@@ -7,6 +7,7 @@ import "./Checkout.css";
 import { StoreContext } from "../../context/StoreContext";
 import OrderSummary from "../../components/OrderSummary/OrderSummary";
 import LocationPicker from "../../components/LocationPicker/LocationPicker";
+import { formatVND } from "../../../../shared/utils/money";
 
 const STEPS = ["Address", "Payment", "Review"];
 
@@ -26,7 +27,7 @@ const emptyAddress = {
 
 // lat/lng come from the map picker, and Vietnam's current admin structure has
 // no postal code — so none of these gate the "address complete" check.
-const OPTIONAL_FIELDS = new Set(["lat", "lng", "zipcode"]);
+const OPTIONAL_FIELDS = new Set(["zipcode"]);
 const REQUIRED_FIELDS = Object.keys(emptyAddress).filter(
   (field) => !OPTIONAL_FIELDS.has(field)
 );
@@ -53,11 +54,15 @@ const Checkout = () => {
   const [step, setStep] = useState(0);
   const [address, setAddress] = useState(emptyAddress);
   const [paymentMethod, setPaymentMethod] = useState("COD");
+  const [deliveryMethod, setDeliveryMethod] = useState("shipper");
+  const [deliveryQuote, setDeliveryQuote] = useState(null);
+  const [quoteError, setQuoteError] = useState("");
   const [placing, setPlacing] = useState(false);
   const [sdkReady, setSdkReady] = useState(false);
   const paypalRef = useRef(null);
 
-  const total = getTotalCartAmount();
+  const subtotal = getTotalCartAmount();
+  const total = subtotal + (deliveryQuote?.shippingPrice || 0);
 
   // Nothing to check out — send them back to the cart. Wait for hydration
   // first, or a direct visit bounces before the session is restored.
@@ -87,6 +92,8 @@ const Checkout = () => {
         state: user.address?.state || "",
         country: user.address?.country || "",
         zipcode: user.address?.zipCode || "",
+        lat: user.address?.lat ?? null,
+        lng: user.address?.lng ?? null,
       }));
       return;
     }
@@ -102,7 +109,9 @@ const Checkout = () => {
   }, [user]);
 
   const addressComplete = REQUIRED_FIELDS.every((field) =>
-    address[field]?.trim()
+    field === "lat" || field === "lng"
+      ? Number.isFinite(address[field])
+      : Boolean(address[field]?.trim())
   );
 
   const onAddressChange = (event) => {
@@ -124,6 +133,49 @@ const Checkout = () => {
       lng: resolved.lng,
     }));
   };
+
+  // A quote is informational only. The backend repeats this calculation when
+  // the order is placed, using its own cart and the selected delivery method.
+  useEffect(() => {
+    if (!token || !Number.isFinite(address.lat) || !Number.isFinite(address.lng)) {
+      setDeliveryQuote(null);
+      return;
+    }
+
+    let active = true;
+    setQuoteError("");
+    axios
+      .post(
+        `${url}/api/order/quote`,
+        {
+          deliveryMethod,
+          address: {
+            fullName: `${address.firstName} ${address.lastName}`.trim() || "Customer",
+            address: address.street || "Map location",
+            city: address.city || "Unknown",
+            state: address.state || "Unknown",
+            country: address.country || "Vietnam",
+            zipCode: address.zipcode,
+            phone: address.phone || "0000000000",
+            lat: address.lat,
+            lng: address.lng,
+          },
+        },
+        { headers: { token } }
+      )
+      .then((response) => {
+        if (active) setDeliveryQuote(response.data.data || null);
+      })
+      .catch((error) => {
+        if (active) {
+          setDeliveryQuote(null);
+          setQuoteError(error.response?.data?.message || "Unable to calculate delivery fee.");
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [address.lat, address.lng, address.firstName, address.lastName, address.street, address.city, address.state, address.country, address.zipcode, address.phone, deliveryMethod, token, url]);
 
   const persistAddress = async () => {
     localStorage.setItem("deliveryInfo", JSON.stringify(address));
@@ -185,6 +237,7 @@ const Checkout = () => {
             lng: address.lng,
           },
           paymentMethod,
+          deliveryMethod,
           ...(paymentDetails && { paymentDetails }),
         },
         { headers: { token } }
@@ -214,7 +267,7 @@ const Checkout = () => {
     }
     const script = document.createElement("script");
     script.src =
-      "https://www.paypal.com/sdk/js?client-id=AciP_05xSaGGzcHyWO3UCQ2kMlUMj_EsbBRgINfSc1nikIMx_-f7h1V0tmEXnnpHxcw7ZJ74GXWuBYrn&currency=USD";
+      "https://www.paypal.com/sdk/js?client-id=AciP_05xSaGGzcHyWO3UCQ2kMlUMj_EsbBRgINfSc1nikIMx_-f7h1V0tmEXnnpHxcw7ZJ74GXWuBYrn&currency=VND";
     script.async = true;
     script.onload = () => setSdkReady(true);
     document.body.appendChild(script);
@@ -232,7 +285,7 @@ const Checkout = () => {
     const buttons = window.paypal.Buttons({
       createOrder: (data, actions) =>
         actions.order.create({
-          purchase_units: [{ amount: { value: total.toFixed(2) } }],
+          purchase_units: [{ amount: { currency_code: "VND", value: String(Math.round(total)) } }],
         }),
       onApprove: async (data, actions) => {
         const details = await actions.order.capture();
@@ -386,6 +439,19 @@ const Checkout = () => {
 
           {step === 1 && (
             <div className="checkout-panel">
+              <h2>Delivery method</h2>
+              <div className="checkout-methods">
+                <label className={`checkout-method ${deliveryMethod === "shipper" ? "picked" : ""}`}>
+                  <input type="radio" value="shipper" checked={deliveryMethod === "shipper"} onChange={(e) => setDeliveryMethod(e.target.value)} />
+                  <span><strong>Shipper</strong><small>5.000đ/km, calculated by road route.</small></span>
+                </label>
+                <label className={`checkout-method ${deliveryMethod === "drone" ? "picked" : ""}`}>
+                  <input type="radio" value="drone" checked={deliveryMethod === "drone"} onChange={(e) => setDeliveryMethod(e.target.value)} />
+                  <span><strong>Drone</strong><small>7.000đ/km, calculated by straight-line distance.</small></span>
+                </label>
+              </div>
+              {deliveryQuote && <p className="checkout-review-block">Delivery: {formatVND(deliveryQuote.shippingPrice)} ({deliveryQuote.billedDistanceKm} km)</p>}
+              {quoteError && <p className="checkout-paypal-loading">{quoteError}</p>}
               <h2>Payment method</h2>
               <div className="checkout-methods">
                 <label
@@ -433,6 +499,7 @@ const Checkout = () => {
                   type="button"
                   className="checkout-next"
                   onClick={() => setStep(2)}
+                  disabled={!deliveryQuote}
                 >
                   Review order
                 </button>
@@ -475,6 +542,10 @@ const Checkout = () => {
                 </p>
               </section>
 
+              <section className="checkout-review-block">
+                <p><strong>{deliveryMethod === "shipper" ? "Shipper" : "Drone"}</strong> · {deliveryQuote ? formatVND(deliveryQuote.shippingPrice) : "Calculating…"}</p>
+              </section>
+
               <div className="checkout-actions">
                 <button
                   type="button"
@@ -509,7 +580,7 @@ const Checkout = () => {
           )}
         </div>
 
-        <OrderSummary />
+        <OrderSummary deliveryQuote={deliveryQuote} />
       </div>
     </div>
   );

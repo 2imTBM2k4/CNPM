@@ -15,7 +15,7 @@ export const registerSchema = Joi.object({
     "string.min": "Mật khẩu phải có ít nhất 8 ký tự",
     "any.required": "Mật khẩu là bắt buộc",
   }),
-  role: Joi.string().valid("user", "restaurant_owner").default("user"),
+  role: Joi.string().valid("user", "restaurant_owner", "shipper").default("user"),
   restaurantName: Joi.when("role", {
     is: "restaurant_owner",
     then: Joi.string().trim().min(2).max(100).required().messages({
@@ -64,6 +64,15 @@ export const updateAddressSchema = Joi.object({
   zipCode: Joi.string().trim().max(20).allow("", null),
   lat: Joi.number().min(-90).max(90).allow(null),
   lng: Joi.number().min(-180).max(180).allow(null),
+});
+
+export const reverseGeocodeQuerySchema = Joi.object({
+  lat: Joi.number().min(-90).max(90).required(),
+  lng: Joi.number().min(-180).max(180).required(),
+});
+
+export const geocodeAddressQuerySchema = Joi.object({
+  address: Joi.string().trim().min(3).max(500).required(),
 });
 
 export const changePasswordSchema = Joi.object({
@@ -122,7 +131,7 @@ export const updateByAdminSchema = Joi.object({
     "any.unknown":
       "Admins cannot set a user's password. Ask the user to reset it by email.",
   }),
-  role: Joi.string().valid("user", "restaurant_owner", "admin"),
+  role: Joi.string().valid("user", "restaurant_owner", "shipper", "admin"),
   locked: Joi.boolean(),
 });
 

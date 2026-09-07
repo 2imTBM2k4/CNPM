@@ -1,6 +1,7 @@
 import express from "express";
 import {
   placeOrder,
+  quoteDelivery,
   verifyOrder,
   userOrders,
   listOrders,
@@ -11,12 +12,14 @@ import { protect, authorize } from "../middleware/auth.js";
 import validate from "../middleware/validate.js";
 import {
   placeOrderSchema,
+  deliveryQuoteSchema,
   updateStatusSchema,
   verifyOrderSchema,
 } from "../validations/orderValidation.js";
 
 const router = express.Router();
 
+router.post("/quote", protect, validate(deliveryQuoteSchema), quoteDelivery);
 router.post("/place", protect, validate(placeOrderSchema), placeOrder);
 router.post("/verify", protect, validate(verifyOrderSchema), verifyOrder);
 router.get("/userorders", protect, userOrders);

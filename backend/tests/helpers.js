@@ -34,6 +34,8 @@ export const createRestaurantOwner = async () => {
     phone: "0123456789",
     email: owner.email,
     isLocked: false,
+    lat: 10.7769,
+    lng: 106.7009,
   });
   owner.restaurantId = restaurant._id;
   await owner.save();
@@ -76,6 +78,8 @@ export const createOrder = async (userId, restaurantId, overrides = {}) => {
       country: "VN",
       zipCode: "12345",
       phone: "0123456789",
+      lat: 10.7769,
+      lng: 106.7009,
     },
     paymentMethod: "COD",
     totalPrice: 12,

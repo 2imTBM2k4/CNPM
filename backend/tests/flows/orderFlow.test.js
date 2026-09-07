@@ -47,6 +47,8 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
       email: "phohanoi@test.com",
       isLocked: false,
       balance: 0,
+      lat: 10.7769,
+      lng: 106.7009,
     });
 
     owner.restaurantId = restaurant._id;
@@ -84,6 +86,8 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
         country: "VN",
         zipCode: "70000",
         phone: "0909876543",
+        lat: 10.7769,
+        lng: 106.7009,
       },
     });
     userToken = generateToken(user._id);
@@ -106,8 +110,10 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
         address: {
           fullName: "Test", address: "123 St", city: "HCM",
           state: "HCM", country: "VN", zipCode: "70000", phone: "0123456789",
+          lat: 10.7769, lng: 106.7009,
         },
         paymentMethod: "COD",
+        deliveryMethod: "drone",
       });
   };
 
@@ -148,8 +154,8 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
 
     // === Bước 2: User đặt hàng COD ===
     const itemsSubtotal = food1.price * 2 + food2.price; // 8*2 + 7 = 23
-    const deliveryFee = 2;
-    const totalPrice = itemsSubtotal + deliveryFee; // 25
+    const deliveryFee = 0;
+    const totalPrice = itemsSubtotal;
     res = await request(app)
       .post("/api/order/place")
       .set("Authorization", `Bearer ${userToken}`)
@@ -166,9 +172,12 @@ describe("Order Flow: User đặt hàng → Restaurant xác nhận → Giao hàn
           country: "VN",
           zipCode: "70000",
           phone: "0909876543",
+          lat: 10.7769,
+          lng: 106.7009,
         },
         amount: totalPrice,
         paymentMethod: "COD",
+        deliveryMethod: "drone",
         restaurantId: restaurant._id.toString(),
       });
     expect(res.body.success).toBe(true);

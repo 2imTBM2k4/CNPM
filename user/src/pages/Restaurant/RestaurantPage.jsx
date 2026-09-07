@@ -7,6 +7,7 @@ import FoodDisplay from "../../components/FoodDisplay/FoodDisplay";
 import { SkeletonGrid } from "../../components/Skeleton/Skeleton";
 import { EmptyState, ErrorState } from "../../../../shared/components/StateBlock";
 import { assets } from "../../assets/assets";
+import { formatVND } from "../../../../shared/utils/money";
 import {
   haversineKm,
   estimateEtaMinutes,
@@ -252,8 +253,8 @@ const RestaurantPage = () => {
             <span className="restaurant-hero-meta-item">
               <Bike size={14} />
               {typeof deliveryFee === "number"
-                ? `$${deliveryFee.toFixed(2)} delivery`
-                : "Delivery"}
+                ? `${formatVND(deliveryFee)} delivery`
+                : "Delivery calculated at checkout"}
             </span>
           </div>
 

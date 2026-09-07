@@ -10,6 +10,7 @@ import AppError from "../utils/AppError.js";
 import sendEmail from "../utils/sendEmail.js";
 import { geocodeAddress } from "../utils/geocode.js";
 import { recordAudit } from "../utils/auditLog.js";
+import { ShipperProfile } from "../models/index.cjs";
 
 const createAccessToken = (id) => {
   return jwt.sign({ id, type: "access" }, process.env.JWT_SECRET, { expiresIn: "30m" });
@@ -120,6 +121,10 @@ export const registerUser = async (userData) => {
       newUser._id,
       newRestaurant._id
     );
+  }
+
+  if (role === "shipper") {
+    await ShipperProfile.create({ user: newUser._id, vehicleType: "motorbike" });
   }
 
   return { success: true, token, refreshToken };
